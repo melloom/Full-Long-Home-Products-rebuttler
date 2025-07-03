@@ -21,7 +21,10 @@
     <a href="#-support">Support</a>
   </p>
 </div>
-APPLICATION LIVEWEBSITE- closeloop.netlify.app
+
+You can see the app live right here:  
+🔗 https://closeloop.netlify.app
+
 ## 📋 Table of Contents
 
 - [Overview](#-overview)
