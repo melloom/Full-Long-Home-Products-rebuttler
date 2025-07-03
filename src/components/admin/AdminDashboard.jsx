@@ -1225,7 +1225,7 @@ const AdminDashboard = () => {
                         <div className="category-stats-mini">
                           <div className="mini-stat">
                             <span className="mini-stat-label">Growth</span>
-                            <span className="mini-stat-value positive">+12%</span>
+                            <span className="mini-stat-value positive">+{Math.round(stats.categoryGrowth || 0)}%</span>
                           </div>
                           <div className="mini-stat">
                             <span className="mini-stat-label">Usage</span>
