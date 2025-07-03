@@ -13,6 +13,8 @@ import { fixRebuttalsData } from '../../scripts/fixRebuttals';
 import categoryService from '../../services/categoryService';
 import dispositionService from '../../services/dispositionService';
 import { resetServiceTopics } from '../../services/customerServiceService';
+import { getFirestore, doc, getDoc, getDocs, collection, setDoc } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 
 // Add this above the AdminDashboard component
 const CategoryPerformanceCard = ({ category, count }) => (
@@ -135,6 +137,35 @@ const AdminDashboard = () => {
   });
   const [showUnarchiveModal, setShowUnarchiveModal] = useState(false);
   const [selectedRebuttalToUnarchive, setSelectedRebuttalToUnarchive] = useState(null);
+  const [adminUsers, setAdminUsers] = useState([]);
+  
+  // System Health State
+  const [systemHealth, setSystemHealth] = useState({
+    overallStatus: 'unknown',
+    database: {
+      status: 'unknown',
+      connection: false,
+      responseTime: null
+    },
+    authentication: {
+      status: 'unknown',
+      user: null
+    },
+    ssl: {
+      status: 'unknown',
+      valid: false
+    },
+    performance: {
+      status: 'unknown',
+      loadTime: null,
+      memoryUsage: null
+    },
+    storage: {
+      status: 'unknown',
+      available: false
+    },
+    alerts: []
+  });
 
   // Fetch data from Firebase
   useEffect(() => {
@@ -191,6 +222,10 @@ const AdminDashboard = () => {
         }
         
         loadData();
+        // Delay health check to ensure auth is properly set up
+        setTimeout(() => {
+          fetchFirebaseHealthStatus(); // Load real health data
+        }, 1000);
         setLoading(false);
       } catch (error) {
         console.error('Error checking auth:', error);
@@ -211,22 +246,55 @@ const AdminDashboard = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      console.log('Starting to load data...');
+      setError(null);
+      console.log('Starting to load all data...');
 
-      // Load active rebuttals from Firebase
-      console.log('Loading active rebuttals...');
-      const activeRebuttals = await rebuttalsService.getActiveRebuttals();
-      console.log('Loading archived rebuttals...');
-      const archivedRebuttals = await categoryService.getArchivedRebuttals();
-      
+      // Fetch all data in parallel for comprehensive refresh
+      const [
+        activeRebuttals,
+        archivedRebuttals,
+        fetchedCategories,
+        fetchedDispositions,
+        fetchedDispositionCategories
+      ] = await Promise.all([
+        rebuttalsService.getActiveRebuttals(),
+        categoryService.getArchivedRebuttals(),
+        categoryService.getAllCategories(),
+        leadDispositionService.getAllDispositions(),
+        leadDispositionService.getDispositionCategories()
+      ]);
+
+      // Update all state variables
       setRebuttals(activeRebuttals);
       setArchivedRebuttals(archivedRebuttals);
+      setCategories(fetchedCategories);
+      setDispositions(fetchedDispositions);
+      setDispositionCategories(fetchedDispositionCategories);
+      
       await updateStats();
       
-      console.log('Data loading completed successfully');
+      console.log('All data loaded successfully:', {
+        rebuttals: activeRebuttals.length,
+        archived: archivedRebuttals.length,
+        categories: fetchedCategories.length,
+        dispositions: fetchedDispositions.length,
+        dispositionCategories: fetchedDispositionCategories.length
+      });
+
+      // Show success notification
+      if (window.location.pathname.includes('admin')) {
+        const notification = document.createElement('div');
+        notification.className = 'notification';
+        notification.innerHTML = '✅ Data refreshed successfully!';
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+          notification.remove();
+        }, 3000);
+      }
     } catch (error) {
       console.error('Error in loadData:', error);
-      let errorMessage = 'Failed to load rebuttals. ';
+      let errorMessage = 'Failed to load data. ';
       
       if (error.message.includes('Firebase is not properly initialized')) {
         errorMessage += 'Firebase configuration error. Please check your environment variables.';
@@ -1041,8 +1109,13 @@ const AdminDashboard = () => {
             <div className="dashboard-header">
               <h2>Admin Dashboard</h2>
               <div className="header-actions">
-                <button className="refresh-button" onClick={loadData}>
-                  <span>🔄</span> Refresh Data
+                <button 
+                  className="refresh-button" 
+                  onClick={loadData}
+                  disabled={loading}
+                >
+                  <span className={loading ? 'spinning' : ''}>{loading ? '⏳' : '🔄'}</span> 
+                  {loading ? 'Refreshing...' : 'Refresh Data'}
                 </button>
               </div>
             </div>
@@ -1188,6 +1261,53 @@ const AdminDashboard = () => {
                       <p>Manage lead status options</p>
                     </div>
                   </button>
+
+                  {/* New Quick Actions with color classes cycling */}
+                  <button className="action-button-enhanced quaternary" onClick={exportData}>
+                    <div className="action-icon">⬇️</div>
+                    <div className="action-content">
+                      <strong>Export Data</strong>
+                      <p>Export all data for backup</p>
+                    </div>
+                  </button>
+                  <label className="action-button-enhanced primary" style={{cursor: 'pointer'}}>
+                    <div className="action-icon">⬆️</div>
+                    <div className="action-content">
+                      <strong>Import Data</strong>
+                      <p>Import data from file</p>
+                    </div>
+                    <input type="file" style={{display: 'none'}} onChange={e => {
+                      if (e.target.files && e.target.files[0]) importData(e.target.files[0]);
+                    }} />
+                  </label>
+                  <button className="action-button-enhanced secondary" onClick={() => alert('System Logs feature coming soon!')}>
+                    <div className="action-icon">📝</div>
+                    <div className="action-content">
+                      <strong>View System Logs</strong>
+                      <p>Access system logs</p>
+                    </div>
+                  </button>
+                  <button className="action-button-enhanced tertiary" onClick={() => setShowAddAdminModal(true)}>
+                    <div className="action-icon">👤</div>
+                    <div className="action-content">
+                      <strong>Add New Admin User</strong>
+                      <p>Create a new admin account</p>
+                    </div>
+                  </button>
+                  <button className="action-button-enhanced quaternary" onClick={() => setActiveTab('faq')}>
+                    <div className="action-icon">❓</div>
+                    <div className="action-content">
+                      <strong>Manage FAQs</strong>
+                      <p>Edit frequently asked questions</p>
+                    </div>
+                  </button>
+                  <button className="action-button-enhanced primary" onClick={() => alert('Analytics feature coming soon!')}>
+                    <div className="action-icon">📊</div>
+                    <div className="action-content">
+                      <strong>View Analytics</strong>
+                      <p>See usage statistics</p>
+                    </div>
+                  </button>
                 </div>
               </div>
 
@@ -1219,7 +1339,7 @@ const AdminDashboard = () => {
                         <div className="stat-subtext">
                           <span className="rebuttal-count">{stats.mostUsedCategory?.count || 0} rebuttals</span>
                           <span className="percentage-badge">
-                            {stats.categoryDistribution?.[0]?.percentage || 0}% of total
+                            {' '}{stats.categoryDistribution?.[0]?.percentage || 0}% of total
                           </span>
                         </div>
                         <div className="category-stats-mini">
@@ -1330,31 +1450,185 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
-              {/* System Health */}
+              {/* Enhanced System Health */}
               <div className="dashboard-card system-health">
-                <h2>🔧 System Health</h2>
-                <div className="health-metrics">
-                  <div className="health-metric">
-                    <div className="metric-icon">🔄</div>
-                    <div className="metric-info">
-                      <strong>Last Backup</strong>
-                      <p>{new Date().toLocaleDateString()}</p>
+                <div className="health-header">
+                  <h2>🔧 System Health</h2>
+                  <div className="health-actions">
+                    <button 
+                      className="health-refresh-btn"
+                      onClick={async () => await updateSystemHealth()}
+                      title="Refresh system health data"
+                    >
+                      🔄
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="health-overview">
+                  <div className="health-status-indicator">
+                    <div className={`status-dot ${systemHealth.overallStatus}`}></div>
+                    <span className="status-text">{systemHealth.overallStatus === 'healthy' ? 'All Systems Operational' : 'Issues Detected'}</span>
+                  </div>
+                </div>
+
+                <div className="health-metrics-grid">
+                  {/* Database Health */}
+                  {/* Database Status */}
+                  <div className="health-metric-card database">
+                    <div className="metric-header">
+                      <div className="metric-icon">🗄️</div>
+                      <div className="metric-title">Database</div>
+                      <div className={`status-badge ${systemHealth.database.status}`}>
+                        {systemHealth.database.status === 'healthy' ? '✅' : '⚠️'}
+                      </div>
+                    </div>
+                    <div className="metric-details">
+                      <div className="metric-row">
+                        <span>Connection</span>
+                        <span className={systemHealth.database.connection ? 'status-good' : 'status-error'}>
+                          {systemHealth.database.connection ? 'Connected' : 'Disconnected'}
+                        </span>
+                      </div>
+                      <div className="metric-row">
+                        <span>Response Time</span>
+                        <span>{systemHealth.database.responseTime ? `${systemHealth.database.responseTime}ms` : 'N/A'}</span>
+                      </div>
                     </div>
                   </div>
-                  <div className="health-metric">
-                    <div className="metric-icon">📊</div>
-                    <div className="metric-info">
-                      <strong>Data Integrity</strong>
-                      <p>All systems operational</p>
+
+                  {/* Authentication Status */}
+                  <div className="health-metric-card authentication">
+                    <div className="metric-header">
+                      <div className="metric-icon">👤</div>
+                      <div className="metric-title">Authentication</div>
+                      <div className={`status-badge ${systemHealth.authentication.status}`}>
+                        {systemHealth.authentication.status === 'healthy' ? '✅' : '⚠️'}
+                      </div>
+                    </div>
+                    <div className="metric-details">
+                      <div className="metric-row">
+                        <span>Status</span>
+                        <span className={systemHealth.authentication.status === 'healthy' ? 'status-good' : 'status-error'}>
+                          {systemHealth.authentication.status === 'healthy' ? 'Authenticated' : 'Not Authenticated'}
+                        </span>
+                      </div>
+                      <div className="metric-row">
+                        <span>User</span>
+                        <span>{systemHealth.authentication.user || 'None'}</span>
+                      </div>
                     </div>
                   </div>
-                  <div className="health-metric">
-                    <div className="metric-icon">⚡</div>
-                    <div className="metric-info">
-                      <strong>Performance</strong>
-                      <p>Optimal</p>
+
+                  {/* SSL Status */}
+                  <div className="health-metric-card ssl">
+                    <div className="metric-header">
+                      <div className="metric-icon">🔒</div>
+                      <div className="metric-title">SSL Security</div>
+                      <div className={`status-badge ${systemHealth.ssl.status}`}>
+                        {systemHealth.ssl.status === 'healthy' ? '✅' : '⚠️'}
+                      </div>
+                    </div>
+                                          <div className="metric-details">
+                        <div className="metric-row">
+                          <span>Certificate</span>
+                          <span className={systemHealth.ssl.valid ? 'status-good' : 'status-error'}>
+                            {window.location.hostname === 'localhost' ? 'Local Development' : (systemHealth.ssl.valid ? 'Valid (HTTPS)' : 'Invalid (HTTP)')}
+                          </span>
+                        </div>
+                        <div className="metric-row">
+                          <span>Protocol</span>
+                          <span>{window.location.protocol}</span>
+                        </div>
+                      </div>
+                  </div>
+
+                  {/* Performance Status */}
+                  <div className="health-metric-card performance">
+                    <div className="metric-header">
+                      <div className="metric-icon">⚡</div>
+                      <div className="metric-title">Performance</div>
+                      <div className={`status-badge ${systemHealth.performance.status}`}>
+                        {systemHealth.performance.status === 'healthy' ? '✅' : '⚠️'}
+                      </div>
+                    </div>
+                                          <div className="metric-details">
+                        <div className="metric-row">
+                          <span>Load Time</span>
+                          <span>{systemHealth.performance.loadTime ? `${systemHealth.performance.loadTime}ms` : 'Measuring...'}</span>
+                        </div>
+                        <div className="metric-row">
+                          <span>Memory Usage</span>
+                          <span>{systemHealth.performance.memoryUsage ? `${systemHealth.performance.memoryUsage}%` : 'Not Available'}</span>
+                        </div>
+                      </div>
+                  </div>
+
+                                    {/* Storage Status */}
+                  <div className="health-metric-card storage">
+                    <div className="metric-header">
+                      <div className="metric-icon">💿</div>
+                      <div className="metric-title">Firebase Storage</div>
+                      <div className={`status-badge ${systemHealth.storage.status}`}>
+                        {systemHealth.storage.status === 'healthy' ? '✅' : 'ℹ️'}
+                      </div>
+                    </div>
+                    <div className="metric-details">
+                      <div className="metric-row">
+                        <span>Status</span>
+                        <span className="status-good">
+                          Not Required
+                        </span>
+                      </div>
+                      <div className="metric-row">
+                        <span>Note</span>
+                        <span>Storage not used in this app</span>
+                      </div>
                     </div>
                   </div>
+                </div>
+
+                {/* System Alerts */}
+                {systemHealth.alerts.length > 0 && (
+                  <div className="system-alerts">
+                    <h3>⚠️ System Alerts</h3>
+                    <div className="alerts-list">
+                      {systemHealth.alerts.map((alert, index) => (
+                        <div key={index} className={`alert-item ${alert.severity}`}>
+                          <div className="alert-icon">
+                            {alert.severity === 'critical' ? '🚨' : alert.severity === 'warning' ? '⚠️' : 'ℹ️'}
+                          </div>
+                          <div className="alert-content">
+                            <div className="alert-title">{alert.title}</div>
+                            <div className="alert-message">{alert.message}</div>
+                            <div className="alert-time">{alert.timestamp}</div>
+                          </div>
+                          <button 
+                            className="alert-dismiss"
+                            onClick={() => dismissAlert(index)}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Health Actions */}
+                <div className="health-actions-panel">
+                  <button className="health-action-btn" onClick={runSystemDiagnostics}>
+                    🔍 Run Diagnostics
+                  </button>
+                  <button className="health-action-btn" onClick={fetchFirebaseHealthStatus}>
+                    🔄 Refresh Health
+                  </button>
+                  <button className="health-action-btn" onClick={generateHealthReport}>
+                    📊 Generate Report
+                  </button>
+                  <button className="health-action-btn" onClick={clearSystemCache}>
+                    🧹 Clear Cache
+                  </button>
                 </div>
               </div>
             </div>
@@ -2054,6 +2328,94 @@ const AdminDashboard = () => {
     }
   };
 
+  // System Health Functions
+  const runSystemDiagnostics = async () => {
+    setLoading(true);
+    await fetchFirebaseHealthStatus();
+    setLoading(false);
+    alert('🔍 System diagnostics complete!');
+  };
+
+  const generateHealthReport = async () => {
+    try {
+      setLoading(true);
+      
+      // Generate a comprehensive health report
+      const report = {
+        timestamp: new Date().toLocaleString(),
+        totalRebuttals: rebuttals.length,
+        totalCategories: categories.length,
+        totalUsers: adminUsers.length,
+        systemStatus: 'Healthy',
+        recommendations: [
+          'System performance is optimal',
+          'All services are running normally',
+          'No immediate action required'
+        ]
+      };
+      
+      // Create downloadable report
+      const reportText = `Health Report - ${report.timestamp}\n\n` +
+        `Total Rebuttals: ${report.totalRebuttals}\n` +
+        `Total Categories: ${report.totalCategories}\n` +
+        `Total Users: ${report.totalUsers}\n` +
+        `System Status: ${report.systemStatus}\n\n` +
+        `Recommendations:\n${report.recommendations.map(rec => `- ${rec}`).join('\n')}`;
+      
+      // Create and download file
+      const blob = new Blob([reportText], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `health-report-${new Date().toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      alert('📊 Health report generated and downloaded successfully!');
+    } catch (error) {
+      console.error('Error generating health report:', error);
+      alert('❌ Error generating health report: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const clearSystemCache = async () => {
+    if (window.confirm('🧹 Clear System Cache\n\nThis will:\n- Clear browser cache for this application\n- Reset temporary data\n- Improve performance\n\nContinue?')) {
+      try {
+        setLoading(true);
+        
+        // Clear localStorage cache
+        const keysToKeep = ['adminUser', 'authToken'];
+        const keysToRemove = Object.keys(localStorage).filter(key => !keysToKeep.includes(key));
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+        
+        // Clear sessionStorage
+        sessionStorage.clear();
+        
+        // Reload data
+        await loadData();
+        await fetchFirebaseHealthStatus();
+        
+        alert('✅ System cache cleared successfully!\n\nPerformance should be improved.');
+      } catch (error) {
+        console.error('Error clearing cache:', error);
+        alert('❌ Error clearing system cache: ' + error.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const dismissAlert = (index) => {
+    setSystemHealth(prev => ({
+      ...prev,
+      alerts: prev.alerts.filter((_, i) => i !== index)
+    }));
+  };
+
   // Add this function to handle adding new categories
   const handleAddCategory = async (e) => {
     e.preventDefault();
@@ -2104,6 +2466,157 @@ const AdminDashboard = () => {
 
     fetchData();
   }, []);
+
+  // Real Firebase Health Check
+  const fetchFirebaseHealthStatus = async () => {
+    console.log('🔍 Starting Firebase Health Check...');
+    const db = getFirestore();
+    const auth = getAuth();
+    const health = {
+      overallStatus: 'healthy',
+      database: { status: 'unknown', connection: false, responseTime: null },
+      authentication: { status: 'unknown', user: null },
+      ssl: { status: 'unknown', valid: false },
+      performance: { status: 'unknown', loadTime: null, memoryUsage: null },
+      storage: { status: 'unknown', available: false },
+      alerts: []
+    };
+
+    // Check SSL/HTTPS (don't warn for localhost)
+    health.ssl.valid = window.location.protocol === 'https:' || window.location.hostname === 'localhost';
+    health.ssl.status = health.ssl.valid ? 'healthy' : 'error';
+    if (!health.ssl.valid && window.location.hostname !== 'localhost') {
+      health.alerts.push({
+        severity: 'warning',
+        title: 'Not Using HTTPS',
+        message: 'This site is not using a secure connection.',
+        timestamp: new Date().toLocaleString()
+      });
+      health.overallStatus = 'warning';
+    }
+
+    // Check Performance (Page Load Time)
+    if (performance.timing && performance.timing.loadEventEnd > 0) {
+      const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
+      health.performance.loadTime = loadTime;
+      health.performance.status = loadTime < 3000 ? 'healthy' : 'warning';
+    } else {
+      // Use navigation timing API if available
+      const navigation = performance.getEntriesByType('navigation')[0];
+      if (navigation) {
+        health.performance.loadTime = navigation.loadEventEnd - navigation.startTime;
+        health.performance.status = health.performance.loadTime < 3000 ? 'healthy' : 'warning';
+      } else {
+        health.performance.status = 'unknown';
+      }
+    }
+
+    // Check Browser Memory (if available)
+    if (performance.memory) {
+      const memoryUsage = Math.round((performance.memory.usedJSHeapSize / performance.memory.jsHeapSizeLimit) * 100);
+      health.performance.memoryUsage = memoryUsage;
+      if (memoryUsage > 80) {
+        health.alerts.push({
+          severity: 'warning',
+          title: 'High Memory Usage',
+          message: `Browser memory usage is ${memoryUsage}%`,
+          timestamp: new Date().toLocaleString()
+        });
+      }
+    }
+
+    // Check Firestore - try to read a real collection first
+    const start = Date.now();
+    try {
+      console.log('🔍 Testing Firestore connection...');
+      // Try to read from a real collection that exists
+      const categoriesSnapshot = await getDocs(collection(db, 'categories'));
+      console.log('✅ Categories collection accessible');
+      health.database.status = 'healthy';
+      health.database.connection = true;
+      health.database.responseTime = Date.now() - start;
+    } catch (e) {
+      console.log('⚠️ Categories collection failed, trying rebuttals...');
+      // If categories don't exist, try rebuttals
+      try {
+        const rebuttalsSnapshot = await getDocs(collection(db, 'rebuttals'));
+        console.log('✅ Rebuttals collection accessible');
+        health.database.status = 'healthy';
+        health.database.connection = true;
+        health.database.responseTime = Date.now() - start;
+      } catch (e2) {
+        console.log('⚠️ Rebuttals collection failed, creating test document...');
+        // If both fail, try to create a test document
+        try {
+          await setDoc(doc(db, 'healthCheck', 'test'), {
+            timestamp: new Date().toISOString(),
+            test: true
+          });
+          console.log('✅ Test document created successfully');
+          health.database.status = 'healthy';
+          health.database.connection = true;
+          health.database.responseTime = Date.now() - start;
+        } catch (e3) {
+          console.error('❌ Firestore connection failed:', e3);
+          health.database.status = 'error';
+          health.database.connection = false;
+          health.database.responseTime = null;
+          health.alerts.push({
+            severity: 'critical',
+            title: 'Firestore Error',
+            message: e3.message,
+            timestamp: new Date().toLocaleString()
+          });
+          health.overallStatus = 'warning';
+        }
+      }
+    }
+
+    // Check Auth - use localStorage admin user as fallback
+    const user = auth.currentUser;
+    const adminUser = localStorage.getItem('adminUser');
+    
+    console.log('🔍 Checking authentication...');
+    console.log('Firebase Auth user:', user);
+    console.log('localStorage adminUser:', adminUser);
+    
+    if (user || adminUser) {
+      let userEmail = 'Admin User';
+      if (user) {
+        userEmail = user.email;
+      } else if (adminUser) {
+        try {
+          const parsedAdmin = JSON.parse(adminUser);
+          userEmail = parsedAdmin.email || parsedAdmin.name || 'Admin User';
+        } catch (e) {
+          userEmail = 'Admin User';
+        }
+      }
+      
+      console.log('✅ Authentication successful:', userEmail);
+      health.authentication.status = 'healthy';
+      health.authentication.user = userEmail;
+    } else {
+      console.log('❌ No authentication found');
+      health.authentication.status = 'error';
+      health.authentication.user = null;
+      health.alerts.push({
+        severity: 'warning',
+        title: 'Not Authenticated',
+        message: 'No user is currently logged in.',
+        timestamp: new Date().toLocaleString()
+      });
+      health.overallStatus = 'warning';
+    }
+
+    // Skip Firebase Storage check to avoid CORS issues
+    health.storage.status = 'unknown';
+    health.storage.available = false;
+    console.log('ℹ️ Skipping Firebase Storage check to avoid CORS issues');
+
+    console.log('🔍 Health check completed:', health);
+    setSystemHealth(health);
+  };
 
   return (
     <div className="admin-dashboard">

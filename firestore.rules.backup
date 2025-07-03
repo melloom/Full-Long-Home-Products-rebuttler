@@ -1,0 +1,97 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper: check if user is an admin
+    function isAdmin() {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Helper: validate data structure
+    function isValidRebuttal() {
+      return request.resource.data.keys().hasAll(['title', 'category', 'createdAt', 'updatedAt']) &&
+        request.resource.data.title is string &&
+        request.resource.data.category is string &&
+        request.resource.data.createdAt is timestamp &&
+        request.resource.data.updatedAt is timestamp;
+    }
+
+    // Helper: validate category structure
+    function isValidCategory() {
+      return request.resource.data.keys().hasAll(['name', 'createdAt', 'updatedAt']) &&
+        request.resource.data.name is string &&
+        request.resource.data.createdAt is timestamp &&
+        request.resource.data.updatedAt is timestamp;
+    }
+
+    // Allow read access to all documents
+    match /{document=**} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // Admins collection - allow read for any authenticated user, write for admin
+    match /admins/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // Users collection - allow read/write for authenticated users
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // Rebuttals collection - public read, authenticated write
+    match /rebuttals/{rebuttalId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // Dispositions collection - public read, authenticated write
+    match /dispositions/{dispositionId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // Service topics collection - public read, authenticated write
+    match /serviceTopics/{topicId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // Customer service categories collection - public read, authenticated write
+    match /customerServiceCategories/{categoryId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // Archived Rebuttals collection - admin only
+    match /archived_rebuttals/{document=**} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Categories collection - public read, admin write
+    match /categories/{document=**} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidCategory();
+      allow update: if isAdmin() && isValidCategory();
+      allow delete: if isAdmin();
+    }
+
+    // FAQs collection - public read, admin write
+    match /faqs/{faqId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

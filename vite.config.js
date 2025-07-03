@@ -10,6 +10,14 @@ const __dirname = dirname(__filename)
 export default defineConfig({
   base: '', // Empty base for absolute paths
   plugins: [react()],
+  css: {
+    postcss: {
+      plugins: [
+        // Add autoprefixer and other CSS processing
+      ]
+    },
+    minify: false // Disable CSS minification to avoid syntax errors
+  },
   server: {
     port: 3001,
     strictPort: true,
@@ -31,6 +39,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
+    cssCodeSplit: false, // Prevent CSS splitting issues
     rollupOptions: {
       output: {
         assetFileNames: 'assets/[name]-[hash][extname]',
