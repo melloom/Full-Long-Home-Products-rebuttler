@@ -1,0 +1,85 @@
+# Local Netlify folder
+.netlify
+node_modules
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Build directories
+dist/
+dist-ssr/
+build/
+release/
+*.local
+.env
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Additional large files and build artifacts
+*.zip
+*.tar.gz
+*.rar
+*.7z
+*.mp4
+*.mov
+*.avi
+*.wmv
+*.flv
+*.mkv
+*.webm
+*.mp3
+*.wav
+*.ogg
+*.flac
+*.pdf
+*.psd
+*.ai
+*.sketch
+*.fig
+*.xd
+*.db
+*.sqlite
+*.sqlite3
+*.cache
+coverage/
+.nyc_output/
+.cache/
+.temp/
+.tmp/
+
+# Electron build artifacts
+release/
+release/**/*
+*.exe
+*.dll
+*.pak
+*.bin
+*.dat
+*.html
+
+# Specific large files
+release/win-unpacked/Rebuttal App.exe
+
+
