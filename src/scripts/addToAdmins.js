@@ -1,6 +1,6 @@
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
-import { auth, db } from '../services/firebase/config.js';
+import { auth, db } from './firebase-node-config.js';
 
 const addToAdmins = async () => {
   try {

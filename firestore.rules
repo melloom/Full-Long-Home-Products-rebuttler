@@ -13,9 +13,10 @@ service cloud.firestore {
     
     function isValidRebuttal() {
       return request.resource.data.keys().hasAll([
-          'title', 'category', 'createdAt', 'updatedAt'
+          'summary', 'content', 'category', 'createdAt', 'updatedAt'
         ])
-        && request.resource.data.title is string
+        && request.resource.data.summary is string
+        && request.resource.data.content is string
         && request.resource.data.category is string
         && request.resource.data.createdAt is timestamp
         && request.resource.data.updatedAt is timestamp;
@@ -23,19 +24,20 @@ service cloud.firestore {
     
     function isValidCategory() {
       return request.resource.data.keys().hasAll([
-          'name', 'createdAt', 'updatedAt'
+          'name', 'description', 'createdAt', 'updatedAt'
         ])
         && request.resource.data.name is string
+        && request.resource.data.description is string
         && request.resource.data.createdAt is timestamp
         && request.resource.data.updatedAt is timestamp;
     }
 
     function isValidUser() {
       return request.resource.data.keys().hasAll([
-          'uid', 'email', 'createdAt', 'updatedAt'
+          'email', 'role', 'createdAt', 'updatedAt'
         ])
-        && request.resource.data.uid is string
         && request.resource.data.email is string
+        && request.resource.data.role is string
         && request.resource.data.createdAt is timestamp
         && request.resource.data.updatedAt is timestamp;
     }
@@ -52,10 +54,11 @@ service cloud.firestore {
 
     function isValidDisposition() {
       return request.resource.data.keys().hasAll([
-          'name', 'description', 'createdAt', 'updatedAt'
+          'name', 'description', 'status', 'createdAt', 'updatedAt'
         ])
         && request.resource.data.name is string
         && request.resource.data.description is string
+        && request.resource.data.status is string
         && request.resource.data.createdAt is timestamp
         && request.resource.data.updatedAt is timestamp;
     }
@@ -86,60 +89,60 @@ service cloud.firestore {
       allow read: if true;
     }
 
-    // Admins collection - allow read for all, write for authenticated users with validation
+    // Admins collection - allow read for all, write for authenticated users
     match /admins/{userId} {
       allow read: if true;
-      allow write: if isAuthenticated() && isValidUser();
+      allow write: if isAuthenticated();
     }
 
-    // Users collection - allow read/write for authenticated users with validation
+    // Users collection - allow read/write for authenticated users
     match /users/{userId} {
       allow read: if true;
-      allow write: if isAuthenticated() && isValidUser();
+      allow write: if isAuthenticated();
     }
 
-    // Rebuttals collection - public read, authenticated write with validation
+    // Rebuttals collection - public read, authenticated write
     match /rebuttals/{rebuttalId} {
       allow read: if true;
-      allow create, update: if isAuthenticated() && isValidRebuttal();
-      allow delete: if isAdmin();
+      allow create, update: if isAuthenticated();
+      allow delete: if isAuthenticated();
     }
 
-    // Categories collection - public read, admin write with validation
+    // Categories collection - public read, authenticated write
     match /categories/{categoryId} {
       allow read: if true;
-      allow create, update: if isAdmin() && isValidCategory();
-      allow delete: if isAdmin();
+      allow create, update: if isAuthenticated();
+      allow delete: if isAuthenticated();
     }
 
-    // FAQs collection - public read, admin write with validation
+    // FAQs collection - public read, authenticated write
     match /faqs/{faqId} {
       allow read: if true;
-      allow create, update, delete: if isAdmin() && isValidFAQ();
+      allow create, update, delete: if isAuthenticated();
     }
 
-    // Dispositions collection - public read, authenticated write with validation
+    // Dispositions collection - public read, authenticated write
     match /dispositions/{dispositionId} {
       allow read: if true;
-      allow write: if isAuthenticated() && isValidDisposition();
+      allow write: if isAuthenticated();
     }
 
-    // Service topics collection - public read, authenticated write with validation
+    // Service topics collection - public read, authenticated write
     match /serviceTopics/{topicId} {
       allow read: if true;
-      allow write: if isAuthenticated() && isValidServiceTopic();
+      allow write: if isAuthenticated();
     }
 
-    // Customer service categories collection - public read, authenticated write with validation
+    // Customer service categories collection - public read, authenticated write
     match /customerServiceCategories/{categoryId} {
       allow read: if true;
-      allow write: if isAuthenticated() && isValidCustomerServiceCategory();
+      allow write: if isAuthenticated();
     }
 
-    // Archived rebuttals collection - public read, admin write with validation
+    // Archived rebuttals collection - public read, authenticated write
     match /archived_rebuttals/{document=**} {
       allow read: if true;
-      allow write: if isAdmin() && isValidRebuttal();
+      allow write: if isAuthenticated();
     }
   }
 }

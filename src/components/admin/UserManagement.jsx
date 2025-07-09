@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import userService from '../../services/userService';
 import { getAuth } from 'firebase/auth';
 import { useAuth } from '../../contexts/AuthContext';
+import { auth } from '../../services/firebase/config';
 import './UserManagement.css';
 
 const UserManagement = () => {
@@ -130,16 +131,31 @@ const UserManagement = () => {
   const handleDeleteUser = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
+        console.log('🔍 UserManagement: Attempting to delete user:', userId);
+        console.log('🔍 UserManagement: Current user:', auth.currentUser);
+        console.log('🔍 UserManagement: Stored admin user:', localStorage.getItem('adminUser'));
+        
         await userService.deleteUser(userId);
+        console.log('🔍 UserManagement: User deleted successfully');
         fetchUsers(); // Refresh the user list
       } catch (error) {
-        console.error('Error deleting user:', error);
+        console.error('🔍 UserManagement: Error deleting user:', error);
+        console.error('🔍 UserManagement: Error details:', {
+          code: error.code,
+          message: error.message,
+          stack: error.stack
+        });
+        
         if (error.message.includes('must be logged in')) {
           alert('You must be logged in to delete users');
+        } else if (error.message.includes('Firebase Auth session required')) {
+          alert('Your session has expired. Please log in again to continue.');
         } else if (error.message.includes('permission-denied')) {
           alert('You do not have permission to delete users');
+        } else if (error.message.includes('not found')) {
+          alert('User not found. They may have already been deleted.');
         } else {
-          alert('Failed to delete user. Please try again.');
+          alert(`Failed to delete user: ${error.message}`);
         }
       }
     }
@@ -147,11 +163,34 @@ const UserManagement = () => {
 
   const handleRoleChange = async (userId, newRole) => {
     try {
+      console.log('🔍 UserManagement: Attempting to update user role:', { userId, newRole });
+      console.log('🔍 UserManagement: Current user:', auth.currentUser);
+      console.log('🔍 UserManagement: Stored admin user:', localStorage.getItem('adminUser'));
+      
       await userService.updateUserRole(userId, newRole);
+      console.log('🔍 UserManagement: User role updated successfully');
       fetchUsers(); // Refresh the user list
     } catch (error) {
-      console.error('Error updating user role:', error);
-      alert('Failed to update user role. Please try again.');
+      console.error('🔍 UserManagement: Error updating user role:', error);
+      console.error('🔍 UserManagement: Error details:', {
+        code: error.code,
+        message: error.message,
+        stack: error.stack
+      });
+      
+              if (error.message.includes('must be logged in')) {
+          alert('You must be logged in to update user roles');
+        } else if (error.message.includes('Firebase Auth session required')) {
+          alert('Your session has expired. Please log in again to continue.');
+        } else if (error.message.includes('permission-denied')) {
+          alert('You do not have permission to update user roles');
+        } else if (error.message.includes('not found')) {
+          alert('User not found. They may have been deleted.');
+        } else if (error.message.includes('unavailable')) {
+          alert('Service temporarily unavailable. Please try again.');
+        } else {
+          alert(`Failed to update user role: ${error.message}`);
+        }
     }
   };
 
@@ -163,10 +202,8 @@ const UserManagement = () => {
   const getStatusBadge = (user) => {
     // Use the same logic as the stats calculation
     const isActive = user.isActive !== false; // Default to true unless explicitly false
-    const isVerified = user.emailVerified !== false; // Default to true unless explicitly false
     
     if (!isActive) return <span className="status-badge inactive">Inactive</span>;
-    if (!isVerified) return <span className="status-badge unverified">Unverified</span>;
     return <span className="status-badge active">Active</span>;
   };
 
@@ -183,15 +220,22 @@ const UserManagement = () => {
       const matchesSearch = user.email.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesRole = filterRole === 'all' || user.role === filterRole;
       const matchesStatus = filterStatus === 'all' || 
-        (filterStatus === 'active' && user.isActive && user.emailVerified) ||
-        (filterStatus === 'inactive' && !user.isActive) ||
-        (filterStatus === 'unverified' && !user.emailVerified);
+        (filterStatus === 'active' && user.isActive) ||
+        (filterStatus === 'inactive' && !user.isActive);
       
       return matchesSearch && matchesRole && matchesStatus;
     });
   };
 
   const filteredUsers = getFilteredUsers();
+
+  // Debug section - remove this after fixing the issue
+  const debugInfo = {
+    currentUser: auth.currentUser,
+    storedAdminUser: localStorage.getItem('adminUser'),
+    usersCount: users.length,
+    filteredUsersCount: filteredUsers.length
+  };
 
   if (loading) {
     return (
@@ -221,6 +265,52 @@ const UserManagement = () => {
 
   return (
     <div className="user-management">
+      {/* Debug section - remove after fixing */}
+      <div style={{ 
+        backgroundColor: '#f0f8ff', 
+        border: '1px solid #007acc', 
+        borderRadius: '8px', 
+        padding: '15px', 
+        marginBottom: '20px',
+        fontSize: '12px'
+      }}>
+        <h4 style={{ margin: '0 0 10px 0', color: '#007acc' }}>🔍 Debug Info</h4>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+          <div>
+            <strong>Current User:</strong> {debugInfo.currentUser ? `${debugInfo.currentUser.email} (${debugInfo.currentUser.uid})` : 'None'}
+          </div>
+          <div>
+            <strong>Stored Admin:</strong> {debugInfo.storedAdminUser ? 'Yes' : 'No'}
+          </div>
+          <div>
+            <strong>Users Count:</strong> {debugInfo.usersCount}
+          </div>
+          <div>
+            <strong>Filtered Users:</strong> {debugInfo.filteredUsersCount}
+          </div>
+        </div>
+        {!debugInfo.currentUser && debugInfo.storedAdminUser && (
+          <div style={{ marginTop: '10px', padding: '10px', backgroundColor: '#fff3cd', border: '1px solid #ffeaa7', borderRadius: '4px' }}>
+            <strong>⚠️ Session Issue:</strong> You have stored admin data but no active Firebase Auth session. 
+            <button 
+              onClick={() => window.location.href = '/admin/login'}
+              style={{ 
+                marginLeft: '10px', 
+                padding: '4px 8px', 
+                backgroundColor: '#007acc', 
+                color: 'white', 
+                border: 'none', 
+                borderRadius: '4px', 
+                cursor: 'pointer',
+                fontSize: '11px'
+              }}
+            >
+              Log In Again
+            </button>
+          </div>
+        )}
+      </div>
+
       <div className="user-management-header">
         <div className="header-left">
           <h2>👥 User Management</h2>
@@ -267,7 +357,6 @@ const UserManagement = () => {
             <option value="all">All Status</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
-            <option value="unverified">Unverified</option>
           </select>
         </div>
       </div>
@@ -285,8 +374,7 @@ const UserManagement = () => {
           <span className="stat-number">{users.filter(u => {
             // Consider a user active if they exist and don't have explicit inactive flags
             const isActive = u.isActive !== false; // Default to true unless explicitly false
-            const isVerified = u.emailVerified !== false; // Default to true unless explicitly false
-            return isActive && isVerified;
+            return isActive;
           }).length}</span>
           <span className="stat-label">Active Users</span>
         </div>

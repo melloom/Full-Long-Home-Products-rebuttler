@@ -330,10 +330,7 @@
   color: white;
 }
 
-.status-badge.unverified {
-  background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
-  color: white;
-}
+
 
 .role-badge.admin {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
