@@ -17,6 +17,32 @@
   font-size: 1.8rem;
 }
 
+/* Modal version of the form */
+.rebuttal-form-modal {
+  padding: 2rem;
+  max-height: calc(90vh - 120px);
+  overflow-y: auto;
+  background: white;
+  width: 100%;
+  display: block;
+}
+
+.rebuttal-form-modal .form-group {
+  margin-bottom: 1.5rem;
+}
+
+.rebuttal-form-modal .form-actions {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  padding: 1rem 0;
+  border-top: 1px solid #e0e0e0;
+  margin-top: 2rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
 .form-group {
   margin-bottom: 1.5rem;
 }
@@ -45,10 +71,40 @@
 }
 
 .form-group input:focus,
-.form-group textarea:focus {
+.form-group textarea:focus,
+.form-group select:focus {
   outline: none;
   border-color: #007bff;
   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.form-group select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: inherit;
+  background-color: white;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group select:disabled {
+  background-color: #f8f9fa;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.loading-indicator {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.category-select option {
+  padding: 0.5rem;
 }
 
 /* Tags styling */

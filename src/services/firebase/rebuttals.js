@@ -1,3 +1,13 @@
+// Dynamic import for db and auth to support both Node scripts and Vite/browser
+let db, auth;
+try {
+  // Try Node config for scripts
+  ({ db, auth } = await import('./nodeConfig.js'));
+} catch (e) {
+  // Fallback to Vite/browser config for app
+  ({ db, auth } = await import('./config.js'));
+}
+
 import {
   collection,
   addDoc,
@@ -11,12 +21,13 @@ import {
   orderBy,
   serverTimestamp
 } from 'firebase/firestore';
-import { db, auth } from './config';
 
 const REBUTTALS_COLLECTION = 'rebuttals';
 
 // Helper function to check authentication
 const checkAuth = () => {
+  // If running in Node (script), skip auth check
+  if (typeof window === 'undefined') return { uid: 'script-admin' };
   const user = auth.currentUser;
   if (!user) {
     throw new Error('User must be authenticated to perform this action');

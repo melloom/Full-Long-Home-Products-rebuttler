@@ -10,6 +10,9 @@ const UserManagement = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterRole, setFilterRole] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
   const [newUser, setNewUser] = useState({
     email: '',
     password: '',
@@ -158,8 +161,12 @@ const UserManagement = () => {
   };
 
   const getStatusBadge = (user) => {
-    if (!user.isActive) return <span className="status-badge inactive">Inactive</span>;
-    if (!user.emailVerified) return <span className="status-badge unverified">Unverified</span>;
+    // Use the same logic as the stats calculation
+    const isActive = user.isActive !== false; // Default to true unless explicitly false
+    const isVerified = user.emailVerified !== false; // Default to true unless explicitly false
+    
+    if (!isActive) return <span className="status-badge inactive">Inactive</span>;
+    if (!isVerified) return <span className="status-badge unverified">Unverified</span>;
     return <span className="status-badge active">Active</span>;
   };
 
@@ -171,10 +178,26 @@ const UserManagement = () => {
     );
   };
 
+  const getFilteredUsers = () => {
+    return users.filter(user => {
+      const matchesSearch = user.email.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesRole = filterRole === 'all' || user.role === filterRole;
+      const matchesStatus = filterStatus === 'all' || 
+        (filterStatus === 'active' && user.isActive && user.emailVerified) ||
+        (filterStatus === 'inactive' && !user.isActive) ||
+        (filterStatus === 'unverified' && !user.emailVerified);
+      
+      return matchesSearch && matchesRole && matchesStatus;
+    });
+  };
+
+  const filteredUsers = getFilteredUsers();
+
   if (loading) {
     return (
       <div className="user-management-loading">
         <div className="loading-spinner"></div>
+        <p>Loading users...</p>
       </div>
     );
   }
@@ -183,9 +206,13 @@ const UserManagement = () => {
     return (
       <div className="user-management">
         <div className="error-message">
-          {error}
-          <div className="error-actions">
-            <button onClick={fetchUsers}>Retry</button>
+          <div className="error-icon">⚠️</div>
+          <div className="error-content">
+            <h3>Error Loading Users</h3>
+            <p>{error}</p>
+            <button onClick={fetchUsers} className="retry-button">
+              <span>🔄</span> Retry
+            </button>
           </div>
         </div>
       </div>
@@ -196,117 +223,204 @@ const UserManagement = () => {
     <div className="user-management">
       <div className="user-management-header">
         <div className="header-left">
-          <h2>User Management</h2>
+          <h2>👥 User Management</h2>
+          <p className="header-subtitle">Manage user accounts and permissions</p>
         </div>
         <div className="header-right">
           <button 
             className="add-button"
             onClick={() => setShowAddModal(true)}
           >
-            Add New User
+            <span>➕</span> Add New User
           </button>
         </div>
       </div>
 
+      <div className="filters-section">
+        <div className="search-box">
+          <span className="search-icon">🔍</span>
+          <input
+            type="text"
+            placeholder="Search users by email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-input"
+          />
+        </div>
+        
+        <div className="filter-controls">
+          <select
+            value={filterRole}
+            onChange={(e) => setFilterRole(e.target.value)}
+            className="filter-select"
+          >
+            <option value="all">All Roles</option>
+            <option value="admin">Admin</option>
+            <option value="user">User</option>
+          </select>
+          
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="filter-select"
+          >
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="unverified">Unverified</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="users-stats">
+        <div className="stat-card">
+          <span className="stat-number">{users.length}</span>
+          <span className="stat-label">Total Users</span>
+        </div>
+        <div className="stat-card">
+          <span className="stat-number">{users.filter(u => u.role === 'admin').length}</span>
+          <span className="stat-label">Admins</span>
+        </div>
+        <div className="stat-card">
+          <span className="stat-number">{users.filter(u => {
+            // Consider a user active if they exist and don't have explicit inactive flags
+            const isActive = u.isActive !== false; // Default to true unless explicitly false
+            const isVerified = u.emailVerified !== false; // Default to true unless explicitly false
+            return isActive && isVerified;
+          }).length}</span>
+          <span className="stat-label">Active Users</span>
+        </div>
+      </div>
+
       <div className="users-list">
-        {users.length === 0 ? (
+        {filteredUsers.length === 0 ? (
           <div className="no-users">
             <div className="no-users-content">
+              <div className="no-users-icon">👤</div>
               <h3>No Users Found</h3>
-              <p>Get started by creating your first user account.</p>
-              <button 
-                className="add-button"
-                onClick={() => setShowAddModal(true)}
-              >
-                Create First User
-              </button>
+              <p>{searchTerm || filterRole !== 'all' || filterStatus !== 'all' 
+                ? 'Try adjusting your search or filters.' 
+                : 'Get started by creating your first user account.'}</p>
+              {!searchTerm && filterRole === 'all' && filterStatus === 'all' && (
+                <button 
+                  className="add-button"
+                  onClick={() => setShowAddModal(true)}
+                >
+                  <span>➕</span> Create First User
+                </button>
+              )}
             </div>
           </div>
         ) : (
-          users.map(user => (
-            <div key={user.id || user.uid} className="user-item">
-              <div className="user-info">
-                <div className="user-header">
-                  <span className="user-email">{user.email}</span>
-                  {getStatusBadge(user)}
-                  {getRoleBadge(user.role || 'user')}
+          <div className="users-grid">
+            {filteredUsers.map(user => (
+              <div key={user.id || user.uid} className="user-card">
+                <div className="user-card-header">
+                  <div className="user-avatar">
+                    {user.email.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="user-info">
+                    <div className="user-email">{user.email}</div>
+                    <div className="user-badges">
+                      {getStatusBadge(user)}
+                      {getRoleBadge(user.role || 'user')}
+                    </div>
+                  </div>
+                  <div className="user-actions">
+                    <button 
+                      className="action-button edit"
+                      onClick={() => handleRoleChange(user.id || user.uid, user.role === 'admin' ? 'user' : 'admin')}
+                      title={user.role === 'admin' ? 'Remove Admin' : 'Make Admin'}
+                    >
+                      {user.role === 'admin' ? '👑' : '👤'} {user.role === 'admin' ? 'Remove Admin' : 'Make Admin'}
+                    </button>
+                    <button 
+                      className="action-button delete"
+                      onClick={() => handleDeleteUser(user.id || user.uid)}
+                      title="Delete User"
+                    >
+                      🗑️ Delete
+                    </button>
+                  </div>
                 </div>
-                <div className="user-details">
-                  <span className="user-created">
-                    Created: {formatDate(user.createdAt)}
-                  </span>
-                  <span className="user-last-signin">
-                    Last Sign In: {formatDate(user.lastSignIn)}
-                  </span>
+                
+                <div className="user-card-details">
+                  <div className="detail-item">
+                    <span className="detail-label">📅 Created:</span>
+                    <span className="detail-value">{formatDate(user.createdAt)}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">🕒 Last Sign In:</span>
+                    <span className="detail-value">{formatDate(user.lastSignIn)}</span>
+                  </div>
                 </div>
               </div>
-              <div className="user-actions">
-                <select
-                  value={user.role || 'user'}
-                  onChange={(e) => handleRoleChange(user.id || user.uid, e.target.value)}
-                  className="role-select"
-                >
-                  <option value="user">User</option>
-                  <option value="admin">Admin</option>
-                </select>
-                <button 
-                  className="delete-button"
-                  onClick={() => handleDeleteUser(user.id || user.uid)}
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))
+            ))}
+          </div>
         )}
       </div>
 
       {/* Add User Modal */}
       {showAddModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h2>Add New User</h2>
+        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>➕ Add New User</h2>
+              <button 
+                className="modal-close"
+                onClick={() => setShowAddModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+            
             {userError && (
               <div className="error-message">
-                {userError}
+                <span>⚠️</span> {userError}
               </div>
             )}
-            <form onSubmit={handleAddUser}>
+            
+            <form onSubmit={handleAddUser} className="add-user-form">
               <div className="form-group">
-                <label htmlFor="email">Email</label>
+                <label htmlFor="email">📧 Email Address</label>
                 <input
                   type="email"
                   id="email"
                   value={newUser.email}
                   onChange={(e) => setNewUser({...newUser, email: e.target.value})}
-                  placeholder="Enter user's email"
+                  placeholder="Enter user's email address"
                   required
                 />
               </div>
-              <div className="form-group">
-                <label htmlFor="password">Password</label>
-                <input
-                  type="password"
-                  id="password"
-                  value={newUser.password}
-                  onChange={(e) => setNewUser({...newUser, password: e.target.value})}
-                  placeholder="Enter password"
-                  required
-                />
+              
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="password">🔒 Password</label>
+                  <input
+                    type="password"
+                    id="password"
+                    value={newUser.password}
+                    onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                    placeholder="Enter password"
+                    required
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="confirmPassword">🔒 Confirm Password</label>
+                  <input
+                    type="password"
+                    id="confirmPassword"
+                    value={newUser.confirmPassword}
+                    onChange={(e) => setNewUser({...newUser, confirmPassword: e.target.value})}
+                    placeholder="Confirm password"
+                    required
+                  />
+                </div>
               </div>
+              
               <div className="form-group">
-                <label htmlFor="confirmPassword">Confirm Password</label>
-                <input
-                  type="password"
-                  id="confirmPassword"
-                  value={newUser.confirmPassword}
-                  onChange={(e) => setNewUser({...newUser, confirmPassword: e.target.value})}
-                  placeholder="Confirm password"
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="role">Role</label>
+                <label htmlFor="role">👤 Role</label>
                 <select
                   id="role"
                   value={newUser.role}
@@ -316,12 +430,21 @@ const UserManagement = () => {
                   <option value="admin">Admin</option>
                 </select>
               </div>
+              
               <div className="modal-actions">
-                <button type="button" onClick={() => setShowAddModal(false)}>
+                <button 
+                  type="button" 
+                  className="cancel-button"
+                  onClick={() => setShowAddModal(false)}
+                >
                   Cancel
                 </button>
-                <button type="submit" disabled={loading}>
-                  {loading ? 'Creating...' : 'Create User'}
+                <button 
+                  type="submit" 
+                  className="create-button"
+                  disabled={loading}
+                >
+                  {loading ? '🔄 Creating...' : '✅ Create User'}
                 </button>
               </div>
             </form>

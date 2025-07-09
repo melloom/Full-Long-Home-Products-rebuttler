@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { addRebuttal, getRebuttal, updateRebuttal } from '../../services/firebase/rebuttals';
+import categoryService from '../../services/categoryService';
 import './RebuttalForm.css';
 
 // Pre-made tags for common rebuttal categories
@@ -22,7 +23,7 @@ const PREMADE_TAGS = [
   'Emergency Service'
 ];
 
-const RebuttalForm = () => {
+const RebuttalForm = ({ rebuttal, onSave }) => {
   const [formData, setFormData] = useState({
     title: '',
     summary: '',
@@ -36,35 +37,73 @@ const RebuttalForm = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [newTag, setNewTag] = useState('');
+  const [newTip, setNewTip] = useState('');
   const [showTagDropdown, setShowTagDropdown] = useState(false);
   const [filteredTags, setFilteredTags] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const navigate = useNavigate();
   const { id } = useParams();
-  const isEditing = Boolean(id);
+  const isEditing = Boolean(id) || Boolean(rebuttal);
 
   useEffect(() => {
-    if (isEditing) {
-      loadRebuttal();
+    loadCategories();
+  }, []);
+
+  // Populate form data when rebuttal prop changes
+  useEffect(() => {
+    if (rebuttal && isEditing) {
+      console.log('Populating form with rebuttal data:', rebuttal);
+      
+      const newFormData = {
+        title: rebuttal.title || '',
+        summary: rebuttal.summary || '',
+        content: {
+          pt1: typeof rebuttal.content === 'object' ? rebuttal.content.pt1 || '' : rebuttal.content || '',
+          pt2: typeof rebuttal.content === 'object' ? rebuttal.content.pt2 || '' : ''
+        },
+        tags: rebuttal.tags || [],
+        category: rebuttal.category || '',
+        situationOverview: rebuttal.situationOverview || '',
+        rebuttalStrategy: rebuttal.rebuttalStrategy || '',
+        tips: rebuttal.tips || []
+      };
+      
+      console.log('Setting form data to:', newFormData);
+      setFormData(newFormData);
     }
-  }, [id]);
+  }, [rebuttal, isEditing]);
+
+  const loadCategories = async () => {
+    try {
+      setCategoriesLoading(true);
+      const categoriesData = await categoryService.getAllCategories();
+      setCategories(categoriesData);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    } finally {
+      setCategoriesLoading(false);
+    }
+  };
 
   const loadRebuttal = async () => {
     try {
       const rebuttal = await getRebuttal(id);
       if (rebuttal) {
-        setFormData({
+        const newFormData = {
           title: rebuttal.title || '',
           summary: rebuttal.summary || '',
           content: {
-            pt1: typeof rebuttal.content === 'object' ? rebuttal.content.pt1 : rebuttal.content || '',
-            pt2: typeof rebuttal.content === 'object' ? rebuttal.content.pt2 : ''
+            pt1: typeof rebuttal.content === 'object' ? rebuttal.content.pt1 || '' : rebuttal.content || '',
+            pt2: typeof rebuttal.content === 'object' ? rebuttal.content.pt2 || '' : ''
           },
           tags: rebuttal.tags || [],
           category: rebuttal.category || '',
           situationOverview: rebuttal.situationOverview || '',
           rebuttalStrategy: rebuttal.rebuttalStrategy || '',
           tips: rebuttal.tips || []
-        });
+        };
+        setFormData(newFormData);
       }
     } catch (error) {
       console.error('Error loading rebuttal:', error);
@@ -129,12 +168,12 @@ const RebuttalForm = () => {
   };
 
   const handleAddTip = () => {
-    if (newTag.trim() && !formData.tips.includes(newTag.trim())) {
+    if (newTip.trim() && !formData.tips.includes(newTip.trim())) {
       setFormData(prev => ({
         ...prev,
-        tips: [...prev.tips, newTag.trim()]
+        tips: [...prev.tips, newTip.trim()]
       }));
-      setNewTag('');
+      setNewTip('');
     }
   };
 
@@ -157,13 +196,18 @@ const RebuttalForm = () => {
       };
 
       if (isEditing) {
-        await updateRebuttal(id, rebuttalData);
+        const rebuttalId = rebuttal?.id || id;
+        await updateRebuttal(rebuttalId, rebuttalData);
       } else {
         rebuttalData.createdAt = new Date().toISOString();
         await addRebuttal(rebuttalData);
       }
 
-      navigate('/admin/dashboard');
+      if (onSave) {
+        onSave();
+      } else {
+        navigate('/admin/dashboard');
+      }
     } catch (error) {
       console.error('Error saving rebuttal:', error);
       setError('Error saving rebuttal');
@@ -173,11 +217,9 @@ const RebuttalForm = () => {
   };
 
   return (
-    <div className="rebuttal-form-container">
-      <div className="rebuttal-form-box">
-        <h1>{isEditing ? 'Edit Rebuttal' : 'Add New Rebuttal'}</h1>
-        {error && <div className="error-message">{error}</div>}
-        <form onSubmit={handleSubmit}>
+    <div className="rebuttal-form-modal">
+      {error && <div className="error-message">{error}</div>}
+      <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="title">Title</label>
             <input
@@ -193,15 +235,23 @@ const RebuttalForm = () => {
 
           <div className="form-group">
             <label htmlFor="category">Category</label>
-            <input
-              type="text"
+            <select
               id="category"
               name="category"
               value={formData.category}
               onChange={handleInputChange}
               required
-              placeholder="Enter category"
-            />
+              disabled={categoriesLoading}
+              className="category-select"
+            >
+              <option value="">Select a category</option>
+              {categories.map(category => (
+                <option key={category.id} value={category.name}>
+                  {category.icon} {category.name}
+                </option>
+              ))}
+            </select>
+            {categoriesLoading && <div className="loading-indicator">Loading categories...</div>}
           </div>
 
           <div className="form-group">
@@ -271,8 +321,8 @@ const RebuttalForm = () => {
             <div className="tags-input-container">
               <input
                 type="text"
-                value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
+                value={newTip}
+                onChange={(e) => setNewTip(e.target.value)}
                 placeholder="Add a tip (e.g., 'Stay calm and professional')"
                 onKeyPress={(e) => {
                   if (e.key === 'Enter') {
@@ -370,7 +420,7 @@ const RebuttalForm = () => {
           <div className="form-actions">
             <button
               type="button"
-              onClick={() => navigate('/admin/dashboard')}
+              onClick={onSave}
               className="cancel-btn"
             >
               Cancel
@@ -381,8 +431,7 @@ const RebuttalForm = () => {
           </div>
         </form>
       </div>
-    </div>
-  );
+    );
 };
 
 export default RebuttalForm; 

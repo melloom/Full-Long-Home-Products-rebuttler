@@ -32,6 +32,12 @@ const CustomerServiceManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('title');
   const [showIconPicker, setShowIconPicker] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [stats, setStats] = useState({
+    total: 0,
+    urgent: 0,
+    categories: {}
+  });
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -48,6 +54,21 @@ const CustomerServiceManagement = () => {
     loadTopics();
   }, []);
 
+  useEffect(() => {
+    // Calculate stats
+    const urgentCount = topics.filter(t => t.isUrgent).length;
+    const categoryCounts = {};
+    topics.forEach(topic => {
+      categoryCounts[topic.category] = (categoryCounts[topic.category] || 0) + 1;
+    });
+    
+    setStats({
+      total: topics.length,
+      urgent: urgentCount,
+      categories: categoryCounts
+    });
+  }, [topics]);
+
   const loadTopics = async () => {
     try {
       setLoading(true);
@@ -63,16 +84,19 @@ const CustomerServiceManagement = () => {
   };
 
   const handleReset = async () => {
-    try {
-      setLoading(true);
-      await resetServiceTopics();
-      await loadTopics();
-      setError(null);
-    } catch (err) {
-      setError('Failed to reset service topics. Please try again.');
-      console.error('Error resetting topics:', err);
-    } finally {
-      setLoading(false);
+    if (window.confirm('Are you sure you want to reset all service topics? This action cannot be undone.')) {
+      try {
+        setLoading(true);
+        await resetServiceTopics();
+        await loadTopics();
+        setError('Service topics have been reset successfully!');
+        setTimeout(() => setError(null), 3000);
+      } catch (err) {
+        setError('Failed to reset service topics. Please try again.');
+        console.error('Error resetting topics:', err);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -177,11 +201,13 @@ const CustomerServiceManagement = () => {
   };
 
   const filteredAndSortedTopics = topics
-    .filter(topic => 
-      topic.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      topic.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      topic.category.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    .filter(topic => {
+      const matchesSearch = topic.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          topic.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          topic.category.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = selectedCategory === 'all' || topic.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    })
     .sort((a, b) => {
       switch (sortBy) {
         case 'title':
@@ -195,25 +221,68 @@ const CustomerServiceManagement = () => {
       }
     });
 
+  const categories = [...new Set(topics.map(t => t.category).filter(Boolean))];
+
   if (loading) {
     return (
-      <div className="service-topics-management">
-        <div className="loading-spinner" />
+      <div className="customer-service-management">
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Loading customer service topics...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="service-topics-management">
-      <div className="customer-service-header">
-        <h2>Customer Service Management</h2>
+    <div className="customer-service-management">
+      {/* Header Section */}
+      <div className="management-header">
+        <div className="header-content">
+          <h2>Customer Service Management</h2>
+          <p className="header-subtitle">Manage support topics, procedures, and customer service guidelines</p>
+        </div>
         <div className="header-actions">
-          <button 
-            className="add-button"
-            onClick={handleAddTopic}
-          >
-            Add Topic
+          <button className="reset-button" onClick={handleReset}>
+            <span className="button-icon">🔄</span>
+            Reset Topics
           </button>
+          <button className="add-button" onClick={handleAddTopic}>
+            <span className="button-icon">➕</span>
+            Add New Topic
+          </button>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="stats-grid">
+        <div className="stat-card">
+          <div className="stat-icon">📋</div>
+          <div className="stat-content">
+            <h3>Total Topics</h3>
+            <div className="stat-number">{stats.total}</div>
+          </div>
+        </div>
+        <div className="stat-card urgent">
+          <div className="stat-icon">⚠️</div>
+          <div className="stat-content">
+            <h3>Urgent Topics</h3>
+            <div className="stat-number">{stats.urgent}</div>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon">🏷️</div>
+          <div className="stat-content">
+            <h3>Categories</h3>
+            <div className="stat-number">{categories.length}</div>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon">📈</div>
+          <div className="stat-content">
+            <h3>Active</h3>
+            <div className="stat-number">{stats.total - stats.urgent}</div>
+          </div>
         </div>
       </div>
 
@@ -224,57 +293,93 @@ const CustomerServiceManagement = () => {
         </div>
       )}
 
-      <div className="service-topics-controls">
-        <div className="search-container">
-          <input
-            type="text"
-            className="search-input"
-            placeholder="Search topics..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      {/* Controls Section */}
+      <div className="management-controls">
+        <div className="search-filter">
+          <div className="search-container">
+            <input
+              type="text"
+              className="search-input"
+              placeholder="Search topics..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <span className="search-icon">🔍</span>
+          </div>
+          <select
+            className="category-filter"
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+          >
+            <option value="all">All Categories</option>
+            {categories.map(category => (
+              <option key={category} value={category}>{category}</option>
+            ))}
+          </select>
+          <select
+            className="sort-select"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+          >
+            <option value="title">Sort by Title</option>
+            <option value="category">Sort by Category</option>
+            <option value="urgent">Sort by Urgency</option>
+          </select>
         </div>
-        <select
-          className="sort-select"
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-        >
-          <option value="title">Sort by Title</option>
-          <option value="category">Sort by Category</option>
-          <option value="urgent">Sort by Urgency</option>
-        </select>
       </div>
 
-      <div className="service-topics-grid">
+      {/* Topics Grid */}
+      <div className="topics-grid">
         {filteredAndSortedTopics.map(topic => (
-          <div key={topic.id} className="topic-box">
-            <div className="topic-box-header">
-              <div className="topic-icon-wrapper">
-                <span className="topic-icon">{topic.icon || EMOJI_ICONS[topic.category] || '💬'}</span>
+          <div key={topic.id} className={`topic-card ${topic.isUrgent ? 'urgent' : ''}`}>
+            <div className="card-header">
+              <div className="topic-icon">
+                <span className="icon">{topic.icon || EMOJI_ICONS[topic.category] || '💬'}</span>
               </div>
-              <div className="topic-actions">
-                <button className="edit-button" onClick={() => handleEditTopic(topic)}>✏️</button>
-                <button className="delete-button" onClick={() => handleDeleteTopic(topic)}>🗑️</button>
+              <div className="card-actions">
+                <button 
+                  className="edit-button" 
+                  onClick={() => handleEditTopic(topic)}
+                  title="Edit topic"
+                >
+                  ✏️
+                </button>
+                <button 
+                  className="delete-button" 
+                  onClick={() => handleDeleteTopic(topic)}
+                  title="Delete topic"
+                >
+                  🗑️
+                </button>
               </div>
             </div>
-            <div className="topic-box-content">
+            
+            <div className="card-content">
               <h3 className="topic-title">{topic.title}</h3>
               <p className="topic-description">{topic.description}</p>
-              <div className="topic-category">
-                <span className="category-icon">{EMOJI_ICONS[topic.category] || '💬'}</span>
-                <span className="category-name">{topic.category}</span>
-              </div>
-              {topic.isUrgent && (
-                <span className="urgent-badge">Urgent</span>
-              )}
+              
               <div className="topic-meta">
-                <div className="meta-item">
-                  <span className="meta-label">Steps</span>
-                  <span className="meta-value">{topic.steps?.length || 0}</span>
+                <span className="category-badge">
+                  <span className="category-icon">{EMOJI_ICONS[topic.category] || '💬'}</span>
+                  {topic.category}
+                </span>
+                {topic.isUrgent && (
+                  <span className="urgent-badge">Urgent</span>
+                )}
+              </div>
+
+              <div className="topic-stats">
+                <div className="stat-item">
+                  <span className="stat-label">Steps</span>
+                  <span className="stat-value">{topic.steps?.length || 0}</span>
                 </div>
-                <div className="meta-item">
-                  <span className="meta-label">Tips</span>
-                  <span className="meta-value">{topic.tips?.length || 0}</span>
+                <div className="stat-item">
+                  <span className="stat-label">Tips</span>
+                  <span className="stat-value">{topic.tips?.length || 0}</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">Keywords</span>
+                  <span className="stat-value">{topic.keywords?.length || 0}</span>
                 </div>
               </div>
             </div>
@@ -282,109 +387,132 @@ const CustomerServiceManagement = () => {
         ))}
       </div>
 
+      {filteredAndSortedTopics.length === 0 && (
+        <div className="empty-state">
+          <div className="empty-icon">📋</div>
+          <h3>No topics found</h3>
+          <p>Create your first customer service topic to get started!</p>
+          <button className="add-button" onClick={handleAddTopic}>
+            <span className="button-icon">➕</span>
+            Add New Topic
+          </button>
+        </div>
+      )}
+
       {/* Add/Edit Modal */}
       {(showAddModal || showEditModal) && (
-        <div className="modal-overlay">
-          <div className="topic-modal">
-            <div className="topic-modal-header">
+        <div className="modal-overlay" onClick={() => {
+          setShowAddModal(false);
+          setShowEditModal(false);
+        }}>
+          <div className="topic-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
               <h2>{showAddModal ? 'Add New Topic' : 'Edit Topic'}</h2>
-              <button className="close-modal" onClick={() => {
-                setShowAddModal(false);
-                setShowEditModal(false);
-              }}>×</button>
+              <button 
+                className="close-modal" 
+                onClick={() => {
+                  setShowAddModal(false);
+                  setShowEditModal(false);
+                }}
+              >
+                ×
+              </button>
             </div>
-            <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label htmlFor="title">Title</label>
-                <input
-                  type="text"
-                  id="title"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleInputChange}
-                  required
-                />
+            
+            <form onSubmit={handleSubmit} className="topic-form">
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Title *</label>
+                  <input
+                    type="text"
+                    name="title"
+                    value={formData.title}
+                    onChange={handleInputChange}
+                    required
+                    placeholder="Enter topic title"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Category *</label>
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleInputChange}
+                    required
+                  >
+                    <option value="">Select category</option>
+                    {CATEGORIES.map(category => (
+                      <option key={category} value={category}>
+                        {category.charAt(0).toUpperCase() + category.slice(1)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div className="form-group">
-                <label htmlFor="description">Description</label>
+                <label>Description *</label>
                 <textarea
-                  id="description"
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
                   required
+                  rows={3}
+                  placeholder="Describe the topic..."
                 />
               </div>
 
-              <div className="form-group">
-                <label htmlFor="topic">Topic</label>
-                <input
-                  type="text"
-                  id="topic"
-                  name="topic"
-                  value={formData.topic}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="category">Category</label>
-                <select
-                  id="category"
-                  name="category"
-                  value={formData.category}
-                  onChange={handleInputChange}
-                  required
-                >
-                  <option value="">Select a category</option>
-                  {CATEGORIES.map(category => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label>Icon</label>
-                <div className="icon-input-container">
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Topic</label>
                   <input
                     type="text"
-                    className="icon-input"
-                    value={formData.icon}
+                    name="topic"
+                    value={formData.topic}
                     onChange={handleInputChange}
-                    name="icon"
-                    onClick={() => setShowIconPicker(true)}
-                    placeholder="Click to select an icon"
-                    readOnly
+                    placeholder="Enter topic keyword"
                   />
-                  <div className="icon-preview">
-                    {formData.icon || EMOJI_ICONS[formData.category] || '💬'}
-                  </div>
                 </div>
-                {showIconPicker && (
-                  <div className="icon-picker">
-                    <div className="icon-picker-grid">
-                      {Object.values(EMOJI_ICONS).map((icon, index) => (
-                        <button
-                          key={index}
-                          className="icon-picker-item"
-                          onClick={() => handleIconSelect(icon)}
-                        >
-                          {icon}
-                        </button>
-                      ))}
+                <div className="form-group">
+                  <label>Icon</label>
+                  <div className="icon-input-container">
+                    <input
+                      type="text"
+                      className="icon-input"
+                      value={formData.icon}
+                      onChange={handleInputChange}
+                      name="icon"
+                      onClick={() => setShowIconPicker(true)}
+                      placeholder="Click to select icon"
+                      readOnly
+                    />
+                    <div className="icon-preview">
+                      {formData.icon || EMOJI_ICONS[formData.category] || '💬'}
                     </div>
                   </div>
-                )}
+                  {showIconPicker && (
+                    <div className="icon-picker">
+                      <div className="icon-picker-grid">
+                        {Object.values(EMOJI_ICONS).map((icon, index) => (
+                          <button
+                            key={index}
+                            className="icon-picker-item"
+                            onClick={() => handleIconSelect(icon)}
+                          >
+                            {icon}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
+              {/* Steps */}
               <div className="form-group">
                 <label>Steps</label>
                 {formData.steps.map((step, index) => (
-                  <div key={index} className="array-item">
+                  <div key={index} className="array-input">
                     <input
                       type="text"
                       value={step}
@@ -393,7 +521,7 @@ const CustomerServiceManagement = () => {
                     />
                     <button
                       type="button"
-                      className="remove-item-button"
+                      className="remove-button"
                       onClick={() => removeArrayItem(index, 'steps')}
                     >
                       ×
@@ -402,17 +530,18 @@ const CustomerServiceManagement = () => {
                 ))}
                 <button
                   type="button"
-                  className="add-item-button"
+                  className="add-array-button"
                   onClick={() => addArrayItem('steps')}
                 >
-                  Add Step
+                  + Add Step
                 </button>
               </div>
 
+              {/* Tips */}
               <div className="form-group">
-                <label>Tips</label>
+                <label>Tips & Best Practices</label>
                 {formData.tips.map((tip, index) => (
-                  <div key={index} className="array-item">
+                  <div key={index} className="array-input">
                     <input
                       type="text"
                       value={tip}
@@ -421,7 +550,7 @@ const CustomerServiceManagement = () => {
                     />
                     <button
                       type="button"
-                      className="remove-item-button"
+                      className="remove-button"
                       onClick={() => removeArrayItem(index, 'tips')}
                     >
                       ×
@@ -430,17 +559,18 @@ const CustomerServiceManagement = () => {
                 ))}
                 <button
                   type="button"
-                  className="add-item-button"
+                  className="add-array-button"
                   onClick={() => addArrayItem('tips')}
                 >
-                  Add Tip
+                  + Add Tip
                 </button>
               </div>
 
+              {/* Keywords */}
               <div className="form-group">
                 <label>Keywords</label>
                 {formData.keywords.map((keyword, index) => (
-                  <div key={index} className="array-item">
+                  <div key={index} className="array-input">
                     <input
                       type="text"
                       value={keyword}
@@ -449,7 +579,7 @@ const CustomerServiceManagement = () => {
                     />
                     <button
                       type="button"
-                      className="remove-item-button"
+                      className="remove-button"
                       onClick={() => removeArrayItem(index, 'keywords')}
                     >
                       ×
@@ -458,27 +588,27 @@ const CustomerServiceManagement = () => {
                 ))}
                 <button
                   type="button"
-                  className="add-item-button"
+                  className="add-array-button"
                   onClick={() => addArrayItem('keywords')}
                 >
-                  Add Keyword
+                  + Add Keyword
                 </button>
               </div>
 
               <div className="form-group">
-                <div className="checkbox-group">
+                <label className="checkbox-label">
                   <input
                     type="checkbox"
-                    id="isUrgent"
                     name="isUrgent"
                     checked={formData.isUrgent}
                     onChange={handleInputChange}
                   />
-                  <label htmlFor="isUrgent">Mark as Urgent</label>
-                </div>
+                  <span className="checkmark"></span>
+                  Mark as Urgent
+                </label>
               </div>
 
-              <div className="modal-actions">
+              <div className="form-actions">
                 <button
                   type="button"
                   className="cancel-button"
@@ -489,8 +619,8 @@ const CustomerServiceManagement = () => {
                 >
                   Cancel
                 </button>
-                <button type="submit" className="submit-button">
-                  {showAddModal ? 'Add Topic' : 'Save Changes'}
+                <button type="submit" className="save-button">
+                  {showAddModal ? 'Create Topic' : 'Save Changes'}
                 </button>
               </div>
             </form>
@@ -500,35 +630,29 @@ const CustomerServiceManagement = () => {
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="modal-overlay">
-          <div className="warning-modal">
-            <div className="modal-content">
-              <div className="warning-header">
-                <div className="warning-icon">⚠️</div>
-                <h2 className="warning-title">Delete Topic</h2>
-              </div>
-              <div className="warning-body">
-                <p className="warning-message">
-                  Are you sure you want to delete "{selectedTopic.title}"?
-                </p>
-                <p className="warning-submessage">
-                  This action cannot be undone.
-                </p>
-              </div>
-              <div className="warning-actions">
-                <button
-                  className="cancel-delete"
-                  onClick={() => setShowDeleteModal(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="confirm-delete"
-                  onClick={handleDelete}
-                >
-                  Delete
-                </button>
-              </div>
+        <div className="modal-overlay" onClick={() => setShowDeleteModal(false)}>
+          <div className="delete-modal" onClick={e => e.stopPropagation()}>
+            <div className="delete-header">
+              <div className="warning-icon">⚠️</div>
+              <h2>Delete Topic</h2>
+            </div>
+            <div className="delete-content">
+              <p>Are you sure you want to delete <strong>"{selectedTopic?.title}"</strong>?</p>
+              <p className="delete-warning">This action cannot be undone.</p>
+            </div>
+            <div className="delete-actions">
+              <button
+                className="cancel-button"
+                onClick={() => setShowDeleteModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="delete-button"
+                onClick={handleDelete}
+              >
+                Delete Topic
+              </button>
             </div>
           </div>
         </div>

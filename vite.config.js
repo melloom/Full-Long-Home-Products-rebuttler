@@ -40,6 +40,7 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     cssCodeSplit: false, // Prevent CSS splitting issues
+    target: 'esnext', // Target modern browsers that support top-level await
     rollupOptions: {
       output: {
         assetFileNames: 'assets/[name]-[hash][extname]',
