@@ -608,88 +608,51 @@
   .bulk-controls {
     justify-content: space-between;
   }
-}
-
-@media (max-width: 768px) {
-  .rebuttals-table {
-    font-size: 0.85rem;
-  }
-  
   .rebuttals-table th,
   .rebuttals-table td {
-    padding: 0.75rem 0.5rem;
+    padding: 0.5rem 0.5rem;
+    font-size: 0.98rem;
   }
-  
+  .action-buttons {
+    gap: 0.5rem;
+  }
+}
+@media (max-width: 768px) {
+  .rebuttals-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .rebuttals-table {
+    min-width: 700px;
+    font-size: 0.95rem;
+  }
+  .action-buttons {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    justify-content: flex-start;
+  }
+  .action-btn {
+    min-width: 36px;
+    font-size: 1rem;
+    padding: 6px 8px;
+    margin-bottom: 2px;
+  }
+}
+@media (max-width: 480px) {
+  .rebuttals-table {
+    min-width: 600px;
+    font-size: 0.92rem;
+  }
+  .action-btn {
+    font-size: 0.98rem;
+    padding: 5px 6px;
+  }
   .action-buttons {
     flex-direction: column;
-    gap: 0.25rem;
-  }
-  
-  .action-btn {
-    min-width: 32px;
-    height: 32px;
-    font-size: 0.9rem;
-  }
-  
-  .stats-footer {
-    flex-wrap: wrap;
-    gap: 1rem;
-  }
-  
-  .stat-item {
-    flex: 1;
-    min-width: 120px;
+    align-items: flex-start;
+    gap: 2px;
   }
 }
-
-@media (max-width: 480px) {
-  .rebuttal-management {
-    padding: 0.5rem;
-  }
-  
-  .header-content h1 {
-    font-size: 1.5rem;
-  }
-  
-  .add-rebuttal-btn {
-    padding: 0.75rem 1.5rem;
-    font-size: 1rem;
-  }
-  
-  .rebuttals-table {
-    font-size: 0.8rem;
-  }
-  
-  .rebuttals-table th,
-  .rebuttals-table td {
-    padding: 0.5rem 0.25rem;
-  }
-  
-  /* Modal responsive styles */
-  .modal-content {
-    width: 95vw;
-    max-height: 95vh;
-    margin: 0.5rem;
-  }
-  
-  .modal-header {
-    padding: 1rem 1.5rem;
-  }
-  
-  .modal-header h2 {
-    font-size: 1.2rem;
-  }
-  
-  .modal-close-btn {
-    width: 32px;
-    height: 32px;
-    font-size: 1.5rem;
-  }
-  
-  .rebuttal-form-modal {
-    padding: 1rem;
-  }
-} 
 
 .fix-categories-btn {
   margin-left: 1rem;
@@ -792,11 +755,83 @@
 }
 
 @media (max-width: 700px) {
-  .modern-modal {
-    max-width: 98vw;
-    padding: 0;
+  .rebuttals-table {
+    display: none !important;
   }
-  .modern-modal-header, .modern-modal-body {
-    padding: 1rem;
+  .mobile-rebuttal-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  .rebuttal-card {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(44, 62, 80, 0.08);
+    padding: 1rem 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    border: 1px solid #f0f0f0;
+  }
+  .rebuttal-card.archived {
+    opacity: 0.7;
+  }
+  .rebuttal-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .rebuttal-card-title {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #2c3e50;
+    flex: 1;
+    margin-bottom: 2px;
+  }
+  .rebuttal-card-summary {
+    color: #7f8c8d;
+    font-size: 0.98rem;
+    margin-bottom: 2px;
+  }
+  .rebuttal-card-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 2px;
+  }
+  .rebuttal-card-status {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    font-size: 0.95rem;
+    margin-bottom: 2px;
+  }
+  .rebuttal-card-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+  }
+  .rebuttal-card .action-btn {
+    min-width: 36px;
+    font-size: 1.1rem;
+    padding: 7px 10px;
+    border-radius: 8px;
+    border: none;
+    background: #f4f6fa;
+    color: #2c3e50;
+    box-shadow: 0 1px 3px rgba(44,62,80,0.04);
+    transition: background 0.2s;
+  }
+  .rebuttal-card .action-btn.edit { background: #e3eafe; color: #2c3e50; }
+  .rebuttal-card .action-btn.archive, .rebuttal-card .action-btn.unarchive { background: #fef9c3; color: #b59f00; }
+  .rebuttal-card .action-btn.delete { background: #fee2e2; color: #b91c1c; }
+  .rebuttal-card .action-btn:hover { filter: brightness(0.95); }
+}
+
+@media (min-width: 701px) {
+  .mobile-rebuttal-cards {
+    display: none !important;
   }
 } 

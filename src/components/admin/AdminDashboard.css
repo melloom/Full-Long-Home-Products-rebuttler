@@ -3179,3 +3179,37 @@
   align-items: center;
   gap: 0.5rem;
 }
+
+@media (max-width: 1024px) {
+  .dashboard-header, .dashboard-grid, .enhanced-stats-grid {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+  }
+}
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0.5rem;
+    text-align: center;
+  }
+  .dashboard-grid, .enhanced-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .dashboard-card, .stat-card {
+    width: 100%;
+    min-width: 0;
+    padding: 1rem;
+  }
+}
+@media (max-width: 480px) {
+  .dashboard-header h2 {
+    font-size: 1.2rem;
+  }
+  .dashboard-card, .stat-card {
+    padding: 0.5rem;
+    font-size: 0.95rem;
+  }
+}

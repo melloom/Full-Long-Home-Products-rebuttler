@@ -380,133 +380,138 @@ const RebuttalManagement = () => {
           </div>
         )}
 
-        {/* Rebuttals Table */}
+        {/* Rebuttals Table & Mobile Cards */}
         <div className="rebuttals-table-container">
-          {loading ? (
-            <div className="loading-state">
-              <div className="spinner"></div>
-              <p>Loading rebuttals...</p>
-            </div>
-          ) : filteredRebuttals.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-icon">📝</div>
-              <h3>No rebuttals found</h3>
-              <p>{searchTerm || categoryFilter || statusFilter !== 'all' 
-                ? 'Try adjusting your search or filters' 
-                : 'Get started by creating your first rebuttal'}
-              </p>
-              {!searchTerm && !categoryFilter && statusFilter === 'all' && (
-                <button 
-                  onClick={() => {
-                    setEditingRebuttal(null);
-                    setShowForm(true);
-                  }}
-                  className="add-first-btn"
-                >
-                  Create First Rebuttal
-                </button>
-              )}
-            </div>
-          ) : (
-            <table className="rebuttals-table">
-              <thead>
-                <tr>
-                  <th>
+          {/* Mobile Card Layout */}
+          <div className="mobile-rebuttal-cards">
+            {filteredRebuttals.map(rebuttal => (
+              <div key={rebuttal.id} className={`rebuttal-card${rebuttal.archived ? ' archived' : ''}`}>
+                <div className="rebuttal-card-header">
+                  <div className="rebuttal-card-title">{rebuttal.title}</div>
+                  <span className="category-badge">{rebuttal.category}</span>
+                </div>
+                <div className="rebuttal-card-summary">{rebuttal.summary}</div>
+                <div className="rebuttal-card-tags">
+                  {rebuttal.tags?.slice(0, 3).map((tag, idx) => (
+                    <span key={idx} className="tag-badge">#{tag}</span>
+                  ))}
+                  {rebuttal.tags?.length > 3 && (
+                    <span className="more-tags">+{rebuttal.tags.length - 3}</span>
+                  )}
+                </div>
+                <div className="rebuttal-card-status">
+                  <span className={`status-badge ${rebuttal.archived ? 'archived' : 'active'}`}>{rebuttal.archived ? 'Archived' : 'Active'}</span>
+                  <span className="date-info">{new Date(rebuttal.createdAt?.toDate?.() || rebuttal.createdAt).toLocaleDateString()}</span>
+                </div>
+                <div className="rebuttal-card-actions">
+                  <button onClick={() => handleEdit(rebuttal)} className="action-btn edit" title="Edit">✏️</button>
+                  {rebuttal.archived ? (
+                    <button onClick={() => handleUnarchive(rebuttal.id)} className="action-btn unarchive" title="Unarchive">📦</button>
+                  ) : (
+                    <button onClick={() => handleArchive(rebuttal.id)} className="action-btn archive" title="Archive">📦</button>
+                  )}
+                  <button onClick={() => handleDelete(rebuttal.id)} className="action-btn delete" title="Delete">🗑️</button>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* Desktop Table Layout */}
+          <table className="rebuttals-table">
+            <thead>
+              <tr>
+                <th>
+                  <input
+                    type="checkbox"
+                    checked={selectedRebuttals.length === filteredRebuttals.length}
+                    onChange={handleSelectAll}
+                    className="select-all-checkbox"
+                  />
+                </th>
+                <th>Title</th>
+                <th>Category</th>
+                <th>Tags</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredRebuttals.map(rebuttal => (
+                <tr key={rebuttal.id} className={rebuttal.archived ? 'archived' : ''}>
+                  <td>
                     <input
                       type="checkbox"
-                      checked={selectedRebuttals.length === filteredRebuttals.length}
-                      onChange={handleSelectAll}
-                      className="select-all-checkbox"
+                      checked={selectedRebuttals.includes(rebuttal.id)}
+                      onChange={() => handleSelectRebuttal(rebuttal.id)}
+                      className="rebuttal-checkbox"
                     />
-                  </th>
-                  <th>Title</th>
-                  <th>Category</th>
-                  <th>Tags</th>
-                  <th>Status</th>
-                  <th>Created</th>
-                  <th>Actions</th>
+                  </td>
+                  <td>
+                    <div className="rebuttal-title">
+                      <strong>{rebuttal.title}</strong>
+                      <p className="rebuttal-summary">{rebuttal.summary}</p>
+                    </div>
+                  </td>
+                  <td>
+                    <span className="category-badge">{rebuttal.category}</span>
+                  </td>
+                  <td>
+                    <div className="tags-container">
+                      {rebuttal.tags?.slice(0, 3).map((tag, index) => (
+                        <span key={index} className="tag-badge">#{tag}</span>
+                      ))}
+                      {rebuttal.tags?.length > 3 && (
+                        <span className="more-tags">+{rebuttal.tags.length - 3}</span>
+                      )}
+                    </div>
+                  </td>
+                  <td>
+                    <span className={`status-badge ${rebuttal.archived ? 'archived' : 'active'}`}>{rebuttal.archived ? 'Archived' : 'Active'}</span>
+                  </td>
+                  <td>
+                    <div className="date-info">
+                      {new Date(rebuttal.createdAt?.toDate?.() || rebuttal.createdAt).toLocaleDateString()}
+                    </div>
+                  </td>
+                  <td>
+                    <div className="action-buttons">
+                      <button
+                        onClick={() => handleEdit(rebuttal)}
+                        className="action-btn edit"
+                        title="Edit"
+                      >
+                        ✏️
+                      </button>
+                      {rebuttal.archived ? (
+                        <button
+                          onClick={() => handleUnarchive(rebuttal.id)}
+                          className="action-btn unarchive"
+                          title="Unarchive"
+                        >
+                          📦
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleArchive(rebuttal.id)}
+                          className="action-btn archive"
+                          title="Archive"
+                        >
+                          📦
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleDelete(rebuttal.id)}
+                        className="action-btn delete"
+                        title="Delete"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {filteredRebuttals.map(rebuttal => (
-                  <tr key={rebuttal.id} className={rebuttal.archived ? 'archived' : ''}>
-                    <td>
-                      <input
-                        type="checkbox"
-                        checked={selectedRebuttals.includes(rebuttal.id)}
-                        onChange={() => handleSelectRebuttal(rebuttal.id)}
-                        className="rebuttal-checkbox"
-                      />
-                    </td>
-                    <td>
-                      <div className="rebuttal-title">
-                        <strong>{rebuttal.title}</strong>
-                        <p className="rebuttal-summary">{rebuttal.summary}</p>
-                      </div>
-                    </td>
-                    <td>
-                      <span className="category-badge">{rebuttal.category}</span>
-                    </td>
-                    <td>
-                      <div className="tags-container">
-                        {rebuttal.tags?.slice(0, 3).map((tag, index) => (
-                          <span key={index} className="tag-badge">#{tag}</span>
-                        ))}
-                        {rebuttal.tags?.length > 3 && (
-                          <span className="more-tags">+{rebuttal.tags.length - 3}</span>
-                        )}
-                      </div>
-                    </td>
-                    <td>
-                      <span className={`status-badge ${rebuttal.archived ? 'archived' : 'active'}`}>
-                        {rebuttal.archived ? 'Archived' : 'Active'}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="date-info">
-                        {new Date(rebuttal.createdAt?.toDate?.() || rebuttal.createdAt).toLocaleDateString()}
-                      </div>
-                    </td>
-                    <td>
-                      <div className="action-buttons">
-                        <button
-                          onClick={() => handleEdit(rebuttal)}
-                          className="action-btn edit"
-                          title="Edit"
-                        >
-                          ✏️
-                        </button>
-                        {rebuttal.archived ? (
-                          <button
-                            onClick={() => handleUnarchive(rebuttal.id)}
-                            className="action-btn unarchive"
-                            title="Unarchive"
-                          >
-                            📦
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleArchive(rebuttal.id)}
-                            className="action-btn archive"
-                            title="Archive"
-                          >
-                            📦
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handleDelete(rebuttal.id)}
-                          className="action-btn delete"
-                          title="Delete"
-                        >
-                          🗑️
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+              ))}
+            </tbody>
+          </table>
         </div>
 
         {/* Stats Footer */}

@@ -1,8 +1,14 @@
 /* Global CSS Reset and Base Styles */
-*, *::before, *::after {
+html, body {
   box-sizing: border-box;
+  width: 100%;
   margin: 0;
   padding: 0;
+  font-family: 'Inter', Arial, sans-serif;
+  background: #f8fafc;
+}
+*, *:before, *:after {
+  box-sizing: inherit;
 }
 
 html {
@@ -70,8 +76,10 @@ img {
 }
 
 /* Layout Classes */
-.container {
-  max-width: 1200px;
+.container, .admin-dashboard, .user-management, .category-management {
+  max-width: 100vw;
+  width: 100%;
+  padding: 0 8px;
 }
 
 .mx-auto {
@@ -223,4 +231,28 @@ button {
   .lg\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .lg\:col-span-1 { grid-column: span 1 / span 1; }
   .lg\:col-span-3 { grid-column: span 3 / span 3; }
+}
+
+@media (max-width: 1024px) {
+  .container, .admin-dashboard, .user-management, .category-management {
+    padding: 0 4px;
+  }
+}
+
+@media (max-width: 768px) {
+  html, body {
+    font-size: 15px;
+  }
+  .container, .admin-dashboard, .user-management, .category-management {
+    padding: 0 2px;
+  }
+}
+
+@media (max-width: 480px) {
+  html, body {
+    font-size: 14px;
+  }
+  .container, .admin-dashboard, .user-management, .category-management {
+    padding: 0;
+  }
 }

@@ -171,58 +171,36 @@ const CategoryManagement = () => {
         </button>
       </div>
 
-      <div className="categories-list">
+      <div className="categories-list redesigned">
         {categories.map(category => (
-          <div key={category.id} className="category-item">
-            <div className="category-main">
-              <div className="category-info">
-                <span className="category-icon" style={{ backgroundColor: category.color + '20' }}>{category.icon}</span>
-                <div className="category-details">
-                  <span className="category-name">{category.name}</span>
-                  {category.description && (
-                    <span className="category-description">{category.description}</span>
-                  )}
+          <div key={category.id} className="category-card redesigned">
+            <div className="category-card-main">
+              <div className="category-card-icon" style={{ background: category.color ? `linear-gradient(135deg, ${category.color}33 0%, #fff 100%)` : '#f3f4f6' }}>
+                <span className="icon-emoji">{category.icon}</span>
+              </div>
+              <div className="category-card-info">
+                <div className="category-card-title">{category.name}</div>
+                {category.description && (
+                  <div className="category-card-desc">{category.description}</div>
+                )}
+                <div className="category-card-badges">
+                  <span className={`status-badge ${category.isActive ? 'active' : 'inactive'}`}>{category.isActive ? 'Active' : 'Inactive'}</span>
                 </div>
               </div>
-              <div className="category-status">
-                <span className={`status-badge ${category.isActive ? 'active' : 'inactive'}`}>
-                  {category.isActive ? 'Active' : 'Inactive'}
-                </span>
-              </div>
             </div>
-            <div className="category-meta">
-              <div className="meta-info">
-                <span className="meta-item">
-                  <i className="fas fa-calendar"></i>
-                  Created: {formatDate(category.createdAt)}
-                </span>
-                {category.updatedAt && (
-                  <span className="meta-item">
-                    <i className="fas fa-clock"></i>
-                    Updated: {formatDate(category.updatedAt)}
-                  </span>
-                )}
-              </div>
-              <div className="category-actions">
-                <button 
-                  className="action-button edit-button"
-                  onClick={() => {
-                    setEditingCategory(category);
-                    setShowEditModal(true);
-                  }}
-                >
-                  <i className="fas fa-edit"></i> Edit
-                </button>
-                <button 
-                  className="action-button delete-button"
-                  onClick={() => {
-                    setCategoryToDelete(category);
-                    setShowDeleteModal(true);
-                  }}
-                >
-                  <i className="fas fa-trash"></i> Delete
-                </button>
-              </div>
+            <div className="category-card-meta">
+              <div className="meta-item"><span className="meta-icon" role="img" aria-label="Created">📅</span> <span className="meta-label">Created:</span> <span className="meta-value">{formatDate(category.createdAt)}</span></div>
+              {category.updatedAt && (
+                <div className="meta-item"><span className="meta-icon" role="img" aria-label="Updated">🕒</span> <span className="meta-label">Updated:</span> <span className="meta-value">{formatDate(category.updatedAt)}</span></div>
+              )}
+            </div>
+            <div className="category-card-actions">
+              <button className="action-button edit-button" onClick={() => { setEditingCategory(category); setShowEditModal(true); }}>
+                <span role="img" aria-label="Edit">✏️</span> Edit
+              </button>
+              <button className="action-button delete-button" onClick={() => { setCategoryToDelete(category); setShowDeleteModal(true); }}>
+                <span role="img" aria-label="Delete">🗑️</span> Delete
+              </button>
             </div>
           </div>
         ))}

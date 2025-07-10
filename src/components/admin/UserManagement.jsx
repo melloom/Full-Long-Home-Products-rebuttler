@@ -402,44 +402,47 @@ const UserManagement = () => {
         ) : (
           <div className="users-grid">
             {filteredUsers.map(user => (
-              <div key={user.id || user.uid} className="user-card">
-                <div className="user-card-header">
-                  <div className="user-avatar">
+              <div key={user.id || user.uid} className="user-card redesigned">
+                <div className="user-card-main">
+                  <div className="user-avatar big">
                     {user.email.charAt(0).toUpperCase()}
                   </div>
-                  <div className="user-info">
-                    <div className="user-email">{user.email}</div>
-                    <div className="user-badges">
+                  <div className="user-main-info">
+                    <div className="user-email redesigned">{user.email}</div>
+                    <div className="user-badges redesigned">
                       {getStatusBadge(user)}
                       {getRoleBadge(user.role || 'user')}
                     </div>
                   </div>
-                  <div className="user-actions">
+                  <div className="user-actions redesigned">
                     <button 
                       className="action-button edit"
                       onClick={() => handleRoleChange(user.id || user.uid, user.role === 'admin' ? 'user' : 'admin')}
                       title={user.role === 'admin' ? 'Remove Admin' : 'Make Admin'}
                     >
-                      {user.role === 'admin' ? '👑' : '👤'} {user.role === 'admin' ? 'Remove Admin' : 'Make Admin'}
+                      {user.role === 'admin' ? <span role="img" aria-label="Remove Admin">👑</span> : <span role="img" aria-label="Make Admin">👤</span>}
+                      {user.role === 'admin' ? 'Remove Admin' : 'Make Admin'}
                     </button>
                     <button 
                       className="action-button delete"
                       onClick={() => handleDeleteUser(user.id || user.uid)}
                       title="Delete User"
                     >
-                      🗑️ Delete
+                      <span role="img" aria-label="Delete">🗑️</span> Delete
                     </button>
                   </div>
                 </div>
-                
-                <div className="user-card-details">
-                  <div className="detail-item">
-                    <span className="detail-label">📅 Created:</span>
-                    <span className="detail-value">{formatDate(user.createdAt)}</span>
+                <div className="user-card-divider"></div>
+                <div className="user-card-meta">
+                  <div className="meta-item">
+                    <span className="meta-icon" role="img" aria-label="Created">📅</span>
+                    <span className="meta-label">Created:</span>
+                    <span className="meta-value">{formatDate(user.createdAt)}</span>
                   </div>
-                  <div className="detail-item">
-                    <span className="detail-label">🕒 Last Sign In:</span>
-                    <span className="detail-value">{formatDate(user.lastSignIn)}</span>
+                  <div className="meta-item">
+                    <span className="meta-icon" role="img" aria-label="Last Sign In">🕒</span>
+                    <span className="meta-label">Last Sign In:</span>
+                    <span className="meta-value">{formatDate(user.lastSignIn)}</span>
                   </div>
                 </div>
               </div>
