@@ -1,23 +1,13 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, Clock, FileText, CheckCircle, ChevronRight, Phone, User, Home, Mail, Users, CheckSquare, Square } from 'lucide-react';
+import { Calendar, Clock, FileText, CheckCircle, ChevronRight, Phone, User, Home, Mail, Users, CheckSquare, Square, Check } from 'lucide-react';
 import '../styles/ScheduleScript.css';
 
 const ScheduleScript = ({ onNavigate }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [callType, setCallType] = useState('');
   const [projectType, setProjectType] = useState('');
-  const [customerInfo, setCustomerInfo] = useState({
-    name: '',
-    address: '',
-    email: '',
-    phone: '',
-    propertyType: '',
-    ownership: '',
-    livesInHouse: '',
-    spouseName: '',
-    otherDecisionMakers: ''
-  });
+
   const [projectDetails, setProjectDetails] = useState({
     age: '',
     issues: '',
@@ -62,11 +52,7 @@ const ScheduleScript = ({ onNavigate }) => {
       title: 'Project-Specific Questions',
       type: 'questions'
     },
-    {
-      id: 'customerInfo',
-      title: 'Customer Information',
-      type: 'form'
-    },
+
     {
       id: 'valueProposition',
       title: 'Value of the Visit',
@@ -128,12 +114,7 @@ const ScheduleScript = ({ onNavigate }) => {
     '6:00 PM'
   ];
 
-  const handleStepComplete = (stepId) => {
-    const currentIndex = scriptSteps.findIndex(step => step.id === stepId);
-    if (currentIndex < scriptSteps.length - 1) {
-      setCurrentStep(currentIndex + 1);
-    }
-  };
+
 
   const handleChecklistToggle = (checklistType, itemIndex) => {
     setChecklistItems(prev => ({
@@ -144,12 +125,7 @@ const ScheduleScript = ({ onNavigate }) => {
     }));
   };
 
-  const handleCustomerInfoChange = (field, value) => {
-    setCustomerInfo(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
+
 
   const handleProjectDetailsChange = (field, value) => {
     setProjectDetails(prev => ({
@@ -165,6 +141,18 @@ const ScheduleScript = ({ onNavigate }) => {
     }));
   };
 
+  const handleBack = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleNext = () => {
+    if (currentStep < scriptSteps.length - 1) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
   const renderGreetingStep = () => (
     <motion.div 
       className="script-step-dark"
@@ -173,10 +161,23 @@ const ScheduleScript = ({ onNavigate }) => {
       transition={{ duration: 0.5 }}
     >
       <h3 className="step-title-dark">Select Call Type</h3>
+      <div style={{ 
+        background: 'rgba(59, 130, 246, 0.1)', 
+        padding: '0.5rem 1rem', 
+        borderRadius: '8px', 
+        marginBottom: '1rem',
+        fontSize: '0.9rem',
+        color: '#f8fafc'
+      }}>
+        Current selection: {callType || 'None'}
+      </div>
       <div className="greeting-options-dark">
         <motion.div 
           className={`greeting-option-dark ${callType === 'incoming' ? 'selected-dark' : ''}`}
-          onClick={() => setCallType('incoming')}
+          onClick={() => {
+            console.log('Setting call type to incoming');
+            setCallType('incoming');
+          }}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
@@ -186,11 +187,31 @@ const ScheduleScript = ({ onNavigate }) => {
             <p className="greeting-script-dark">"{greetingScripts.incoming.script}"</p>
             <p className="greeting-tone-dark">{greetingScripts.incoming.tone}</p>
           </div>
+          {callType === 'incoming' && (
+            <div style={{
+              position: 'absolute',
+              top: '1rem',
+              right: '1rem',
+              background: '#10b981',
+              borderRadius: '50%',
+              width: '2rem',
+              height: '2rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white'
+            }}>
+              <Check size={16} />
+            </div>
+          )}
         </motion.div>
         
         <motion.div 
           className={`greeting-option-dark ${callType === 'outgoing' ? 'selected-dark' : ''}`}
-          onClick={() => setCallType('outgoing')}
+          onClick={() => {
+            console.log('Setting call type to outgoing');
+            setCallType('outgoing');
+          }}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
@@ -200,20 +221,55 @@ const ScheduleScript = ({ onNavigate }) => {
             <p className="greeting-script-dark">"{greetingScripts.outgoing.script}"</p>
             <p className="greeting-tone-dark">{greetingScripts.outgoing.tone}</p>
           </div>
+          {callType === 'outgoing' && (
+            <div style={{
+              position: 'absolute',
+              top: '1rem',
+              right: '1rem',
+              background: '#10b981',
+              borderRadius: '50%',
+              width: '2rem',
+              height: '2rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white'
+            }}>
+              <Check size={16} />
+            </div>
+          )}
         </motion.div>
       </div>
       
-      {callType && (
-        <motion.button 
-          className="next-button-dark"
-          onClick={() => handleStepComplete('greeting')}
+      <div className="step-navigation-dark">
+        <motion.button
+          className="nav-button-dark back-button-dark"
+          onClick={handleBack}
+          disabled={currentStep === 0}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
+          style={{ opacity: currentStep === 0 ? 0.5 : 1 }}
         >
-          Continue to Project Type
-          <ChevronRight className="button-icon" />
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Back
         </motion.button>
-      )}
+        
+        <motion.button
+          className="nav-button-dark next-button-dark"
+          onClick={handleNext}
+          disabled={!callType}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          style={{ opacity: !callType ? 0.5 : 1 }}
+        >
+          Next
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 12H19M12 5L19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </motion.button>
+      </div>
     </motion.div>
   );
 
@@ -225,10 +281,23 @@ const ScheduleScript = ({ onNavigate }) => {
       transition={{ duration: 0.5 }}
     >
       <h3 className="step-title-dark">Select Project Type</h3>
+      <div style={{ 
+        background: 'rgba(59, 130, 246, 0.1)', 
+        padding: '0.5rem 1rem', 
+        borderRadius: '8px', 
+        marginBottom: '1rem',
+        fontSize: '0.9rem',
+        color: '#f8fafc'
+      }}>
+        Current selection: {projectType || 'None'}
+      </div>
       <div className="project-options-dark">
         <motion.div 
           className={`project-option-dark ${projectType === 'bath' ? 'selected-dark' : ''}`}
-          onClick={() => setProjectType('bath')}
+          onClick={() => {
+            console.log('Setting project type to bath');
+            setProjectType('bath');
+          }}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
@@ -237,11 +306,31 @@ const ScheduleScript = ({ onNavigate }) => {
             <h4>Bath/Shower Replacement</h4>
             <p>Schedule bath check and consultation</p>
           </div>
+          {projectType === 'bath' && (
+            <div style={{
+              position: 'absolute',
+              top: '1rem',
+              right: '1rem',
+              background: '#10b981',
+              borderRadius: '50%',
+              width: '2rem',
+              height: '2rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white'
+            }}>
+              <Check size={16} />
+            </div>
+          )}
         </motion.div>
         
         <motion.div 
           className={`project-option-dark ${projectType === 'roof' ? 'selected-dark' : ''}`}
-          onClick={() => setProjectType('roof')}
+          onClick={() => {
+            console.log('Setting project type to roof');
+            setProjectType('roof');
+          }}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
@@ -250,20 +339,53 @@ const ScheduleScript = ({ onNavigate }) => {
             <h4>Roof Replacement</h4>
             <p>Schedule roof inspection and estimate</p>
           </div>
+          {projectType === 'roof' && (
+            <div style={{
+              position: 'absolute',
+              top: '1rem',
+              right: '1rem',
+              background: '#10b981',
+              borderRadius: '50%',
+              width: '2rem',
+              height: '2rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white'
+            }}>
+              <Check size={16} />
+            </div>
+          )}
         </motion.div>
       </div>
       
-      {projectType && (
-        <motion.button 
-          className="next-button-dark"
-          onClick={() => handleStepComplete('projectType')}
+      <div className="step-navigation-dark">
+        <motion.button
+          className="nav-button-dark back-button-dark"
+          onClick={handleBack}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          Continue to Project Checklist
-          <ChevronRight className="button-icon" />
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Back
         </motion.button>
-      )}
+        
+        <motion.button
+          className="nav-button-dark next-button-dark"
+          onClick={handleNext}
+          disabled={!projectType}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          style={{ opacity: !projectType ? 0.5 : 1 }}
+        >
+          Next
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 12H19M12 5L19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </motion.button>
+      </div>
     </motion.div>
   );
 
@@ -297,15 +419,31 @@ const ScheduleScript = ({ onNavigate }) => {
         </div>
       </div>
       
-      <motion.button 
-        className="next-button-dark"
-        onClick={() => handleStepComplete('projectChecklist')}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        Continue to Project-Specific Questions
-        <ChevronRight className="button-icon" />
-      </motion.button>
+      <div className="step-navigation-dark">
+        <motion.button
+          className="nav-button-dark back-button-dark"
+          onClick={handleBack}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Back
+        </motion.button>
+        
+        <motion.button
+          className="nav-button-dark next-button-dark"
+          onClick={handleNext}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          Next
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 12H19M12 5L19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </motion.button>
+      </div>
     </motion.div>
   );
 
@@ -362,110 +500,31 @@ const ScheduleScript = ({ onNavigate }) => {
         )}
       </div>
       
-      <motion.button 
-        className="next-button-dark"
-        onClick={() => handleStepComplete('projectQuestions')}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        Continue to Customer Information
-        <ChevronRight className="button-icon" />
-      </motion.button>
-    </motion.div>
-  );
-
-  const renderCustomerInfoStep = () => (
-    <motion.div 
-      className="script-step-dark"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      <h3 className="step-title-dark">Customer Information Collection</h3>
-      
-      <div className="form-grid-dark">
-        <div className="form-group-dark">
-          <label className="form-label-dark">Customer Name</label>
-          <input
-            type="text"
-            value={customerInfo.name}
-            onChange={(e) => handleCustomerInfoChange('name', e.target.value)}
-            className="form-input-dark"
-            placeholder="Enter customer name"
-          />
-        </div>
+      <div className="step-navigation-dark">
+        <motion.button
+          className="nav-button-dark back-button-dark"
+          onClick={handleBack}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Back
+        </motion.button>
         
-        <div className="form-group-dark">
-          <label className="form-label-dark">Address</label>
-          <input
-            type="text"
-            value={customerInfo.address}
-            onChange={(e) => handleCustomerInfoChange('address', e.target.value)}
-            className="form-input-dark"
-            placeholder="Enter property address"
-          />
-        </div>
-        
-        <div className="form-group-dark">
-          <label className="form-label-dark">Email Address</label>
-          <input
-            type="email"
-            value={customerInfo.email}
-            onChange={(e) => handleCustomerInfoChange('email', e.target.value)}
-            className="form-input-dark"
-            placeholder="Enter email address"
-          />
-        </div>
-        
-        <div className="form-group-dark">
-          <label className="form-label-dark">Phone Number</label>
-          <input
-            type="tel"
-            value={customerInfo.phone}
-            onChange={(e) => handleCustomerInfoChange('phone', e.target.value)}
-            className="form-input-dark"
-            placeholder="Enter phone number"
-          />
-        </div>
-        
-        <div className="form-group-dark">
-          <label className="form-label-dark">Property Type</label>
-          <select
-            value={customerInfo.propertyType}
-            onChange={(e) => handleCustomerInfoChange('propertyType', e.target.value)}
-            className="form-input-dark"
-          >
-            <option value="">Select property type</option>
-            <option value="single-family">Single Family</option>
-            <option value="townhome">Town Home</option>
-            <option value="condo">Condo</option>
-            <option value="mobile">Mobile Home</option>
-          </select>
-        </div>
-        
-        <div className="form-group-dark">
-          <label className="form-label-dark">Ownership</label>
-          <select
-            value={customerInfo.ownership}
-            onChange={(e) => handleCustomerInfoChange('ownership', e.target.value)}
-            className="form-input-dark"
-          >
-            <option value="">Select ownership</option>
-            <option value="own">Own</option>
-            <option value="rent">Rent</option>
-          </select>
-        </div>
+        <motion.button
+          className="nav-button-dark next-button-dark"
+          onClick={handleNext}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          Next
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 12H19M12 5L19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </motion.button>
       </div>
-      
-      <motion.button 
-        className="next-button-dark"
-        onClick={() => handleStepComplete('customerInfo')}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        Continue to Value Proposition
-        <ChevronRight className="button-icon" />
-      </motion.button>
     </motion.div>
   );
 
@@ -499,15 +558,31 @@ const ScheduleScript = ({ onNavigate }) => {
         </div>
       </div>
       
-      <motion.button 
-        className="next-button-dark"
-        onClick={() => handleStepComplete('valueProposition')}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        Continue to Commitment & Scheduling
-        <ChevronRight className="button-icon" />
-      </motion.button>
+      <div className="step-navigation-dark">
+        <motion.button
+          className="nav-button-dark back-button-dark"
+          onClick={handleBack}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Back
+        </motion.button>
+        
+        <motion.button
+          className="nav-button-dark next-button-dark"
+          onClick={handleNext}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          Next
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 12H19M12 5L19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </motion.button>
+      </div>
     </motion.div>
   );
 
@@ -557,17 +632,33 @@ const ScheduleScript = ({ onNavigate }) => {
         </div>
       </div>
       
-      {appointment.date && appointment.time && (
-        <motion.button 
-          className="next-button-dark"
-          onClick={() => handleStepComplete('commitment')}
+      <div className="step-navigation-dark">
+        <motion.button
+          className="nav-button-dark back-button-dark"
+          onClick={handleBack}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          Continue to Final Confirmation
-          <ChevronRight className="button-icon" />
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Back
         </motion.button>
-      )}
+        
+        <motion.button
+          className="nav-button-dark next-button-dark"
+          onClick={handleNext}
+          disabled={!appointment.date || !appointment.time}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          style={{ opacity: (!appointment.date || !appointment.time) ? 0.5 : 1 }}
+        >
+          Next
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 12H19M12 5L19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </motion.button>
+      </div>
     </motion.div>
   );
 
@@ -618,7 +709,6 @@ const ScheduleScript = ({ onNavigate }) => {
           console.log('Script completed:', {
             callType,
             projectType,
-            customerInfo,
             projectDetails,
             appointment,
             checklistItems
@@ -643,8 +733,7 @@ const ScheduleScript = ({ onNavigate }) => {
         return renderProjectChecklistStep();
       case 'projectQuestions':
         return renderProjectQuestionsStep();
-      case 'customerInfo':
-        return renderCustomerInfoStep();
+
       case 'valueProposition':
         return renderValuePropositionStep();
       case 'commitment':
@@ -768,9 +857,11 @@ const ScheduleScript = ({ onNavigate }) => {
             {scriptSteps.map((step, index) => (
               <motion.div
                 key={step.id}
-                className={`progress-step-dark ${index <= currentStep ? 'active-dark' : ''} ${index === currentStep ? 'current-dark' : ''}`}
+                className={`progress-step-dark ${index <= currentStep ? 'active-dark' : ''} ${index === currentStep ? 'current-dark' : ''} clickable-step-dark`}
+                onClick={() => setCurrentStep(index)}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
+                style={{ cursor: 'pointer' }}
               >
                 <span className="step-number-dark">{index + 1}</span>
                 <span className="step-label-dark">{step.title}</span>
@@ -785,6 +876,6 @@ const ScheduleScript = ({ onNavigate }) => {
       </motion.div>
     </div>
   );
-};
+    };
 
-export default ScheduleScript; 
+  export default ScheduleScript; 
