@@ -1,0 +1,148 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    
+    function isValidRebuttal() {
+      return request.resource.data.keys().hasAll([
+          'summary', 'content', 'category', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.summary is string
+        && request.resource.data.content is string
+        && request.resource.data.category is string
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp;
+    }
+    
+    function isValidCategory() {
+      return request.resource.data.keys().hasAll([
+          'name', 'description', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.name is string
+        && request.resource.data.description is string
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp;
+    }
+
+    function isValidUser() {
+      return request.resource.data.keys().hasAll([
+          'email', 'role', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.email is string
+        && request.resource.data.role is string
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp;
+    }
+
+    function isValidFAQ() {
+      return request.resource.data.keys().hasAll([
+          'question', 'answer', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.question is string
+        && request.resource.data.answer is string
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp;
+    }
+
+    function isValidDisposition() {
+      return request.resource.data.keys().hasAll([
+          'name', 'description', 'status', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.name is string
+        && request.resource.data.description is string
+        && request.resource.data.status is string
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp;
+    }
+
+    function isValidServiceTopic() {
+      return request.resource.data.keys().hasAll([
+          'topic', 'title', 'description', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.topic is string
+        && request.resource.data.title is string
+        && request.resource.data.description is string
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp;
+    }
+
+    function isValidCustomerServiceCategory() {
+      return request.resource.data.keys().hasAll([
+          'name', 'description', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.name is string
+        && request.resource.data.description is string
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp;
+    }
+
+    // Development mode - allow all read operations
+    match /{document=**} {
+      allow read: if true;
+    }
+
+    // Admins collection - allow read for all, write for authenticated users
+    match /admins/{userId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // Users collection - allow read/write for authenticated users
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // Rebuttals collection - public read, authenticated write
+    match /rebuttals/{rebuttalId} {
+      allow read: if true;
+      allow create, update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+
+    // Categories collection - public read, authenticated write
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow create, update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+
+    // FAQs collection - public read, authenticated write
+    match /faqs/{faqId} {
+      allow read: if true;
+      allow create, update, delete: if isAuthenticated();
+    }
+
+    // Dispositions collection - public read, authenticated write
+    match /dispositions/{dispositionId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // Service topics collection - public read, authenticated write
+    match /serviceTopics/{topicId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // Customer service categories collection - public read, authenticated write
+    match /customerServiceCategories/{categoryId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // Archived rebuttals collection - public read, authenticated write
+    match /archived_rebuttals/{document=**} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+  }
+}
