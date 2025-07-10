@@ -175,8 +175,8 @@ const ScheduleScript = ({ onNavigate }) => {
         <motion.div 
           className={`greeting-option-dark ${callType === 'incoming' ? 'selected-dark' : ''}`}
           onClick={() => {
-            console.log('Setting call type to incoming');
             setCallType('incoming');
+            setTimeout(() => setCurrentStep(1), 200); // auto-advance
           }}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -209,8 +209,8 @@ const ScheduleScript = ({ onNavigate }) => {
         <motion.div 
           className={`greeting-option-dark ${callType === 'outgoing' ? 'selected-dark' : ''}`}
           onClick={() => {
-            console.log('Setting call type to outgoing');
             setCallType('outgoing');
+            setTimeout(() => setCurrentStep(1), 200); // auto-advance
           }}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -255,20 +255,6 @@ const ScheduleScript = ({ onNavigate }) => {
           </svg>
           Back
         </motion.button>
-        
-        <motion.button
-          className="nav-button-dark next-button-dark"
-          onClick={handleNext}
-          disabled={!callType}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          style={{ opacity: !callType ? 0.5 : 1 }}
-        >
-          Next
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M5 12H19M12 5L19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </motion.button>
       </div>
     </motion.div>
   );
@@ -295,8 +281,8 @@ const ScheduleScript = ({ onNavigate }) => {
         <motion.div 
           className={`project-option-dark ${projectType === 'bath' ? 'selected-dark' : ''}`}
           onClick={() => {
-            console.log('Setting project type to bath');
             setProjectType('bath');
+            setTimeout(() => setCurrentStep(2), 200); // auto-advance
           }}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -328,8 +314,8 @@ const ScheduleScript = ({ onNavigate }) => {
         <motion.div 
           className={`project-option-dark ${projectType === 'roof' ? 'selected-dark' : ''}`}
           onClick={() => {
-            console.log('Setting project type to roof');
             setProjectType('roof');
+            setTimeout(() => setCurrentStep(2), 200); // auto-advance
           }}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -358,7 +344,6 @@ const ScheduleScript = ({ onNavigate }) => {
           )}
         </motion.div>
       </div>
-      
       <div className="step-navigation-dark">
         <motion.button
           className="nav-button-dark back-button-dark"
@@ -370,20 +355,6 @@ const ScheduleScript = ({ onNavigate }) => {
             <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
           Back
-        </motion.button>
-        
-        <motion.button
-          className="nav-button-dark next-button-dark"
-          onClick={handleNext}
-          disabled={!projectType}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          style={{ opacity: !projectType ? 0.5 : 1 }}
-        >
-          Next
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M5 12H19M12 5L19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
         </motion.button>
       </div>
     </motion.div>
