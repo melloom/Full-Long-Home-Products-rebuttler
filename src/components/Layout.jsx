@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import PWAInstall from './PWAInstall';
+import PWAUpdateNotification from './PWAUpdateNotification';
+import PWAStatus from './PWAStatus';
 import '../styles/Layout.css';
 
 const Layout = ({ children }) => {
@@ -18,12 +21,10 @@ const Layout = ({ children }) => {
     { path: '/scheduleScript', label: 'Schedule Script', icon: '📅' }
   ];
 
-  const handleDownload = () => {
-    setShowComingSoon(true);
-  };
-
-  const closeComingSoon = () => {
-    setShowComingSoon(false);
+  const handleInstallSuccess = (outcome) => {
+    if (outcome === 'accepted') {
+      console.log('PWA installed successfully!');
+    }
   };
 
   const toggleNav = () => {
@@ -67,14 +68,8 @@ const Layout = ({ children }) => {
             ))}
           </ul>
           <div className="nav-footer">
-            <button 
-              className="download-button"
-              onClick={handleDownload}
-              title="Download Desktop App"
-            >
-              <span className="download-icon">⬇️</span>
-              {!isNavCollapsed && <span className="download-text">Download App</span>}
-            </button>
+            <PWAInstall onInstall={handleInstallSuccess} isCollapsed={isNavCollapsed} />
+            <PWAStatus isCollapsed={isNavCollapsed} />
           </div>
         </nav>
       )}
@@ -84,43 +79,8 @@ const Layout = ({ children }) => {
         </button>
       )}
 
-      {/* Coming Soon Popup */}
-      {showComingSoon && (
-        <div className="coming-soon-overlay" onClick={closeComingSoon}>
-          <div className="coming-soon-popup" onClick={(e) => e.stopPropagation()}>
-            <div className="coming-soon-header">
-              <h2>🚀 Coming Soon!</h2>
-              <button className="coming-soon-close" onClick={closeComingSoon}>
-                ✕
-              </button>
-            </div>
-            <div className="coming-soon-content">
-              <div className="coming-soon-icon">💻</div>
-              <h3>Desktop App</h3>
-              <p>We're working hard to bring you the desktop version of CloseLoop. Stay tuned for updates!</p>
-              <div className="coming-soon-features">
-                <div className="feature">
-                  <span className="feature-icon">⚡</span>
-                  <span>Faster Performance</span>
-                </div>
-                <div className="feature">
-                  <span className="feature-icon">🔒</span>
-                  <span>Enhanced Security</span>
-                </div>
-                <div className="feature">
-                  <span className="feature-icon">🔄</span>
-                  <span>Offline Access</span>
-                </div>
-              </div>
-            </div>
-            <div className="coming-soon-footer">
-              <button className="coming-soon-button" onClick={closeComingSoon}>
-                Got it!
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* PWA Update Notification */}
+      <PWAUpdateNotification />
     </div>
   );
 };

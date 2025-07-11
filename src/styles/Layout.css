@@ -19,11 +19,20 @@
   right: 0;
   overflow-y: auto;
   transition: all 0.3s ease;
+  overflow-x: hidden;
 }
 
 .side-nav.collapsed {
   width: 60px;
   padding: 1rem 0.5rem;
+  overflow-x: hidden;
+}
+
+.side-nav.collapsed * {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .nav-header {
@@ -539,6 +548,309 @@
   justify-content: center;
 }
 
+/* PWA Install Button Styles */
+.pwa-install-button,
+.pwa-manual-install,
+.pwa-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 40px;
+}
+
+.pwa-loading {
+  background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.pwa-install-button:hover,
+.pwa-manual-install:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+  background: linear-gradient(135deg, #45a049 0%, #4CAF50 100%);
+}
+
+.pwa-install-button:active,
+.pwa-manual-install:active {
+  transform: translateY(0);
+}
+
+.pwa-icon {
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pwa-text {
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.pwa-installed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: 500;
+  font-size: 0.9rem;
+  min-width: 40px;
+}
+
+.pwa-installed-icon {
+  font-size: 1.2rem;
+}
+
+.pwa-installed-text {
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+/* Collapsed state styles */
+.side-nav.collapsed .pwa-install-button,
+.side-nav.collapsed .pwa-manual-install,
+.side-nav.collapsed .pwa-loading {
+  padding: 0.75rem 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin: 0 auto;
+}
+
+.side-nav.collapsed .pwa-icon {
+  font-size: 1.4rem;
+  margin: 0;
+}
+
+.side-nav.collapsed .pwa-installed {
+  padding: 0.75rem 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin: 0 auto;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.side-nav.collapsed .pwa-installed-icon {
+  font-size: 1.4rem;
+}
+
+.side-nav.collapsed .pwa-installed-text {
+  font-size: 0.7rem;
+  text-align: center;
+  line-height: 1;
+}
+
+/* Hide text completely when collapsed */
+.side-nav.collapsed .pwa-text,
+.side-nav.collapsed .pwa-status-text {
+  display: none;
+}
+
+/* PWA Update Notification Styles */
+.pwa-update-notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e5e7eb;
+  z-index: 10000;
+  animation: slideInUp 0.3s ease;
+  max-width: 350px;
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.pwa-update-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+}
+
+.pwa-update-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.pwa-update-text {
+  flex: 1;
+}
+
+.pwa-update-text h3 {
+  margin: 0 0 4px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.pwa-update-text p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.pwa-update-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.pwa-update-button,
+.pwa-dismiss-button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pwa-update-button {
+  background: #3b82f6;
+  color: white;
+}
+
+.pwa-update-button:hover {
+  background: #2563eb;
+}
+
+.pwa-dismiss-button {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.pwa-dismiss-button:hover {
+  background: #e5e7eb;
+}
+
+/* PWA Status Styles */
+.pwa-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem;
+  margin-top: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  position: relative;
+  cursor: help;
+  transition: all 0.3s ease;
+}
+
+.pwa-status:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.pwa-status-icon {
+  font-size: 1rem;
+}
+
+.pwa-status-text {
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.pwa-status-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f2937;
+  color: white;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  margin-bottom: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.pwa-status:hover .pwa-status-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+.tooltip-content h4 {
+  margin: 0 0 8px 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.tooltip-content ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tooltip-content li {
+  margin: 4px 0;
+  font-size: 0.75rem;
+}
+
+/* Collapsed state for PWA status */
+.side-nav.collapsed .pwa-status {
+  padding: 0.25rem;
+  margin-top: 0.25rem;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.side-nav.collapsed .pwa-status-text {
+  font-size: 0.6rem;
+  text-align: center;
+  line-height: 1;
+}
+
 /* Coming Soon Popup Styles */
 .coming-soon-overlay {
   position: fixed;
@@ -733,3 +1045,28 @@
     padding: 14px 24px;
   }
 } 
+
+/* Collapsed nav buttons layout */
+.side-nav.collapsed .nav-buttons {
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 0.5rem;
+}
+
+.side-nav.collapsed .nav-toggle,
+.side-nav.collapsed .nav-hide {
+  width: 32px;
+  height: 32px;
+  font-size: 1.25rem;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  margin: 0 auto;
+  padding: 0;
+}
+
+/* Optionally, increase collapsed sidebar width for better usability */
+/* .side-nav.collapsed {
+  width: 64px;
+} */ 

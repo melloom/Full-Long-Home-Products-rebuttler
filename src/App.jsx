@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { getCurrentUser } from './services/firebase/auth';
+import { registerServiceWorker, handleServiceWorkerUpdates } from './utils/pwa';
 import Home from './components/Home';
 import RebuttalLibrary from './components/RebuttalLibrary';
 import LeadDisposition from './components/LeadDisposition';
@@ -38,6 +39,10 @@ function App() {
   const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
+    // Register PWA service worker
+    registerServiceWorker();
+    handleServiceWorkerUpdates();
+
     // Simulate initial app loading
     const timer = setTimeout(() => {
       setIsLoading(false);
