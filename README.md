@@ -8,6 +8,7 @@
 [![Code Quality](https://img.shields.io/badge/Code%20Quality-A%2B-brightgreen.svg?style=for-the-badge)](https://github.com/yourusername/long-home-rebuttal)
 [![Coverage](https://img.shields.io/badge/Coverage-95%25-brightgreen.svg?style=for-the-badge)](https://github.com/yourusername/long-home-rebuttal)
 [![Last Commit](https://img.shields.io/badge/Last%20Commit-2024--03--20-brightgreen.svg?style=for-the-badge)](https://github.com/yourusername/long-home-rebuttal)
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/melloom/Full-Long-Home-Products-rebuttler?utm_source=oss&utm_medium=github&utm_campaign=melloom%2FFull-Long-Home-Products-rebuttler&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
 
 <div align="center">
   <p><em>A powerful sales enablement platform designed to transform objection handling and customer interactions</em></p>
