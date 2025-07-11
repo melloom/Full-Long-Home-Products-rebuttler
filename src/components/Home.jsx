@@ -1622,17 +1622,19 @@ const Home = () => {
       {renderModal()}
       <div className="home-content">
         {/* Hero Section */}
-        <div className="home-hero">
-          <div className="hero-content">
-            <div className="hero-logo">
-              <span className="logo-icon">🏠</span>
-              <h1 className="hero-title">
-                Long Home <span className="title-accent">Rebuttal Hub</span>
-              </h1>
+        <div className="hero-wrapper">
+          <div className="home-hero">
+            <div className="hero-content">
+              <div className="hero-logo">
+                <span className="logo-icon">🏠</span>
+                <h1 className="hero-title">
+                  Long Home <span className="title-accent">Rebuttal Hub</span>
+                </h1>
+              </div>
+              <p className="hero-subtitle">
+                Your intelligent assistant for mastering appointment setting, objection handling, and customer service excellence
+              </p>
             </div>
-            <p className="hero-subtitle">
-              Your intelligent assistant for mastering appointment setting, objection handling, and customer service excellence
-            </p>
           </div>
         </div>
 

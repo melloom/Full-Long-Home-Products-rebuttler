@@ -334,43 +334,50 @@ const FAQ = ({ onNavigate }) => {
                   {section.icon}
                   <h3>{section.title}</h3>
                 </div>
-
-                <div className="section-content">
-                  <div className="can-do-section">
+                <div className="section-cards-flex">
+                  {/* Can Do Card */}
+                  <div className="can-do-card">
                     <div className="section-subheader">
                       <CheckCircle className="check-icon" />
                       <h4>{section.canDo.title}</h4>
                     </div>
-                    <ul className="service-list can-do-list">
-                      {section.canDo.items.map((item, index) => (
-                        <motion.li
-                          key={index}
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.2, delay: 0.4 + index * 0.05 }}
-                          className={item.startsWith('•') ? 'sub-item' : 'main-item'}
-                        >
-                          {item}
-                        </motion.li>
-                      ))}
-                    </ul>
+                    {/* Main item and sub-items logic */}
+                    {section.canDo.items.map((item, idx) => {
+                      if (!item.startsWith('•')) {
+                        // Find sub-items for this main item
+                        const subItems = [];
+                        for (let i = idx + 1; i < section.canDo.items.length; i++) {
+                          if (section.canDo.items[i].startsWith('•')) {
+                            subItems.push(section.canDo.items[i]);
+                          } else {
+                            break;
+                          }
+                        }
+                        return (
+                          <div key={idx} className="main-with-subs">
+                            <div className="main-item">{item}</div>
+                            {subItems.length > 0 && (
+                              <ul className="service-list sub-items">
+                                {subItems.map((sub, subIdx) => (
+                                  <li key={subIdx} className="sub-item">{sub}</li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        );
+                      }
+                      return null;
+                    })}
                   </div>
-
-                  <div className="cant-do-section">
+                  {/* Can't Do Card */}
+                  <div className="cant-do-card">
                     <div className="section-subheader">
                       <XCircle className="x-icon" />
                       <h4>{section.cantDo.title}</h4>
                     </div>
                     <ul className="service-list cant-do-list">
                       {section.cantDo.items.map((item, index) => (
-                        <motion.li
-                          key={index}
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.2, delay: 0.5 + index * 0.05 }}
-                        >
-                          {item}
-                        </motion.li>
+                        <li key={index} className="sub-item">{item}</li>
                       ))}
                     </ul>
                   </div>
@@ -443,7 +450,7 @@ const FAQ = ({ onNavigate }) => {
             <div className="contact-info">
               <div className="contact-item">
                 <span className="contact-label">Email:</span>
-                <span className="contact-value">support@longhome.com</span>
+                <span className="contact-value">contactsupervisors@longhome.com</span>
               </div>
               <div className="contact-item">
                 <span className="contact-label">Phone:</span>

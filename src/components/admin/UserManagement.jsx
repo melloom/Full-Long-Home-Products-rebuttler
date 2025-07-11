@@ -423,13 +423,15 @@ const UserManagement = () => {
                       {user.role === 'admin' ? <span role="img" aria-label="Remove Admin">👑</span> : <span role="img" aria-label="Make Admin">👤</span>}
                       {user.role === 'admin' ? 'Remove Admin' : 'Make Admin'}
                     </button>
-                    <button 
-                      className="action-button delete"
-                      onClick={() => handleDeleteUser(user.id || user.uid)}
-                      title="Delete User"
-                    >
-                      <span role="img" aria-label="Delete">🗑️</span> Delete
-                    </button>
+                    {user.email !== 'longhome@' && (
+                      <button 
+                        className="action-button delete"
+                        onClick={() => handleDeleteUser(user.id || user.uid)}
+                        title="Delete User"
+                      >
+                        <span role="img" aria-label="Delete">🗑️</span> Delete
+                      </button>
+                    )}
                   </div>
                 </div>
                 <div className="user-card-divider"></div>

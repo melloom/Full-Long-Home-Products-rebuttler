@@ -519,11 +519,9 @@ const ScheduleScript = ({ onNavigate }) => {
             <h5>Key Points:</h5>
             <ul>
               <li>60-90 minute consultation</li>
-              <li>Samples in hand</li>
-              <li>Wellness check</li>
-              <li>Colors, styles, warranty options</li>
-              <li>Financing options</li>
-              <li>On-the-spot estimate</li>
+              <li>Total replacement services only</li>
+              <li>Own the property</li>
+              <li>All decision makers must be present</li>
             </ul>
           </div>
         </div>
@@ -676,13 +674,31 @@ const ScheduleScript = ({ onNavigate }) => {
       <motion.button 
         className="complete-button-dark"
         onClick={() => {
-          // Handle script completion
-          console.log('Script completed:', {
-            callType,
-            projectType,
-            projectDetails,
-            appointment,
-            checklistItems
+          // Reset script state after completion
+          setCurrentStep(0);
+          setCallType('');
+          setProjectType('');
+          setProjectDetails({
+            age: '',
+            issues: '',
+            currentSetup: '',
+            replacementType: '',
+            plumbingSetup: '',
+            materialsPurchased: '',
+            roofType: '',
+            activeLeaks: '',
+            roofReplaced: ''
+          });
+          setAppointment({
+            date: '',
+            time: '',
+            confirmed: false
+          });
+          setChecklistItems({
+            projectChecklist: [],
+            bathChecklist: [],
+            roofChecklist: [],
+            commitmentChecklist: []
           });
         }}
         whileHover={{ scale: 1.05 }}
@@ -824,20 +840,35 @@ const ScheduleScript = ({ onNavigate }) => {
         transition={{ duration: 0.6, delay: 0.8 }}
       >
         <div className="script-progress-dark">
-          <div className="progress-bar-dark">
-            {scriptSteps.map((step, index) => (
-              <motion.div
-                key={step.id}
-                className={`progress-step-dark ${index <= currentStep ? 'active-dark' : ''} ${index === currentStep ? 'current-dark' : ''} clickable-step-dark`}
-                onClick={() => setCurrentStep(index)}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                style={{ cursor: 'pointer' }}
-              >
-                <span className="step-number-dark">{index + 1}</span>
-                <span className="step-label-dark">{step.title}</span>
-              </motion.div>
-            ))}
+          <div className="progress-bar-prominent">
+            {scriptSteps.map((step, index) => {
+              // Choose an icon for each step type
+              let StepIcon = FileText;
+              if (step.type === 'greeting') StepIcon = Phone;
+              if (step.type === 'selection') StepIcon = Home;
+              if (step.type === 'checklist') StepIcon = CheckSquare;
+              if (step.type === 'questions') StepIcon = Users;
+              if (step.type === 'presentation') StepIcon = FileText;
+              if (step.type === 'scheduling') StepIcon = Calendar;
+              if (step.type === 'confirmation') StepIcon = CheckCircle;
+              return (
+                <motion.div
+                  key={step.id}
+                  className={`progress-step-prominent ${index < currentStep ? 'completed' : ''} ${index === currentStep ? 'current' : ''}`}
+                  onClick={() => setCurrentStep(index)}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  style={{ cursor: 'pointer' }}
+                  aria-label={`Go to step: ${step.title}`}
+                >
+                  <div className="step-icon-wrapper">
+                    <StepIcon className="step-icon" />
+                  </div>
+                  <span className="step-label-prominent">{step.title}</span>
+                  {index < scriptSteps.length - 1 && <span className="step-connector" />}
+                </motion.div>
+              );
+            })}
           </div>
         </div>
 

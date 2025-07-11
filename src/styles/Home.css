@@ -13,6 +13,10 @@
   margin: 0 auto;
 }
 
+.hero-wrapper {
+  margin-left: 180px;
+}
+
 /* Hero Section */
 .home-hero {
   text-align: center;
@@ -1545,4 +1549,60 @@
   width: 16px;
   height: 16px;
   flex-shrink: 0;
+}
+
+.quick-navigation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 180px;
+  height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+  padding: 0.75rem;
+  z-index: 1000;
+  overflow-y: auto;
+  border-right: 1px solid #2d3748;
+}
+
+.simple-mode-container {
+  display: flex;
+}
+
+.simple-mode-container .quick-navigation {
+  flex-shrink: 0;
+}
+
+.simple-mode-grid {
+  flex: 1;
+  margin-left: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+@media (max-width: 1200px) {
+  .quick-navigation {
+    width: 140px;
+  }
+  .simple-mode-grid {
+    margin-left: 140px;
+  }
+}
+
+@media (max-width: 768px) {
+  .quick-navigation {
+    position: relative;
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid #2d3748;
+  }
+  .simple-mode-container {
+    flex-direction: column;
+  }
+  .simple-mode-grid {
+    margin-left: 0;
+    align-items: stretch;
+  }
 }

@@ -142,9 +142,10 @@
 
 .main-content {
   flex: 1;
+  margin-left: 180px; /* Added to account for left sidebar */
   margin-right: 250px;
   padding: 2rem;
-  width: calc(100% - 250px);
+  width: calc(100% - 430px); /* 180px (left) + 250px (right) */
   min-height: 100vh;
   position: relative;
   z-index: 1;
@@ -318,14 +319,15 @@
 
 /* Adjust main content for smaller category navigation */
 .main-content {
-  margin-left: 180px;
+  margin-left: 0;
   margin-right: 250px;
-  width: calc(100% - 430px);
+  width: calc(100% - 250px);
 }
 
 /* Responsive Design */
 @media (max-width: 1400px) {
   .main-content {
+    margin-left: 180px;
     width: calc(100% - 430px);
   }
 }
