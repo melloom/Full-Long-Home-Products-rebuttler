@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { getCurrentUser } from './services/firebase/auth';
-import { registerServiceWorker, handleServiceWorkerUpdates } from './utils/pwa';
+import { registerServiceWorker, handleServiceWorkerUpdates, checkServiceWorkerStatus } from './utils/pwa';
 import Home from './components/Home';
 import RebuttalLibrary from './components/RebuttalLibrary';
 import LeadDisposition from './components/LeadDisposition';
@@ -40,8 +40,25 @@ function App() {
 
   React.useEffect(() => {
     // Register PWA service worker
-    registerServiceWorker();
-    handleServiceWorkerUpdates();
+    const initializePWA = async () => {
+      try {
+        console.log('Initializing PWA...');
+        
+        // Check service worker status first
+        const swStatus = await checkServiceWorkerStatus();
+        console.log('Service Worker Status:', swStatus);
+        
+        // Register service worker
+        await registerServiceWorker();
+        handleServiceWorkerUpdates();
+        
+        console.log('PWA initialization complete');
+      } catch (error) {
+        console.error('PWA initialization failed:', error);
+      }
+    };
+
+    initializePWA();
 
     // Simulate initial app loading
     const timer = setTimeout(() => {
@@ -112,56 +129,14 @@ function App() {
         />
 
         {/* Public Routes */}
-        <Route
-          path="/"
-          element={
-            <Layout>
-              <Home />
-            </Layout>
-          }
-        />
-        <Route
-          path="/rebuttals"
-          element={
-            <Layout>
-              <NavigationWrapper Component={RebuttalLibrary} />
-            </Layout>
-          }
-        />
-        <Route
-          path="/disposition"
-          element={
-            <Layout>
-              <NavigationWrapper Component={LeadDisposition} />
-            </Layout>
-          }
-        />
-        <Route
-          path="/customerService"
-          element={
-            <Layout>
-              <NavigationWrapper Component={CustomerService} />
-            </Layout>
-          }
-        />
-        <Route
-          path="/faq"
-          element={
-            <Layout>
-              <NavigationWrapper Component={FAQ} />
-            </Layout>
-          }
-        />
-        <Route
-          path="/scheduleScript"
-          element={
-            <Layout>
-              <NavigationWrapper Component={ScheduleScript} />
-            </Layout>
-          }
-        />
+        <Route path="/" element={<Layout><NavigationWrapper Component={Home} /></Layout>} />
+        <Route path="/rebuttals" element={<Layout><RebuttalLibrary /></Layout>} />
+        <Route path="/lead-disposition" element={<Layout><LeadDisposition /></Layout>} />
+        <Route path="/customer-service" element={<Layout><CustomerService /></Layout>} />
+        <Route path="/faq" element={<Layout><FAQ /></Layout>} />
+        <Route path="/schedule-script" element={<Layout><ScheduleScript /></Layout>} />
         
-        {/* Catch all route - redirect to home */}
+        {/* Catch all route */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>

@@ -583,6 +583,6 @@ const unsubscribe = db.collection('leads')
 
 <div align="center">
   <p>Made with ❤️ by Melvin Peralta</p>
-  <p>© 2024 Long Home. All rights reserved.</p>
+  <p>© 2025 Long Home. All rights reserved.</p>
   <p><em>Built in just 3 days with passion and dedication</em></p>
 </div>

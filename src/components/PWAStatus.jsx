@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { checkServiceWorkerStatus } from '../utils/pwa';
 
 const PWAStatus = ({ isCollapsed = false }) => {
   const [pwaStatus, setPwaStatus] = useState({
@@ -6,7 +7,10 @@ const PWAStatus = ({ isCollapsed = false }) => {
     isStandalone: false,
     hasServiceWorker: false,
     isOnline: navigator.onLine,
-    cacheSize: '0 MB'
+    cacheSize: '0 MB',
+    swRegistered: false,
+    swActive: false,
+    swError: null
   });
 
   useEffect(() => {
@@ -18,6 +22,16 @@ const PWAStatus = ({ isCollapsed = false }) => {
         hasServiceWorker: 'serviceWorker' in navigator && navigator.serviceWorker.controller,
         isOnline: navigator.onLine
       };
+
+      // Check service worker status
+      try {
+        const swStatus = await checkServiceWorkerStatus();
+        status.swRegistered = swStatus.registered;
+        status.swActive = swStatus.active;
+        status.swError = swStatus.error;
+      } catch (error) {
+        status.swError = error.message;
+      }
 
       // Check cache size if possible
       if ('caches' in window) {
@@ -58,21 +72,48 @@ const PWAStatus = ({ isCollapsed = false }) => {
 
   const getStatusIcon = () => {
     if (pwaStatus.isInstalled) return '✅';
-    if (pwaStatus.hasServiceWorker) return '⚡';
+    if (pwaStatus.swActive) return '⚡';
+    if (pwaStatus.swRegistered) return '🔄';
+    if (pwaStatus.swError) return '❌';
     return '📱';
   };
 
   const getStatusText = () => {
     if (pwaStatus.isInstalled) return 'App Installed';
-    if (pwaStatus.hasServiceWorker) return 'Ready to Install';
+    if (pwaStatus.swActive) return 'SW Active';
+    if (pwaStatus.swRegistered) return 'SW Registered';
+    if (pwaStatus.swError) return 'SW Error';
     return 'Install Available';
   };
 
   const getStatusColor = () => {
     if (pwaStatus.isInstalled) return '#10B981'; // Green
-    if (pwaStatus.hasServiceWorker) return '#3B82F6'; // Blue
+    if (pwaStatus.swActive) return '#3B82F6'; // Blue
+    if (pwaStatus.swRegistered) return '#F59E0B'; // Yellow
+    if (pwaStatus.swError) return '#EF4444'; // Red
     return '#6B7280'; // Gray
   };
+
+  const handleRefresh = async () => {
+    console.log('Refreshing PWA status...');
+    const swStatus = await checkServiceWorkerStatus();
+    console.log('Updated SW Status:', swStatus);
+    
+    // Force a page reload to re-register service worker
+    if (swStatus.error) {
+      console.log('Service worker error detected, reloading page...');
+      window.location.reload();
+    }
+  };
+
+  // Center icon when collapsed
+  if (isCollapsed) {
+    return (
+      <div className="pwa-status-collapsed-center" style={{ color: getStatusColor() }}>
+        <span className="pwa-status-icon" style={{ fontSize: '2rem', display: 'block', textAlign: 'center' }}>{getStatusIcon()}</span>
+      </div>
+    );
+  }
 
   return (
     <div className="pwa-status" style={{ color: getStatusColor() }}>
@@ -86,10 +127,25 @@ const PWAStatus = ({ isCollapsed = false }) => {
           <ul>
             <li>Installed: {pwaStatus.isInstalled ? 'Yes' : 'No'}</li>
             <li>Standalone: {pwaStatus.isStandalone ? 'Yes' : 'No'}</li>
-            <li>Service Worker: {pwaStatus.hasServiceWorker ? 'Active' : 'Inactive'}</li>
+            <li>Service Worker: {pwaStatus.swActive ? 'Active' : pwaStatus.swRegistered ? 'Registered' : 'Inactive'}</li>
             <li>Online: {pwaStatus.isOnline ? 'Yes' : 'No'}</li>
             <li>Cache: {pwaStatus.cacheSize}</li>
+            {pwaStatus.swError && <li style={{color: 'red'}}>Error: {pwaStatus.swError}</li>}
           </ul>
+          <button 
+            onClick={handleRefresh}
+            style={{
+              marginTop: '10px',
+              padding: '5px 10px',
+              backgroundColor: '#3B82F6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Refresh Status
+          </button>
         </div>
       </div>
     </div>

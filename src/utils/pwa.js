@@ -2,32 +2,67 @@
 export const registerServiceWorker = async () => {
   if ('serviceWorker' in navigator) {
     try {
-      const registration = await navigator.serviceWorker.register('/sw.js');
-      console.log('SW registered: ', registration);
+      console.log('Registering service worker...');
+      
+      // Check if we're in production
+      const isProduction = window.location.hostname !== 'localhost' && 
+                          window.location.hostname !== '127.0.0.1';
+      
+      console.log('Environment:', isProduction ? 'Production' : 'Development');
+      
+      const registration = await navigator.serviceWorker.register('/sw.js', {
+        scope: '/',
+        updateViaCache: 'none' // Don't cache the service worker itself
+      });
+      
+      console.log('SW registered successfully:', registration);
       
       // Check for updates
       registration.addEventListener('updatefound', () => {
+        console.log('Service worker update found');
         const newWorker = registration.installing;
+        
         newWorker.addEventListener('statechange', () => {
+          console.log('Service worker state changed:', newWorker.state);
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
             // New content is available, show update notification
+            console.log('New service worker installed, showing update notification');
             showUpdateNotification(registration);
           }
         });
       });
       
+      // Handle service worker errors
+      registration.addEventListener('error', (error) => {
+        console.error('Service worker registration error:', error);
+      });
+      
       return registration;
     } catch (error) {
-      console.log('SW registration failed: ', error);
+      console.error('SW registration failed:', error);
+      
+      // Log specific error details
+      if (error.name === 'SecurityError') {
+        console.error('Security error - service worker must be served over HTTPS in production');
+      } else if (error.name === 'NetworkError') {
+        console.error('Network error - service worker file not found');
+      } else if (error.name === 'TypeError') {
+        console.error('Type error - service worker script has syntax errors');
+      }
     }
+  } else {
+    console.log('Service Worker not supported in this browser');
   }
 };
 
 // Show update notification
 const showUpdateNotification = (registration) => {
   if (confirm('New version available! Reload to update?')) {
+    console.log('User accepted update, skipping waiting and reloading');
     registration.waiting.postMessage({ type: 'SKIP_WAITING' });
     window.location.reload();
+  } else {
+    console.log('User dismissed update notification');
   }
 };
 
@@ -39,9 +74,16 @@ export const handleServiceWorkerUpdates = () => {
     });
 
     navigator.serviceWorker.addEventListener('message', (event) => {
+      console.log('Message from service worker:', event.data);
       if (event.data && event.data.type === 'SKIP_WAITING') {
+        console.log('Skipping waiting and reloading');
         window.location.reload();
       }
+    });
+    
+    // Handle service worker errors
+    navigator.serviceWorker.addEventListener('error', (error) => {
+      console.error('Service worker error:', error);
     });
   }
 };
@@ -62,8 +104,14 @@ export const isAppInstallable = () => {
 // Request notification permission
 export const requestNotificationPermission = async () => {
   if ('Notification' in window) {
-    const permission = await Notification.requestPermission();
-    return permission === 'granted';
+    try {
+      const permission = await Notification.requestPermission();
+      console.log('Notification permission:', permission);
+      return permission === 'granted';
+    } catch (error) {
+      console.error('Error requesting notification permission:', error);
+      return false;
+    }
   }
   return false;
 };
@@ -72,12 +120,42 @@ export const requestNotificationPermission = async () => {
 export const showNotification = (title, options = {}) => {
   if ('Notification' in window && Notification.permission === 'granted') {
     const defaultOptions = {
-      icon: '/icons/icon-192x192.png',
-      badge: '/icons/icon-72x72.png',
+      icon: '/android-chrome-192x192.png',
+      badge: '/android-chrome-192x192.png',
       vibrate: [100, 50, 100],
       ...options
     };
     
-    return new Notification(title, defaultOptions);
+    try {
+      return new Notification(title, defaultOptions);
+    } catch (error) {
+      console.error('Error showing notification:', error);
+    }
   }
+};
+
+// Check service worker status
+export const checkServiceWorkerStatus = async () => {
+  if ('serviceWorker' in navigator) {
+    try {
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (registration) {
+        console.log('Service worker registration found:', registration);
+        console.log('Service worker state:', registration.active ? 'active' : 'inactive');
+        return {
+          registered: true,
+          active: !!registration.active,
+          waiting: !!registration.waiting,
+          installing: !!registration.installing
+        };
+      } else {
+        console.log('No service worker registration found');
+        return { registered: false };
+      }
+    } catch (error) {
+      console.error('Error checking service worker status:', error);
+      return { registered: false, error: error.message };
+    }
+  }
+  return { registered: false, supported: false };
 }; 
