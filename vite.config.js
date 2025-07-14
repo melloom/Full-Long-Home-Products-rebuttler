@@ -8,7 +8,19 @@ export default defineConfig({
     outDir: 'dist',
     target: 'esnext', // Target modern browsers that support top-level await
     rollupOptions: {
-      external: []
+      external: [],
+      output: {
+        assetFileNames: 'assets/[name]-[hash][extname]',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js'
+      }
+    },
+    assetsInlineLimit: 0, // Don't inline small assets
+    sourcemap: false
+  },
+  server: {
+    headers: {
+      'Content-Type': 'application/javascript'
     }
   }
 })

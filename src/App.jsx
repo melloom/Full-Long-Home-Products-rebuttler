@@ -131,10 +131,10 @@ function App() {
         {/* Public Routes */}
         <Route path="/" element={<Layout><NavigationWrapper Component={Home} /></Layout>} />
         <Route path="/rebuttals" element={<Layout><RebuttalLibrary /></Layout>} />
-        <Route path="/lead-disposition" element={<Layout><LeadDisposition /></Layout>} />
-        <Route path="/customer-service" element={<Layout><CustomerService /></Layout>} />
+        <Route path="/disposition" element={<Layout><LeadDisposition /></Layout>} />
+        <Route path="/customerService" element={<Layout><CustomerService /></Layout>} />
         <Route path="/faq" element={<Layout><FAQ /></Layout>} />
-        <Route path="/schedule-script" element={<Layout><ScheduleScript /></Layout>} />
+        <Route path="/scheduleScript" element={<Layout><ScheduleScript /></Layout>} />
         
         {/* Catch all route */}
         <Route path="*" element={<Navigate to="/" replace />} />
