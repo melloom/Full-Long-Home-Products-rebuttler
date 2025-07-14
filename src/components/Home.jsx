@@ -694,12 +694,28 @@ const Home = () => {
     if (suggestion.type === 'rebuttal') {
       setSelectedSimpleModeItem(suggestion.data);
       setShowModal(true);
+      
+      // Scroll modal to top when item changes
+      setTimeout(() => {
+        const modalContent = document.querySelector('.modal-content');
+        if (modalContent) {
+          modalContent.scrollTop = 0;
+        }
+      }, 100);
     } else if (suggestion.type === 'disposition') {
       setSelectedDisposition(suggestion.data);
       navigate('disposition');
     } else if (suggestion.type === 'modal') {
       setSelectedSimpleModeItem(suggestion.data);
       setShowModal(true);
+      
+      // Scroll modal to top when item changes
+      setTimeout(() => {
+        const modalContent = document.querySelector('.modal-content');
+        if (modalContent) {
+          modalContent.scrollTop = 0;
+        }
+      }, 100);
     }
     setShowSuggestions(false);
   };
@@ -746,6 +762,14 @@ const Home = () => {
             categoryElement.scrollIntoView({ behavior: 'smooth' });
           }
         }, 100);
+        
+        // Scroll modal to top when item changes
+        setTimeout(() => {
+          const modalContent = document.querySelector('.modal-content');
+          if (modalContent) {
+            modalContent.scrollTop = 0;
+          }
+        }, 150);
       } else {
         // If no matching category found, navigate to rebuttals
         navigate('rebuttals');
@@ -785,6 +809,14 @@ const Home = () => {
     
     setRelatedRebuttals(related);
     setShowMoreOptions(true);
+    
+    // Scroll modal to top when showing more options
+    setTimeout(() => {
+      const modalContent = document.querySelector('.modal-content');
+      if (modalContent) {
+        modalContent.scrollTop = 0;
+      }
+    }, 100);
   };
 
   const closeModal = () => {
@@ -819,6 +851,14 @@ const Home = () => {
     });
     setShowModal(true);
     setIsExpanded(true);
+    
+    // Scroll modal to top when item changes
+    setTimeout(() => {
+      const modalContent = document.querySelector('.modal-content');
+      if (modalContent) {
+        modalContent.scrollTop = 0;
+      }
+    }, 100);
   };
 
   const handleSimpleModeItemClick = (item) => {
@@ -1322,12 +1362,14 @@ const Home = () => {
     if (showModal) {
       setTimeout(() => {
         const modalContent = document.querySelector('.modal-content');
-        if (modalContent) {
-          modalContent.scrollTop = 0;
-        }
-      }, 100);
+        if (modalContent) modalContent.scrollTop = 0;
+      }, 0);
+      setTimeout(() => {
+        const modalContent = document.querySelector('.modal-content');
+        if (modalContent) modalContent.scrollTop = 0;
+      }, 200);
     }
-  }, [showModal]);
+  }, [showModal, selectedSimpleModeItem]);
 
   // Add useEffect to load categories
   useEffect(() => {
@@ -1519,6 +1561,14 @@ const Home = () => {
       });
       setShowModal(true);
       setIsExpanded(true);
+      
+      // Scroll modal to top when category changes
+      setTimeout(() => {
+        const modalContent = document.querySelector('.modal-content');
+        if (modalContent) {
+          modalContent.scrollTop = 0;
+        }
+      }, 100);
     }
   };
 
@@ -1532,6 +1582,14 @@ const Home = () => {
     });
     setShowModal(true);
     setIsExpanded(true);
+    
+    // Scroll modal to top when item changes
+    setTimeout(() => {
+      const modalContent = document.querySelector('.modal-content');
+      if (modalContent) {
+        modalContent.scrollTop = 0;
+      }
+    }, 100);
   };
 
   const renderCategoryContent = () => {

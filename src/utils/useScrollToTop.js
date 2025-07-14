@@ -3,39 +3,24 @@ import { useLocation } from 'react-router-dom';
 
 export const useScrollToTop = () => {
   const location = useLocation();
-  
   useEffect(() => {
-    // Immediate scroll to top
-    window.scrollTo(0, 0);
-    
-    // Additional scroll to top after a short delay to ensure it works
-    const timer = setTimeout(() => {
-      window.scrollTo(0, 0);
-    }, 100);
-    
-    return () => clearTimeout(timer);
+    setTimeout(scrollToTop, 0);
+    setTimeout(scrollToTop, 200);
   }, [location.pathname]);
 };
 
 export const scrollToTop = () => {
-  // Try multiple scroll methods to ensure it works
+  // Window/document
   window.scrollTo(0, 0);
-  
-  // Also try scrolling the document element
-  if (document.documentElement) {
-    document.documentElement.scrollTop = 0;
-  }
-  
-  // Also try scrolling the body
-  if (document.body) {
-    document.body.scrollTop = 0;
-  }
-  
-  // Try scrolling any scrollable containers
-  const scrollableElements = document.querySelectorAll('.main-content, .layout, [style*="overflow"], [style*="scroll"]');
-  scrollableElements.forEach(element => {
-    if (element.scrollTop !== undefined) {
-      element.scrollTop = 0;
-    }
+  if (document.documentElement) document.documentElement.scrollTop = 0;
+  if (document.body) document.body.scrollTop = 0;
+
+  // Main content container
+  const mainContent = document.querySelector('.main-content');
+  if (mainContent) mainContent.scrollTop = 0;
+
+  // All scrollable containers
+  document.querySelectorAll('[data-scrollable], [style*="overflow"]').forEach(el => {
+    if (el.scrollTop !== undefined) el.scrollTop = 0;
   });
 }; 

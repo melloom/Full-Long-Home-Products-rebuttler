@@ -40,16 +40,9 @@ const Layout = ({ children }) => {
   };
 
   const handleNavigation = (path) => {
-    // Scroll to top immediately for better UX
-    scrollToTop();
-    
-    // Navigate to the new path
     navigate(path);
-    
-    // Additional scroll to top after navigation to ensure it works
-    setTimeout(() => {
-      scrollToTop();
-    }, 100);
+    setTimeout(scrollToTop, 0);    // After navigation
+    setTimeout(scrollToTop, 200);  // After render
   };
 
   return (

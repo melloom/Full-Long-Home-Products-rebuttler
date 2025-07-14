@@ -146,6 +146,7 @@ const FAQ = ({ onNavigate }) => {
       const link = document.createElement('a');
       link.href = '/Can-Can\'t do.pdf';
       link.download = 'Long-Home-Can-Cant-Do-Reference-Guide.pdf';
+      link.target = '_blank';
       
       // Append to body, click, and remove
       document.body.appendChild(link);
@@ -153,7 +154,13 @@ const FAQ = ({ onNavigate }) => {
       document.body.removeChild(link);
     } catch (error) {
       console.error('Error downloading file:', error);
-      alert('Failed to download the reference guide. Please try again.');
+      // Try alternative method
+      try {
+        window.open('/Can-Can\'t do.pdf', '_blank');
+      } catch (fallbackError) {
+        console.error('Fallback download failed:', fallbackError);
+        alert('Failed to download the reference guide. Please try again.');
+      }
     }
   };
 
@@ -163,6 +170,7 @@ const FAQ = ({ onNavigate }) => {
       const link = document.createElement('a');
       link.href = '/Scheduling Script Update 2025 - Jill Approved.docx';
       link.download = 'Long-Home-Scheduling-Script-2025.docx';
+      link.target = '_blank';
       
       // Append to body, click, and remove
       document.body.appendChild(link);
@@ -170,7 +178,13 @@ const FAQ = ({ onNavigate }) => {
       document.body.removeChild(link);
     } catch (error) {
       console.error('Error downloading file:', error);
-      alert('Failed to download the scheduling script. Please try again.');
+      // Try alternative method
+      try {
+        window.open('/Scheduling Script Update 2025 - Jill Approved.docx', '_blank');
+      } catch (fallbackError) {
+        console.error('Fallback download failed:', fallbackError);
+        alert('Failed to download the scheduling script. Please try again.');
+      }
     }
   };
 
@@ -305,7 +319,7 @@ const FAQ = ({ onNavigate }) => {
                 transition={{ duration: 0.2 }}
               >
                 <Download className="button-icon" />
-                Download PDF
+                Download
               </motion.button>
               
               <motion.button
