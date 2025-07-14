@@ -17,16 +17,17 @@
 }
 
 .hero-wrapper {
-  min-height: 100vh;
+  min-height: auto;
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-left: 0;
+  padding: 2rem 0;
 }
 .home-hero {
   width: 100%;
-  min-height: 50vh;
+  min-height: auto;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -35,8 +36,8 @@
 /* Hero Section */
 .home-hero {
   text-align: center;
-  margin-bottom: 4rem;
-  padding: 3rem 0;
+  margin-bottom: 2rem;
+  padding: 2rem 0;
 }
 
 .hero-content {

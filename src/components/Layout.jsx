@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useScrollToTop, scrollToTop } from '../utils/useScrollToTop';
 import PWAInstall from './PWAInstall';
 import PWAUpdateNotification from './PWAUpdateNotification';
 import PWAStatus from './PWAStatus';
@@ -11,6 +12,9 @@ const Layout = ({ children }) => {
   const [isNavCollapsed, setIsNavCollapsed] = useState(true);
   const [isNavHidden, setIsNavHidden] = useState(false);
   const [showComingSoon, setShowComingSoon] = useState(false);
+
+  // Use custom hook for scroll to top
+  useScrollToTop();
 
   const navItems = [
     { path: '/', label: 'Home', icon: '🏠' },
@@ -33,6 +37,19 @@ const Layout = ({ children }) => {
 
   const toggleHide = () => {
     setIsNavHidden(!isNavHidden);
+  };
+
+  const handleNavigation = (path) => {
+    // Scroll to top immediately for better UX
+    scrollToTop();
+    
+    // Navigate to the new path
+    navigate(path);
+    
+    // Additional scroll to top after navigation to ensure it works
+    setTimeout(() => {
+      scrollToTop();
+    }, 100);
   };
 
   return (
@@ -60,7 +77,7 @@ const Layout = ({ children }) => {
               <li
                 key={item.path}
                 className={`nav-item ${location.pathname === item.path ? 'active' : ''}`}
-                onClick={() => navigate(item.path)}
+                onClick={() => handleNavigation(item.path)}
               >
                 <span className="nav-icon">{item.icon}</span>
                 {!isNavCollapsed && <span className="nav-label">{item.label}</span>}

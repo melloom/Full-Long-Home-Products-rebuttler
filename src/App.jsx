@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { getCurrentUser } from './services/firebase/auth';
 import { registerServiceWorker, handleServiceWorkerUpdates, checkServiceWorkerStatus } from './utils/pwa';
+import { scrollToTop } from './utils/useScrollToTop';
 import Home from './components/Home';
 import RebuttalLibrary from './components/RebuttalLibrary';
 import LeadDisposition from './components/LeadDisposition';
@@ -31,6 +32,8 @@ const NavigationWrapper = ({ Component }) => {
   const navigate = useNavigate();
   const handleNavigate = (path) => {
     navigate(`/${path}`);
+    // Scroll to top when navigating programmatically
+    scrollToTop();
   };
   return <Component onNavigate={handleNavigate} />;
 };

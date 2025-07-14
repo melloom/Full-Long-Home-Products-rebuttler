@@ -35,18 +35,39 @@ const Home = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentItemIndex, setCurrentItemIndex] = useState(0);
 
-  // Handle modal scroll prevention - simplified approach
+  // Handle modal scroll prevention and scroll to top when modal opens
   useEffect(() => {
     if (showModal || showCommonObjectionsModal || showSmartTipsModal) {
-      // Simply prevent body scroll
+      // Prevent body scroll
       document.body.style.overflow = 'hidden';
+      
+      // Scroll modal content to top when modal opens
+      setTimeout(() => {
+        const modalContent = document.querySelector('.modal-content');
+        if (modalContent) {
+          modalContent.scrollTop = 0;
+        }
+      }, 50);
       
       return () => {
         // Restore body scroll when modal closes
         document.body.style.overflow = '';
       };
     }
-  }, [showModal, showCommonObjectionsModal, showSmartTipsModal]);
+  }, [showModal, showCommonObjectionsModal, showSmartTipsModal, selectedSimpleModeItem]);
+
+  // Additional effect to scroll to top when selected item changes
+  useEffect(() => {
+    if (showModal && selectedSimpleModeItem) {
+      // Scroll modal content to top when item changes
+      setTimeout(() => {
+        const modalContent = document.querySelector('.modal-content');
+        if (modalContent) {
+          modalContent.scrollTop = 0;
+        }
+      }, 100);
+    }
+  }, [selectedSimpleModeItem, showModal]);
 
   // Add defaultContent object
   const defaultContent = {
@@ -897,6 +918,14 @@ const Home = () => {
       });
     }
     setShowModal(true);
+    
+    // Scroll modal to top when item changes
+    setTimeout(() => {
+      const modalContent = document.querySelector('.modal-content');
+      if (modalContent) {
+        modalContent.scrollTop = 0;
+      }
+    }, 100);
   };
 
   const handleNextItem = () => {
@@ -905,6 +934,31 @@ const Home = () => {
       setCurrentItemIndex(nextIndex);
       const nextItem = selectedCategory.items[nextIndex];
       handleItemClick(nextItem);
+      
+      // Scroll modal to top when navigating to next item
+      setTimeout(() => {
+        const modalContent = document.querySelector('.modal-content');
+        if (modalContent) {
+          modalContent.scrollTop = 0;
+        }
+      }, 50);
+    }
+  };
+
+  const handlePreviousItem = () => {
+    if (selectedCategory && selectedCategory.items) {
+      const prevIndex = currentItemIndex === 0 ? selectedCategory.items.length - 1 : currentItemIndex - 1;
+      setCurrentItemIndex(prevIndex);
+      const prevItem = selectedCategory.items[prevIndex];
+      handleItemClick(prevItem);
+      
+      // Scroll modal to top when navigating to previous item
+      setTimeout(() => {
+        const modalContent = document.querySelector('.modal-content');
+        if (modalContent) {
+          modalContent.scrollTop = 0;
+        }
+      }, 50);
     }
   };
 
@@ -1263,6 +1317,18 @@ const Home = () => {
     return null;
   };
 
+  // Scroll modal to top when it opens
+  useEffect(() => {
+    if (showModal) {
+      setTimeout(() => {
+        const modalContent = document.querySelector('.modal-content');
+        if (modalContent) {
+          modalContent.scrollTop = 0;
+        }
+      }, 100);
+    }
+  }, [showModal]);
+
   // Add useEffect to load categories
   useEffect(() => {
     const loadData = async () => {
@@ -1453,8 +1519,6 @@ const Home = () => {
       });
       setShowModal(true);
       setIsExpanded(true);
-      
-      // Modal is now open, no need to scroll the page
     }
   };
 
@@ -1468,8 +1532,6 @@ const Home = () => {
     });
     setShowModal(true);
     setIsExpanded(true);
-    
-    // Modal is now open, no need to scroll the page
   };
 
   const renderCategoryContent = () => {

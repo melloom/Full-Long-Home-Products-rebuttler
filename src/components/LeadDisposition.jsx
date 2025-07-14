@@ -327,6 +327,7 @@ const LeadDisposition = ({ onNavigate, searchQuery }) => {
 
   const handleDispositionClick = (disposition) => {
     setSelectedDisposition(disposition);
+    setShowModal(true);
   };
 
   if (loading) {
@@ -544,10 +545,13 @@ const LeadDisposition = ({ onNavigate, searchQuery }) => {
         </div>
       </div>
 
-      {selectedDisposition && (
+      {showModal && selectedDisposition && (
         <DispositionModal 
           disposition={selectedDisposition} 
-          onClose={() => setSelectedDisposition(null)} 
+          onClose={() => {
+            setSelectedDisposition(null);
+            setShowModal(false);
+          }} 
         />
       )}
     </div>
