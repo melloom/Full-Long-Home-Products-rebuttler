@@ -1641,37 +1641,6 @@
 }
 
 @media (max-width: 768px) {
-  .home-content {
-    max-width: 100%;
-    margin: 0;
-    width: 100%;
-    padding: 0;
-  }
-  .hero-wrapper {
-    width: 100%;
-    margin: 0;
-    padding: 0;
-  }
-  .home-hero {
-    width: 100%;
-    margin: 0;
-    padding: 0;
-  }
-  .hero-content {
-    width: 100%;
-    align-items: center;
-    justify-content: center;
-    display: flex;
-    flex-direction: column;
-  }
-}
-
-@media (max-width: 768px) {
-  body {
-    overflow-x: hidden;
-  }
-  .simple-mode-container,
-  .quick-navigation,
   .home-content,
   .hero-wrapper,
   .home-hero,
@@ -1681,5 +1650,9 @@
     margin: 0 !important;
     padding: 0 !important;
     box-sizing: border-box;
+    align-items: center !important;
+    justify-content: center !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
 }

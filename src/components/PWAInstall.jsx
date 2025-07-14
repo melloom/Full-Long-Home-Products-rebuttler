@@ -222,9 +222,9 @@ The app will install and appear in your Start Menu!`;
 
   if (isInstalled) {
     return (
-      <div className="pwa-installed">
-        <span className="pwa-installed-icon">✅</span>
-        <span className="pwa-installed-text">App Installed</span>
+      <div className="pwa-installed" style={{ display: 'flex', alignItems: 'center', gap: '0.5em', background: '#22c55e', color: 'white', borderRadius: '8px', padding: isCollapsed ? '0.25em 0.75em' : '0.5em 1em', fontWeight: 600, fontSize: isCollapsed ? '0.95em' : '1.1em', justifyContent: 'center' }}>
+        <span className="pwa-installed-icon" style={{ fontSize: isCollapsed ? '1.1em' : '1.2em' }}>✅</span>
+        <span className="pwa-installed-text">Installed</span>
       </div>
     );
   }
