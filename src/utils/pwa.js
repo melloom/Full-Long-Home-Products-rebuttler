@@ -9,6 +9,13 @@ export const registerServiceWorker = async () => {
                           window.location.hostname !== '127.0.0.1';
       
       console.log('Environment:', isProduction ? 'Production' : 'Development');
+      console.log('Current URL:', window.location.href);
+      
+      // Check if service worker file exists
+      const swResponse = await fetch('/sw.js', { method: 'HEAD' });
+      if (!swResponse.ok) {
+        throw new Error(`Service worker file not found: ${swResponse.status} ${swResponse.statusText}`);
+      }
       
       const registration = await navigator.serviceWorker.register('/sw.js', {
         scope: '/',
@@ -48,6 +55,17 @@ export const registerServiceWorker = async () => {
         console.error('Network error - service worker file not found');
       } else if (error.name === 'TypeError') {
         console.error('Type error - service worker script has syntax errors');
+        console.error('Error details:', error.message);
+      } else if (error.name === 'InvalidStateError') {
+        console.error('Invalid state error - service worker already registered');
+      }
+      
+      // Try to get more details about the error
+      if (error.message) {
+        console.error('Error message:', error.message);
+      }
+      if (error.stack) {
+        console.error('Error stack:', error.stack);
       }
     }
   } else {

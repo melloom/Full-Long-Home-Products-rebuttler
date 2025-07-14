@@ -815,7 +815,14 @@ const Home = () => {
       };
 
       // Handle different response formats
-      if (typeof matchingRebuttal.response === 'string') {
+      if (typeof matchingRebuttal.content === 'string') {
+        content.pt1 = matchingRebuttal.content;
+      } else if (matchingRebuttal.content && typeof matchingRebuttal.content === 'object') {
+        content = {
+          pt1: matchingRebuttal.content.pt1 || matchingRebuttal.content.initial || matchingRebuttal.content.part1 || '',
+          pt2: matchingRebuttal.content.pt2 || matchingRebuttal.content.followup || matchingRebuttal.content.part2 || ''
+        };
+      } else if (typeof matchingRebuttal.response === 'string') {
         content.pt1 = matchingRebuttal.response;
       } else if (matchingRebuttal.response && typeof matchingRebuttal.response === 'object') {
         content = {
@@ -852,7 +859,14 @@ const Home = () => {
       };
 
       // Handle different response formats
-      if (typeof item.response === 'string') {
+      if (typeof item.content === 'string') {
+        content.pt1 = item.content;
+      } else if (item.content && typeof item.content === 'object') {
+        content = {
+          pt1: item.content.pt1 || item.content.initial || item.content.part1 || '',
+          pt2: item.content.pt2 || item.content.followup || item.content.part2 || ''
+        };
+      } else if (typeof item.response === 'string') {
         content.pt1 = item.response;
       } else if (item.response && typeof item.response === 'object') {
         content = {
@@ -1053,17 +1067,23 @@ const Home = () => {
                         <div className="rebuttal-section">
                           <h4 className="rebuttal-section-title">Initial Response</h4>
                           <p className="modal-content-text">
-                            {typeof selectedSimpleModeItem.content === 'string' 
-                              ? selectedSimpleModeItem.content 
-                              : selectedSimpleModeItem.content.pt1 || ''}
+                            {(() => {
+                              console.log('Rendering content:', selectedSimpleModeItem.content);
+                              return typeof selectedSimpleModeItem.content === 'string' 
+                                ? selectedSimpleModeItem.content 
+                                : selectedSimpleModeItem.content.pt1 || '';
+                            })()}
                           </p>
                         </div>
                         <div className="rebuttal-section">
                           <h4 className="rebuttal-section-title">Follow-up Response</h4>
                           <p className="modal-content-text">
-                            {typeof selectedSimpleModeItem.content === 'string'
-                              ? ''
-                              : selectedSimpleModeItem.content.pt2 || ''}
+                            {(() => {
+                              console.log('Rendering pt2:', selectedSimpleModeItem.content?.pt2);
+                              return typeof selectedSimpleModeItem.content === 'string'
+                                ? ''
+                                : selectedSimpleModeItem.content.pt2 || '';
+                            })()}
                           </p>
                         </div>
                         <div className="rebuttal-actions">
@@ -1179,12 +1199,12 @@ const Home = () => {
                             setSelectedSimpleModeItem({
                               ...relatedRebuttal,
                               content: {
-                                pt1: typeof relatedRebuttal.response === 'string' 
-                                  ? relatedRebuttal.response 
-                                  : relatedRebuttal.response?.pt1 || relatedRebuttal.objection || '',
-                                pt2: typeof relatedRebuttal.response === 'string'
+                                pt1: typeof relatedRebuttal.content === 'string' 
+                                  ? relatedRebuttal.content 
+                                  : relatedRebuttal.content?.pt1 || relatedRebuttal.response?.pt1 || relatedRebuttal.objection || '',
+                                pt2: typeof relatedRebuttal.content === 'string'
                                   ? ''
-                                  : relatedRebuttal.response?.pt2 || relatedRebuttal.followUpResponse || ''
+                                  : relatedRebuttal.content?.pt2 || relatedRebuttal.response?.pt2 || relatedRebuttal.followUpResponse || ''
                               }
                             });
                             setShowMoreOptions(false);
@@ -1192,9 +1212,9 @@ const Home = () => {
                         >
                           <h5>{relatedRebuttal.title}</h5>
                           <p>
-                            {typeof relatedRebuttal.response === 'string'
-                              ? relatedRebuttal.response
-                              : relatedRebuttal.response?.pt1 || relatedRebuttal.objection || ''}
+                            {typeof relatedRebuttal.content === 'string'
+                              ? relatedRebuttal.content
+                              : relatedRebuttal.content?.pt1 || relatedRebuttal.response?.pt1 || relatedRebuttal.objection || ''}
                           </p>
                         </div>
                       ))}
@@ -1355,7 +1375,14 @@ const Home = () => {
                 };
 
                 // Handle different response formats
-                if (typeof rebuttal.response === 'string') {
+                if (typeof rebuttal.content === 'string') {
+                  content.pt1 = rebuttal.content;
+                } else if (rebuttal.content && typeof rebuttal.content === 'object') {
+                  content = {
+                    pt1: rebuttal.content.pt1 || rebuttal.content.initial || rebuttal.content.part1 || '',
+                    pt2: rebuttal.content.pt2 || rebuttal.content.followup || rebuttal.content.part2 || ''
+                  };
+                } else if (typeof rebuttal.response === 'string') {
                   content.pt1 = rebuttal.response;
                 } else if (rebuttal.response && typeof rebuttal.response === 'object') {
                   content = {
@@ -1392,6 +1419,7 @@ const Home = () => {
           });
           
           console.log('Transformed categories:', transformedCategories);
+          console.log('Sample rebuttal content:', transformedCategories[0]?.items[0]?.content);
           setCategories(transformedCategories);
           setSimpleModeCategories(transformedCategories);
         });

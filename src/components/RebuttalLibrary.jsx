@@ -240,9 +240,9 @@ const RebuttalLibrary = ({ onNavigate, searchQuery }) => {
       const tagsScore = rebuttal.tags.reduce((score, tag) => 
         score + getSemanticScore(query, tag), 0) / rebuttal.tags.length;
       
-      const contentScore = rebuttal.content.pt1 ? 
+      const contentScore = rebuttal.content && rebuttal.content.pt1 ? 
         getSemanticScore(query, rebuttal.content.pt1) : 0;
-      const content2Score = rebuttal.content.pt2 ? 
+      const content2Score = rebuttal.content && rebuttal.content.pt2 ? 
         getSemanticScore(query, rebuttal.content.pt2) : 0;
 
       const relevanceScore = Math.max(
@@ -381,7 +381,7 @@ const RebuttalLibrary = ({ onNavigate, searchQuery }) => {
 
     if (typeof content === 'string') {
       pt1 = content;
-    } else if (typeof content === 'object') {
+    } else if (content && typeof content === 'object') {
       pt1 = content.pt1 || '';
       pt2 = content.pt2 || '';
     }
