@@ -5,6 +5,7 @@ import Header from './Header';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../services/firebase/config';
 import rebuttalsService from '../services/rebuttalsService';
+import SearchBar from './SearchBar';
 
 const DEFAULT_TIPS = [
   "Listen actively and acknowledge the customer's concerns",
@@ -661,35 +662,13 @@ const RebuttalLibrary = ({ onNavigate, searchQuery }) => {
 
             {/* Enhanced Search Bar */}
             <div className="search-container">
-              <div className="search-input-wrapper">
-                <svg className="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2"/>
-                  <path d="M21 21l-4.35-4.35" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <input
-                  type="text"
-                  placeholder="Search rebuttals..."
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                  className="search-input"
-                  aria-label="Search rebuttals"
-                />
-                {searchTerm && (
-                  <button 
-                    onClick={() => {
-                      setSearchTerm('');
-                      setShowSuggestions(false);
-                      setSearchSuggestions([]);
-                    }} 
-                    className="clear-search-button"
-                    aria-label="Clear search"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </button>
-                )}
-              </div>
+              <SearchBar
+                value={searchTerm}
+                onChange={handleSearchChange}
+                onClear={() => { setSearchTerm(''); setShowSuggestions(false); setSearchSuggestions([]); }}
+                placeholder="Search rebuttals..."
+                onKeyDown={handleKeyDown}
+              />
               
               {/* Search Suggestions Dropdown */}
               {showSuggestions && searchSuggestions.length > 0 && (
@@ -804,11 +783,10 @@ const RebuttalLibrary = ({ onNavigate, searchQuery }) => {
       {/* Modal */}
       {showModal && selectedRebuttal && (
         <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <div className="modal-header-content">
                 <h2 className="modal-title">{selectedRebuttal.title}</h2>
-                <div className="modal-id">ID: {selectedRebuttal.id}</div>
               </div>
               <button onClick={closeModal} className="modal-close-button">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -816,94 +794,55 @@ const RebuttalLibrary = ({ onNavigate, searchQuery }) => {
                 </svg>
               </button>
             </div>
-            
             <div className="modal-body">
+              {/* Tags */}
               <div className="modal-tags">
                 {selectedRebuttal.tags && selectedRebuttal.tags.map(tag => (
-                  <span key={tag} className="modal-tag">
-                    #{tag}
-                  </span>
+                  <span key={tag} className="modal-tag">#{tag}</span>
                 ))}
               </div>
-              
+              {/* Main Situation/Summary */}
               <div className="modal-summary">
-                <div className="modal-section-header">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-                    <path d="M12 6v6l4 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  <h3>Situation Overview</h3>
-                </div>
-                <p className="modal-summary-text">
-                  {selectedRebuttal.situationOverview || selectedRebuttal.summary || selectedRebuttal.objection || 'No situation overview available.'}
-                </p>
+                <p className="modal-summary-text">{selectedRebuttal.situationOverview || selectedRebuttal.summary || selectedRebuttal.objection || 'No situation overview available.'}</p>
               </div>
-              
+              {/* Main Rebuttal Content: Part 1, Part 2, etc. */}
               <div className="modal-rebuttal-content">
-                <div className="modal-section-header">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  <h3>Rebuttal Responses</h3>
-                </div>
                 {renderRebuttalContent(selectedRebuttal.content || selectedRebuttal.response)}
               </div>
-
-              {/* Tips Section */}
+              {/* Tips Grid */}
               <div className="modal-tips">
                 <div className="modal-section-header">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 17H11V15H13V17ZM13 13H11V7H13V13Z" fill="currentColor"/>
-                  </svg>
                   <h3>Pro Tips & Best Practices</h3>
                 </div>
-                <div className="modal-tips-content">
-                  <div className="tips-grid">
-                    {(selectedRebuttal.tips && selectedRebuttal.tips.length > 0 ? selectedRebuttal.tips : DEFAULT_TIPS).map((tip, index) => (
-                      <div key={index} className="tip-card">
-                        <div className="tip-card-header">
-                          <div className="tip-icon-wrapper">
-                            <span className="tip-icon">
-                              {index === 0 ? '🎯' : 
-                               index === 1 ? '💡' : 
-                               index === 2 ? '⚡' : 
-                               index === 3 ? '✨' : '🌟'}
-                            </span>
-                          </div>
-                          <span className="tip-number">Tip {index + 1}</span>
-                        </div>
-                        <div className="tip-content">
-                          <p className="tip-text">{tip}</p>
-                        </div>
+                <div className="tips-grid">
+                  {(selectedRebuttal.tips && selectedRebuttal.tips.length > 0 ? selectedRebuttal.tips : DEFAULT_TIPS).map((tip, index) => (
+                    <div key={index} className="tip-card">
+                      <div className="tip-card-header">
+                        <span className="tip-icon">{['🎯','💡','⚡','✨','🌟'][index] || '💡'}</span>
+                        <span className="tip-number">Tip {index + 1}</span>
                       </div>
-                    ))}
-                  </div>
-                  {(!selectedRebuttal.tips || selectedRebuttal.tips.length === 0) && (
-                    <div className="default-tips-note">
-                      <div className="default-tips-icon-wrapper">
-                        <span className="default-tips-icon">ℹ️</span>
-                      </div>
-                      <div className="default-tips-content">
-                        <p className="default-tips-title">General Best Practices</p>
-                        <p className="default-tips-text">These are general best practice tips. Consider adding specific tips for this rebuttal.</p>
+                      <div className="tip-content">
+                        <p className="tip-text">{tip}</p>
                       </div>
                     </div>
-                  )}
+                  ))}
                 </div>
+                {(!selectedRebuttal.tips || selectedRebuttal.tips.length === 0) && (
+                  <div className="default-tips-note">
+                    <span className="default-tips-icon">ℹ️</span>
+                    <div className="default-tips-content">
+                      <p className="default-tips-title">General Best Practices</p>
+                      <p className="default-tips-text">These are general best practice tips. Consider adding specific tips for this rebuttal.</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-            
             <div className="modal-footer">
               <div className="modal-footer-note">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-                  <path d="M12 16v-4M12 8h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
                 💡 Pro Tip: Start with the Initial Response. If customer still objects, use the Follow-up Response
               </div>
-              <button onClick={closeModal} className="modal-close-footer-button">
-                Close
-              </button>
+              <button onClick={closeModal} className="modal-close-footer-button">Close</button>
             </div>
           </div>
         </div>

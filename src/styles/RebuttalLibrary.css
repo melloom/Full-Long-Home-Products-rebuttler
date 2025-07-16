@@ -1438,3 +1438,449 @@ body.modal-open {
     margin-bottom: 0.75rem;
   }
 }
+
+/* --- DARK MODE: REBUTTAL LIBRARY MAIN VIEW & MODAL --- */
+.dark .library-container {
+  background: linear-gradient(135deg, #18181b 0%, #23232b 100%) !important;
+}
+
+.dark .categories-section h2,
+.dark .rebuttals-section h2 {
+  color: #38bdf8 !important;
+}
+
+.dark .categories-grid,
+.dark .rebuttals-grid {
+  background: none !important;
+}
+
+.dark .category-button,
+.dark .library-category-button {
+  background: #18181b !important;
+  color: #f1f5f9 !important;
+  border: 2px solid #3f3f46 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18) !important;
+}
+
+.dark .category-button.active,
+.dark .library-category-button.active {
+  background: linear-gradient(135deg, #2563eb, #38bdf8) !important;
+  color: #f1f5f9 !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 6px 16px rgba(37,99,235,0.18) !important;
+}
+
+.dark .rebuttal-card,
+.dark .library-rebuttal-card {
+  background: #23232b !important;
+  color: #f1f5f9 !important;
+  border: 1.5px solid #3f3f46 !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.25) !important;
+}
+
+.dark .rebuttal-title,
+.dark .library-rebuttal-title,
+.dark .rebuttal-summary,
+.dark .library-rebuttal-summary {
+  color: #f1f5f9 !important;
+}
+
+.dark .rebuttal-category,
+.dark .library-rebuttal-tag,
+.dark .library-detail-tag {
+  background: #2563eb !important;
+  color: #f1f5f9 !important;
+}
+
+.dark .no-rebuttals {
+  background: #23232b !important;
+  color: #a1a1aa !important;
+}
+
+/* --- MODAL POPUP DARK MODE --- */
+.dark .modal-overlay {
+  background: rgba(20, 20, 30, 0.75) !important;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: background 0.3s;
+}
+
+.dark .modal-content {
+  background: rgba(35, 35, 43, 0.95) !important;
+  border-radius: 28px !important;
+  box-shadow: 0 12px 48px 0 rgba(0,0,0,0.55), 0 1.5px 8px 0 rgba(37,99,235,0.08);
+  border: 1.5px solid #2563eb !important;
+  animation: popIn 0.25s cubic-bezier(0.4,0,0.2,1);
+  overflow: hidden;
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.96) translateY(30px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.dark .modal-header {
+  background: linear-gradient(90deg, #2563eb 0%, #38bdf8 100%) !important;
+  border-bottom: 2.5px solid #2563eb !important;
+  border-radius: 28px 28px 0 0 !important;
+  box-shadow: 0 2px 12px 0 rgba(37,99,235,0.10);
+  position: relative;
+}
+
+.dark .modal-title {
+  color: #f1f5f9 !important;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.dark .modal-close-button {
+  background: #23232b !important;
+  color: #38bdf8 !important;
+  border-radius: 50% !important;
+  border: 1.5px solid #38bdf8 !important;
+  width: 40px !important;
+  height: 40px !important;
+  font-size: 2rem !important;
+  top: 18px;
+  right: 18px;
+  position: absolute;
+  transition: background 0.2s, color 0.2s;
+  z-index: 2;
+}
+.dark .modal-close-button:hover {
+  background: #2563eb !important;
+  color: #f1f5f9 !important;
+}
+
+.dark .modal-body {
+  background: rgba(35, 35, 43, 0.98) !important;
+  color: #f1f5f9 !important;
+  border-radius: 0 0 28px 28px !important;
+  padding-bottom: 24px !important;
+}
+
+.dark .modal-tags {
+  background: none !important;
+  padding: 0 0 16px 0 !important;
+}
+.dark .modal-tag {
+  background: #18181b !important;
+  color: #38bdf8 !important;
+  border: 1.5px solid #2563eb !important;
+  border-radius: 16px !important;
+  font-weight: 600;
+  margin-right: 8px;
+  margin-bottom: 8px;
+  padding: 6px 16px !important;
+  font-size: 1rem;
+  transition: background 0.2s, color 0.2s;
+}
+.dark .modal-tag:hover {
+  background: #2563eb !important;
+  color: #f1f5f9 !important;
+}
+
+.dark .modal-section-header h3,
+.dark .modal-section-header svg {
+  color: #38bdf8 !important;
+}
+
+.dark .modal-summary,
+.dark .modal-rebuttal-content,
+.dark .modal-tips {
+  background: #23232b !important;
+  border-radius: 18px !important;
+  border: 1.5px solid #3f3f46 !important;
+  margin-bottom: 18px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10) !important;
+}
+
+.dark .tip-card {
+  background: #18181b !important;
+  color: #f1f5f9 !important;
+  border: 1.5px solid #2563eb !important;
+  border-radius: 14px !important;
+  box-shadow: 0 1px 4px rgba(37,99,235,0.08) !important;
+}
+
+.dark .tip-icon {
+  color: #38bdf8 !important;
+}
+
+.dark .modal-footer {
+  background: none !important;
+  border-top: 1.5px solid #2563eb !important;
+  border-radius: 0 0 28px 28px !important;
+  box-shadow: none !important;
+}
+
+.dark .modal-footer-note {
+  color: #38bdf8 !important;
+  background: none !important;
+}
+
+.dark .modal-close-footer-button {
+  background: linear-gradient(90deg, #2563eb 0%, #38bdf8 100%) !important;
+  color: #f1f5f9 !important;
+  border: none !important;
+  border-radius: 12px !important;
+  font-weight: 600;
+  font-size: 1.1rem;
+  padding: 10px 28px !important;
+  margin-top: 12px;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.10) !important;
+  transition: background 0.2s, color 0.2s;
+}
+.dark .modal-close-footer-button:hover {
+  background: #38bdf8 !important;
+  color: #23232b !important;
+}
+
+/* --- DARK MODE: FIX MODAL POPUP CONTENT FOR REBUTTAL LIBRARY --- */
+.dark .modal-section,
+.dark .modal-tips {
+  background: #23232b !important;
+  color: #e0e7ef !important;
+  border: 1.5px solid #3f3f46 !important;
+  border-radius: 16px !important;
+}
+
+.dark .modal-section h3,
+.dark .modal-tips .modal-section-header h3 {
+  color: #38bdf8 !important;
+  font-size: 1.25rem !important;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  border-bottom: 2px solid #2563eb !important;
+}
+
+.dark .modal-section p,
+.dark .modal-section ol,
+.dark .modal-section ul,
+.dark .modal-section li,
+.dark .modal-tips-content,
+.dark .tip-text {
+  color: #e0e7ef !important;
+  font-size: 1.08rem;
+  line-height: 1.7;
+}
+
+.dark .modal-tips .modal-section-header svg {
+  color: #38bdf8 !important;
+}
+
+.dark .tips-grid {
+  background: none !important;
+}
+
+.dark .tip-card {
+  background: #18181b !important;
+  color: #f1f5f9 !important;
+  border: 1.5px solid #3f3f46 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18) !important;
+}
+
+.dark .tip-icon-wrapper {
+  background: #2563eb !important;
+  color: #f1f5f9 !important;
+}
+
+.dark .tip-number {
+  color: #38bdf8 !important;
+}
+
+.dark .example-card {
+  background: #23232b !important;
+  color: #e0e7ef !important;
+  border: 1.5px solid #3f3f46 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18) !important;
+}
+
+.dark .example-header {
+  background: none !important;
+}
+
+.dark .example-icon {
+  color: #38bdf8 !important;
+  font-size: 1.5rem !important;
+}
+
+.dark .example-text {
+  color: #e0e7ef !important;
+}
+
+.dark .situation-card {
+  background: #23232b !important;
+  color: #e0e7ef !important;
+  border: 1.5px solid #3f3f46 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18) !important;
+}
+
+.dark .situation-header {
+  background: none !important;
+}
+
+.dark .situation-icon {
+  color: #38bdf8 !important;
+  font-size: 1.5rem !important;
+}
+
+.dark .situation-title {
+  color: #f1f5f9 !important;
+  font-weight: 600 !important;
+}
+
+.dark .situation-text {
+  color: #e0e7ef !important;
+  font-size: 1.08rem !important;
+  line-height: 1.7 !important;
+}
+
+/* --- DARK MODE: FORCE ALL MODAL POPUP TEXT TO WHITE --- */
+.dark .modal-content,
+.dark .modal-body,
+.dark .modal-summary,
+.dark .modal-rebuttal-content,
+.dark .modal-tips,
+.dark .tip-card,
+.dark .modal-section-header,
+.dark .modal-tag,
+.dark .modal-footer,
+.dark .modal-footer-note,
+.dark .modal-close-footer-button,
+.dark .modal-content p,
+.dark .modal-content h3,
+.dark .modal-content h4,
+.dark .modal-content li {
+  color: #f1f5f9 !important;
+}
+
+/* --- DARK MODE: GENERAL BEST PRACTICES (DEFAULT TIPS NOTE) --- */
+.dark .default-tips-note {
+  background: #18181b !important;
+  border: 1.5px solid #2563eb !important;
+  color: #f1f5f9 !important;
+  border-radius: 16px !important;
+  padding: 18px 20px !important;
+  margin-top: 18px !important;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.10) !important;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+.dark .default-tips-icon {
+  font-size: 2.2rem !important;
+  color: #38bdf8 !important;
+  flex-shrink: 0;
+}
+.dark .default-tips-title {
+  color: #38bdf8 !important;
+  font-weight: 600;
+  font-size: 1.15rem;
+  margin-bottom: 4px;
+}
+.dark .default-tips-text {
+  color: #f1f5f9 !important;
+  font-size: 1rem;
+}
+
+/* --- DARK MODE: FORCE REBUTTAL CONTENT SECTIONS TO DARK --- */
+.dark .modal-rebuttal-content,
+.dark .rebuttal-content-sections,
+.dark .rebuttal-section,
+.dark .rebuttal-section-title,
+.dark .modal-rebuttal-content h4,
+.dark .modal-rebuttal-content p {
+  background: #23232b !important;
+  color: #f1f5f9 !important;
+  border-color: #3f3f46 !important;
+}
+
+/* --- DARK MODE: FIX ALL MODAL TEXT ELEMENTS --- */
+.dark .modal-summary-text,
+.dark .modal-content-text,
+.dark .tip-text,
+.dark .default-tips-text,
+.dark .modal-footer-note,
+.dark .modal-title,
+.dark .modal-header h2,
+.dark .modal-header h3,
+.dark .modal-header h4,
+.dark .modal-header p,
+.dark .modal-body p,
+.dark .modal-body h2,
+.dark .modal-body h3,
+.dark .modal-body h4,
+.dark .modal-body li,
+.dark .modal-body ul,
+.dark .modal-body ol,
+.dark .modal-body span,
+.dark .modal-body div,
+.dark .tip-number,
+.dark .tip-content,
+.dark .tip-content p,
+.dark .default-tips-content,
+.dark .default-tips-content p,
+.dark .default-tips-title,
+.dark .modal-section-header h3,
+.dark .tips-grid,
+.dark .tips-grid div,
+.dark .tips-grid p,
+.dark .tips-grid span {
+  color: #f1f5f9 !important;
+}
+
+/* --- DARK MODE: FIX MODAL BACKGROUNDS --- */
+.dark .modal-summary,
+.dark .modal-rebuttal-content,
+.dark .modal-tips,
+.dark .tip-card,
+.dark .default-tips-note,
+.dark .tips-grid,
+.dark .tip-content,
+.dark .default-tips-content {
+  background: #23232b !important;
+  border-color: #3f3f46 !important;
+}
+
+/* --- DARK MODE: FORCE ALL TIP CARDS TO DARK --- */
+.dark .tip-card {
+  background: #18181b !important;
+  color: #f1f5f9 !important;
+  border: 1.5px solid #3f3f46 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18) !important;
+}
+
+.dark .tip-card-header {
+  background: transparent !important;
+  color: #f1f5f9 !important;
+}
+
+.dark .tip-icon {
+  color: #38bdf8 !important;
+  font-size: 1.2rem !important;
+}
+
+.dark .tip-number {
+  color: #38bdf8 !important;
+  font-weight: 600 !important;
+}
+
+/* --- DARK MODE: FIX MODAL HEADER BACKGROUND --- */
+.dark .modal-header {
+  background: linear-gradient(90deg, #2563eb 0%, #38bdf8 100%) !important;
+  color: #f1f5f9 !important;
+}
+
+/* --- DARK MODE: FIX MODAL BODY BACKGROUND --- */
+.dark .modal-body {
+  background: #23232b !important;
+  color: #f1f5f9 !important;
+}
+
+/* --- DARK MODE: FIX MODAL FOOTER BACKGROUND --- */
+.dark .modal-footer {
+  background: #23232b !important;
+  color: #f1f5f9 !important;
+  border-top-color: #3f3f46 !important;
+}

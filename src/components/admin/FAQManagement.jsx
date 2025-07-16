@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import faqService from '../../services/faqService';
 import './FAQManagement.css';
+import SearchBar from '../SearchBar';
 
 const FAQManagement = () => {
   const [faqs, setFaqs] = useState([]);
@@ -128,16 +129,12 @@ const FAQManagement = () => {
       )}
 
       <div className="faq-search-section">
-        <div className="search-container">
-          <input
-            type="text"
-            placeholder="Search FAQs..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="faq-search-input"
-          />
-          <span className="search-icon">🔍</span>
-        </div>
+        <SearchBar
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          onClear={() => setSearchTerm('')}
+          placeholder="Search FAQs..."
+        />
         <div className="search-results">
           {searchTerm && (
             <span className="results-count">

@@ -1290,3 +1290,301 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* --- DARK MODE: LEAD DISPOSITION MAIN VIEW & MODAL --- */
+.dark .disposition-container,
+.dark .lead-disposition-container {
+  background: linear-gradient(135deg, #18181b 0%, #23232b 100%) !important;
+}
+
+.dark .disposition-sidebar {
+  background: #23232b !important;
+  color: #f1f5f9 !important;
+  border: 1.5px solid #3f3f46 !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.35) !important;
+}
+
+.dark .sidebar-title {
+  color: #38bdf8 !important;
+  background: none !important;
+  -webkit-text-fill-color: #38bdf8 !important;
+}
+
+.dark .category-button {
+  background: #18181b !important;
+  color: #f1f5f9 !important;
+  border: 2px solid #3f3f46 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18) !important;
+}
+
+.dark .category-button.active {
+  background: linear-gradient(135deg, #2563eb, #38bdf8) !important;
+  color: #f1f5f9 !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 6px 16px rgba(37,99,235,0.18) !important;
+}
+
+.dark .disposition-main {
+  background: #23232b !important;
+  color: #f1f5f9 !important;
+}
+
+.dark .disposition-card {
+  background: #23232b !important;
+  color: #f1f5f9 !important;
+  border: 1.5px solid #3f3f46 !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.25) !important;
+}
+
+.dark .card-header,
+.dark .card-title,
+.dark .card-description,
+.dark .card-next-steps,
+.dark .card-tips,
+.dark .card-category {
+  background: transparent !important;
+  color: #f1f5f9 !important;
+}
+
+.dark .card-icon {
+  background: #18181b !important;
+  color: #38bdf8 !important;
+}
+
+.dark .card-category {
+  background: #2563eb !important;
+  color: #f1f5f9 !important;
+}
+
+/* --- MODAL POPUP DARK MODE --- */
+.dark .modal-overlay {
+  background: rgba(20, 20, 30, 0.82) !important;
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+  transition: background 0.3s;
+}
+
+.dark .modal-content {
+  background: rgba(35, 35, 43, 0.97) !important;
+  border-radius: 28px !important;
+  box-shadow: 0 12px 48px 0 rgba(0,0,0,0.55), 0 1.5px 8px 0 rgba(37,99,235,0.08);
+  border: 2px solid #2563eb !important;
+  overflow: hidden;
+  transition: box-shadow 0.3s, background 0.3s;
+  animation: modalPopIn 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+
+@keyframes modalPopIn {
+  0% { transform: scale(0.96) translateY(30px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.dark .modal-header {
+  background: linear-gradient(90deg, #23232b 80%, #2563eb 100%) !important;
+  border-bottom: 2.5px solid #2563eb !important;
+  padding-top: 2rem !important;
+  padding-bottom: 2rem !important;
+  position: relative;
+}
+
+.dark .modal-header::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; right: 0; height: 5px;
+  background: linear-gradient(90deg, #2563eb 0%, #38bdf8 100%);
+  border-radius: 28px 28px 0 0;
+}
+
+.dark .modal-title h2 {
+  color: #f1f5f9 !important;
+  font-size: 2rem !important;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.dark .modal-title h2::before {
+  content: '\2728'; /* Sparkles emoji */
+  font-size: 2rem;
+  color: #38bdf8;
+  margin-right: 0.5rem;
+}
+
+.dark .modal-icon {
+  background: #18181b !important;
+  color: #38bdf8 !important;
+}
+
+.dark .modal-category {
+  background: #2563eb !important;
+  color: #f1f5f9 !important;
+}
+
+.dark .modal-close {
+  color: #a1a1aa !important;
+  background: rgba(37,99,235,0.08) !important;
+  border-radius: 50% !important;
+  font-size: 2.25rem !important;
+  width: 2.5rem; height: 2.5rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s, color 0.2s, transform 0.2s;
+  position: absolute; right: 2rem; top: 2rem;
+  z-index: 2;
+}
+
+.dark .modal-close:hover {
+  background: #2563eb !important;
+  color: #f1f5f9 !important;
+  transform: scale(1.12) rotate(8deg);
+}
+
+.dark .modal-body {
+  background: rgba(40, 40, 50, 0.98) !important;
+  color: #f1f5f9 !important;
+  padding: 2rem 2.5rem !important;
+  border-radius: 0 0 28px 28px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+
+.dark .modal-section {
+  background: #23232b !important;
+  color: #e0e7ef !important;
+  border: 1.5px solid #3f3f46 !important;
+  border-radius: 16px !important;
+}
+
+.dark .modal-section h3 {
+  color: #38bdf8 !important;
+  font-size: 1.25rem !important;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  border-bottom: 2px solid #2563eb !important;
+}
+
+.dark .modal-section p,
+.dark .modal-section ol,
+.dark .modal-section ul,
+.dark .modal-section li {
+  color: #e0e7ef !important;
+  font-size: 1.08rem;
+  line-height: 1.7;
+}
+
+.dark .description-section {
+  background: linear-gradient(135deg, #23232b, #18181b) !important;
+}
+
+.dark .next-steps-section {
+  background: linear-gradient(135deg, #23232b, #2563eb) !important;
+  border-left: 4px solid #38bdf8 !important;
+}
+
+.dark .next-steps-section p {
+  color: #e0e7ef !important;
+}
+
+.dark .tips-section {
+  background: linear-gradient(135deg, #23232b, #f59e42) !important;
+  border-left: 4px solid #f59e42 !important;
+}
+
+.dark .tip-text {
+  color: #fbbf24 !important;
+}
+
+.dark .examples-section {
+  background: linear-gradient(135deg, #23232b, #10b981) !important;
+  border-left: 4px solid #10b981 !important;
+}
+
+.dark .example-text {
+  color: #6ee7b7 !important;
+}
+
+/* --- DARK MODE: FIX SITUATION CARDS AND MODAL TEXT --- */
+.dark .situation-card {
+  background: #23232b !important;
+  color: #e0e7ef !important;
+  border: 1.5px solid #3f3f46 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18) !important;
+}
+
+.dark .situation-header {
+  background: none !important;
+}
+
+.dark .situation-icon {
+  color: #38bdf8 !important;
+  font-size: 1.5rem !important;
+}
+
+.dark .situation-title {
+  color: #f1f5f9 !important;
+  font-weight: 600 !important;
+}
+
+.dark .situation-text {
+  color: #e0e7ef !important;
+  font-size: 1.08rem !important;
+  line-height: 1.7 !important;
+}
+
+.dark .modal-section h3,
+.dark .modal-section p,
+.dark .modal-section ul,
+.dark .modal-section li {
+  color: #e0e7ef !important;
+}
+
+.dark .expanded-description {
+  color: #e0e7ef !important;
+}
+
+/* --- DARK MODE: FIX NEXT STEPS & KEY TIPS BOXES --- */
+.dark .next-steps-box,
+.dark .key-tips-box {
+  background: #23232b !important;
+  color: #f1f5f9 !important;
+  border: 1.5px solid #3f3f46 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18) !important;
+}
+
+.dark .next-steps-box h4,
+.dark .key-tips-box h4 {
+  color: #38bdf8 !important;
+}
+
+.dark .next-steps-box li,
+.dark .key-tips-box li,
+.dark .next-steps-box p,
+.dark .key-tips-box p {
+  color: #f1f5f9 !important;
+}
+
+/* --- DARK MODE: FORCE ALL MAIN CONTAINERS AND CARDS TO DARK --- */
+.dark .disposition-container,
+.dark .disposition-main,
+.dark .disposition-card,
+.dark .next-steps-box,
+.dark .key-tips-box,
+.dark .card-header,
+.dark .card-content,
+.dark .card-footer,
+.dark .preview-section {
+  background: #23232b !important;
+  color: #f1f5f9 !important;
+  border-color: #3f3f46 !important;
+}
+.dark .disposition-card h1,
+.dark .disposition-card h2,
+.dark .disposition-card h3,
+.dark .disposition-card h4,
+.dark .disposition-card p,
+.dark .disposition-card li,
+.dark .preview-section h4,
+.dark .preview-section p,
+.dark .preview-section li {
+  color: #f1f5f9 !important;
+}

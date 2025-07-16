@@ -4,6 +4,7 @@ import { getAllRebuttals, deleteRebuttal, updateRebuttal } from '../../services/
 import categoryService from '../../services/categoryService';
 import RebuttalForm from './RebuttalForm';
 import './RebuttalManagement.css';
+import SearchBar from '../SearchBar';
 
 const RebuttalManagement = () => {
   const [rebuttals, setRebuttals] = useState([]);
@@ -317,16 +318,12 @@ const RebuttalManagement = () => {
 
         {/* Filters and Search */}
         <div className="filters-section">
-          <div className="search-box">
-            <input
-              type="text"
-              placeholder="Search rebuttals..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
-            <span className="search-icon">🔍</span>
-          </div>
+          <SearchBar
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            onClear={() => setSearchTerm('')}
+            placeholder="Search rebuttals..."
+          />
 
           <div className="filter-controls">
             <select

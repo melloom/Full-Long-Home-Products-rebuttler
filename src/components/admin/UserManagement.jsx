@@ -4,6 +4,7 @@ import { getAuth } from 'firebase/auth';
 import { useAuth } from '../../contexts/AuthContext';
 import { auth } from '../../services/firebase/config';
 import './UserManagement.css';
+import SearchBar from '../SearchBar';
 
 const UserManagement = () => {
   const { currentUser } = useAuth();
@@ -327,16 +328,12 @@ const UserManagement = () => {
       </div>
 
       <div className="filters-section">
-        <div className="search-box">
-          <span className="search-icon">🔍</span>
-          <input
-            type="text"
-            placeholder="Search users by email..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="search-input"
-          />
-        </div>
+        <SearchBar
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          onClear={() => setSearchTerm('')}
+          placeholder="Search users by email..."
+        />
         
         <div className="filter-controls">
           <select

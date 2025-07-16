@@ -11,10 +11,27 @@ export const registerServiceWorker = async () => {
       console.log('Environment:', isProduction ? 'Production' : 'Development');
       console.log('Current URL:', window.location.href);
       
+      // In development, service workers might not work properly
+      if (!isProduction) {
+        console.log('Development mode detected - service worker registration may be limited');
+      }
+      
+      // Check if service worker is already registered
+      const existingRegistration = await navigator.serviceWorker.getRegistration();
+      if (existingRegistration) {
+        console.log('Service worker already registered:', existingRegistration);
+        return existingRegistration;
+      }
+      
       // Check if service worker file exists
-      const swResponse = await fetch('/sw.js', { method: 'HEAD' });
-      if (!swResponse.ok) {
-        throw new Error(`Service worker file not found: ${swResponse.status} ${swResponse.statusText}`);
+      try {
+        const swResponse = await fetch('/sw.js', { method: 'HEAD' });
+        if (!swResponse.ok) {
+          throw new Error(`Service worker file not found: ${swResponse.status} ${swResponse.statusText}`);
+        }
+      } catch (fetchError) {
+        console.warn('Could not check service worker file:', fetchError.message);
+        // Continue anyway - the registration might still work
       }
       
       const registration = await navigator.serviceWorker.register('/sw.js', {
@@ -67,6 +84,8 @@ export const registerServiceWorker = async () => {
       if (error.stack) {
         console.error('Error stack:', error.stack);
       }
+      
+      throw error; // Re-throw the error so it can be handled by the caller
     }
   } else {
     console.log('Service Worker not supported in this browser');

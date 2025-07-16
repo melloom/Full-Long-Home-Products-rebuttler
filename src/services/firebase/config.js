@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore, enableIndexedDbPersistence, CACHE_SIZE_UNLIMITED, initializeFirestore } from 'firebase/firestore';
+import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -58,6 +59,7 @@ export const checkFirebaseConnection = () => {
 let app = null;
 let auth = null;
 let db = null;
+let messaging = null;
 let isInitializing = false;
 let initializationPromise = null;
 
@@ -111,9 +113,47 @@ export const initializeFirebase = async () => {
           // Continue without persistence
         }
       }
+
+      // Initialize Firebase Messaging with error handling
+      try {
+        if ('serviceWorker' in navigator && 'Notification' in window) {
+          messaging = getMessaging(app);
+          console.log('Firebase Messaging initialized successfully');
+          
+          // Request notification permission with better error handling
+          const requestNotificationPermission = async () => {
+            try {
+              const permission = await Notification.requestPermission();
+              if (permission === 'granted') {
+                try {
+                  const token = await getToken(messaging, {
+                    vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY || 'YOUR_VAPID_KEY'
+                  });
+                  console.log('Notification token obtained:', token);
+                } catch (tokenError) {
+                  console.log('Could not get notification token:', tokenError.message);
+                }
+              } else {
+                console.log('Notification permission denied or blocked');
+              }
+            } catch (error) {
+              console.log('Error requesting notification permission:', error.message);
+            }
+          };
+
+          // Only request permission if not already granted/denied
+          if (Notification.permission === 'default') {
+            requestNotificationPermission();
+          }
+        } else {
+          console.log('Service Worker or Notification API not supported');
+        }
+      } catch (error) {
+        console.log('Firebase Messaging initialization failed:', error.message);
+      }
       
       console.log('Firebase initialized successfully');
-      return { app, auth, db };
+      return { app, auth, db, messaging };
     } catch (error) {
       console.error('Firebase initialization error:', error.message);
       throw error;
@@ -130,5 +170,5 @@ initializeFirebase().catch(error => {
   console.error('Failed to initialize Firebase:', error);
 });
 
-export { auth, db };
+export { auth, db, messaging };
 export default app; 

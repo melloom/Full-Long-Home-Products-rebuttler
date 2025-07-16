@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getServiceTopics, addServiceTopic, updateServiceTopic, deleteServiceTopic, resetServiceTopics } from '../../services/customerServiceService';
 import './CustomerServiceManagement.css';
+import SearchBar from '../SearchBar';
 
 const EMOJI_ICONS = {
   'Appointment Management': '📅',
@@ -296,16 +297,12 @@ const CustomerServiceManagement = () => {
       {/* Controls Section */}
       <div className="management-controls">
         <div className="search-filter">
-          <div className="search-container">
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Search topics..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <span className="search-icon">🔍</span>
-          </div>
+          <SearchBar
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            onClear={() => setSearchTerm('')}
+            placeholder="Search topics..."
+          />
           <select
             className="category-filter"
             value={selectedCategory}

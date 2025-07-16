@@ -7,6 +7,7 @@ import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '../services/firebase/config';
 import categoryService from '../services/categoryService';
 import rebuttalsService from '../services/rebuttalsService';
+import SearchBar from './SearchBar';
 
 const Home = () => {
   const navigate = useNavigate();

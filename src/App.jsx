@@ -1,8 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { getCurrentUser } from './services/firebase/auth';
-import { registerServiceWorker, handleServiceWorkerUpdates, checkServiceWorkerStatus } from './utils/pwa';
 import { scrollToTop } from './utils/useScrollToTop';
+import { registerServiceWorker, handleServiceWorkerUpdates } from './utils/pwa';
 import Home from './components/Home';
 import RebuttalLibrary from './components/RebuttalLibrary';
 import LeadDisposition from './components/LeadDisposition';
@@ -41,32 +40,35 @@ const NavigationWrapper = ({ Component }) => {
 function App() {
   const [isLoading, setIsLoading] = React.useState(true);
 
+  // Force dark mode on every render
   React.useEffect(() => {
-    // Register PWA service worker
+    document.body.classList.add('dark');
+    return () => {
+      document.body.classList.remove('dark');
+    };
+  });
+
+  // Register service worker
+  React.useEffect(() => {
     const initializePWA = async () => {
       try {
         console.log('Initializing PWA...');
-        
-        // Check service worker status first
-        const swStatus = await checkServiceWorkerStatus();
-        console.log('Service Worker Status:', swStatus);
-        
-        // Register service worker
         await registerServiceWorker();
         handleServiceWorkerUpdates();
-        
-        console.log('PWA initialization complete');
+        console.log('PWA initialized successfully');
       } catch (error) {
-        console.error('PWA initialization failed:', error);
+        console.error('Failed to initialize PWA:', error);
       }
     };
 
     initializePWA();
+  }, []);
 
+  React.useEffect(() => {
     // Simulate initial app loading
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 1500); // Show loading screen for at least 1.5 seconds
+    }, 1000); // Show loading screen for 1 second
 
     return () => clearTimeout(timer);
   }, []);

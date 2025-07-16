@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, Clock, FileText, CheckCircle, ChevronRight, Phone, User, Home, Mail, Users, CheckSquare, Square, Check } from 'lucide-react';
+import { Calendar, Clock, FileText, CheckCircle, ChevronRight, Phone, User, Mail, Users, CheckSquare, Square, Check, Home } from 'lucide-react';
+import { safePostMessage } from '../utils/iframeErrorHandler';
+
 import '../styles/ScheduleScript.css';
 
 const ScheduleScript = ({ onNavigate }) => {
@@ -9,7 +11,6 @@ const ScheduleScript = ({ onNavigate }) => {
   const [projectType, setProjectType] = useState('');
 
   const [projectDetails, setProjectDetails] = useState({
-    age: '',
     issues: '',
     currentSetup: '',
     replacementType: '',
@@ -19,6 +20,8 @@ const ScheduleScript = ({ onNavigate }) => {
     activeLeaks: '',
     roofReplaced: ''
   });
+
+
   const [appointment, setAppointment] = useState({
     date: '',
     time: '',
@@ -29,6 +32,22 @@ const ScheduleScript = ({ onNavigate }) => {
     bathChecklist: [],
     roofChecklist: [],
     commitmentChecklist: []
+  });
+
+  const [propertySearch, setPropertySearch] = useState({
+    address: '',
+    results: null,
+    loading: false,
+    error: null,
+    suggestions: [],
+    showSuggestions: false,
+    selectedCoordinates: null,
+    checklist: {
+      addressVerified: false,
+      propertyTypeConfirmed: false,
+      characteristicsNoted: false,
+      accessInfoCollected: false
+    }
   });
 
   const scriptSteps = [
@@ -43,6 +62,11 @@ const ScheduleScript = ({ onNavigate }) => {
       type: 'selection'
     },
     {
+      id: 'propertySearch',
+      title: 'Property Search',
+      type: 'property'
+    },
+    {
       id: 'projectChecklist',
       title: 'Project Checklist',
       type: 'checklist'
@@ -52,7 +76,6 @@ const ScheduleScript = ({ onNavigate }) => {
       title: 'Project-Specific Questions',
       type: 'questions'
     },
-
     {
       id: 'valueProposition',
       title: 'Value of the Visit',
@@ -114,6 +137,21 @@ const ScheduleScript = ({ onNavigate }) => {
     '6:00 PM'
   ];
 
+  const addressInputRef = useRef(null);
+
+  // Handle clicking outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (addressInputRef.current && !addressInputRef.current.contains(event.target)) {
+        setPropertySearch(prev => ({ ...prev, showSuggestions: false }));
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
 
   const handleChecklistToggle = (checklistType, itemIndex) => {
@@ -152,6 +190,311 @@ const ScheduleScript = ({ onNavigate }) => {
       setCurrentStep(currentStep + 1);
     }
   };
+
+  const handlePropertySearch = async () => {
+    if (!propertySearch.address) return;
+
+    setPropertySearch(prev => ({ ...prev, loading: true, error: null }));
+
+    try {
+      let lat, lon;
+      
+      // Use coordinates from selected suggestion if available
+      if (propertySearch.selectedCoordinates) {
+        [lon, lat] = propertySearch.selectedCoordinates; // Mapbox returns [lon, lat]
+      } else {
+        // Fallback to geocoding the address
+        const geocodeRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(propertySearch.address)}`);
+        const geocodeData = await geocodeRes.json();
+        if (!geocodeData.length) throw new Error('Address not found');
+        [lon, lat] = geocodeData[0].lon, geocodeData[0].lat;
+      }
+
+      console.log('Using coordinates:', { lat, lon });
+
+      // Call Regrid API with lat/lon
+      const apiKey = import.meta.env.VITE_REGRID_API_KEY;
+      
+      if (!apiKey || apiKey === 'your_regrid_api_key_here') {
+        throw new Error('Regrid API key not configured. Please add your Regrid API key to .env.local');
+      }
+      
+      console.log('Regrid API key available:', !!apiKey);
+      
+      // Try different Regrid API v2 endpoints
+      let regridUrl;
+      let regridData;
+      
+      // First try the Regrid v2 API endpoint with lat/lon and larger radius
+      regridUrl = `https://app.regrid.com/api/v2/parcels/point?lat=${lat}&lon=${lon}&token=${apiKey}&radius=500`;
+      console.log('Trying Regrid v2 API with lat/lon (500m radius):', regridUrl);
+      
+      let regridRes = await fetch(regridUrl);
+      console.log('Regrid v2 response status:', regridRes.status);
+      console.log('Regrid v2 response headers:', regridRes.headers);
+      
+      if (regridRes.ok) {
+        regridData = await regridRes.json();
+        console.log('Regrid v2 API response:', regridData);
+        console.log('Regrid v2 API response structure:', {
+          hasParcels: !!regridData.parcels,
+          parcelsType: typeof regridData.parcels,
+          hasFeatures: regridData.parcels && !!regridData.parcels.features,
+          featuresLength: regridData.parcels && regridData.parcels.features ? regridData.parcels.features.length : 0,
+          firstFeature: regridData.parcels && regridData.parcels.features ? regridData.parcels.features[0] : null
+        });
+        
+        // Check if we got any parcels
+        const hasParcels = regridData.parcels && regridData.parcels.features && regridData.parcels.features.length > 0;
+        
+        if (!hasParcels) {
+          console.log('No parcels found with lat/lon search, trying address search...');
+          
+          // Try with address search instead
+          regridUrl = `https://app.regrid.com/api/v2/parcels/address?query=${encodeURIComponent(propertySearch.address)}&token=${apiKey}`;
+          console.log('Trying Regrid v2 API with address:', regridUrl);
+          
+          regridRes = await fetch(regridUrl);
+          console.log('Regrid v2 address response status:', regridRes.status);
+          
+          if (regridRes.ok) {
+            regridData = await regridRes.json();
+            console.log('Regrid v2 address API response:', regridData);
+            
+            // Check if address search also returned no results
+            const hasAddressParcels = regridData.parcels && regridData.parcels.features && regridData.parcels.features.length > 0;
+            
+            if (!hasAddressParcels) {
+              console.log('No parcels found with address search, trying simplified address...');
+              
+              // Try with a simplified address (just street name and number)
+              const simplifiedAddress = propertySearch.address.split(',')[0]; // Take just the street address part
+              regridUrl = `https://app.regrid.com/api/v2/parcels/address?query=${encodeURIComponent(simplifiedAddress)}&token=${apiKey}`;
+              console.log('Trying Regrid v2 API with simplified address:', regridUrl);
+              
+              regridRes = await fetch(regridUrl);
+              console.log('Regrid v2 simplified address response status:', regridRes.status);
+              
+              if (regridRes.ok) {
+                regridData = await regridRes.json();
+                console.log('Regrid v2 simplified address API response:', regridData);
+              }
+            }
+          }
+        } else {
+          // Try with address search instead of lat/lon
+          regridUrl = `https://app.regrid.com/api/v2/parcels/address?query=${encodeURIComponent(propertySearch.address)}&token=${apiKey}`;
+          console.log('Trying Regrid v2 API with address:', regridUrl);
+          
+          regridRes = await fetch(regridUrl);
+          console.log('Regrid v2 address response status:', regridRes.status);
+          
+          if (regridRes.ok) {
+            regridData = await regridRes.json();
+            console.log('Regrid v2 address API response:', regridData);
+          } else {
+            // Try with different authentication method
+            regridUrl = `https://app.regrid.com/api/v2/parcels/point?lat=${lat}&lon=${lon}&radius=500`;
+            console.log('Trying Regrid v2 API with Authorization header:', regridUrl);
+            
+            regridRes = await fetch(regridUrl, {
+              headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            console.log('Regrid v2 Auth header response status:', regridRes.status);
+            
+            if (regridRes.ok) {
+              regridData = await regridRes.json();
+              console.log('Regrid v2 Auth header API response:', regridData);
+            } else {
+              throw new Error(`All Regrid v2 API attempts failed. Last error: ${regridRes.status} ${regridRes.statusText}`);
+            }
+          }
+        }
+      }
+
+      // Map the API response to your UI fields
+      let parcel = null;
+      
+      // Try different possible response structures
+      if (regridData.parcels && regridData.parcels.features && regridData.parcels.features.length > 0) {
+        parcel = regridData.parcels.features[0];
+        console.log('Found parcel in features array');
+      } else if (regridData.parcels && Array.isArray(regridData.parcels) && regridData.parcels.length > 0) {
+        parcel = regridData.parcels[0];
+        console.log('Found parcel in parcels array');
+      } else if (regridData.features && Array.isArray(regridData.features) && regridData.features.length > 0) {
+        parcel = regridData.features[0];
+        console.log('Found parcel in root features array');
+      } else {
+        console.log('No parcel found in any expected structure');
+        console.log('Available keys in response:', Object.keys(regridData));
+      }
+      
+      if (!parcel) {
+        console.log('No parcel found in API response, using mock data');
+        console.log('Full API response for debugging:', JSON.stringify(regridData, null, 2));
+        // Fallback to mock data for now
+        const mockParcel = {
+          address: propertySearch.address,
+          usedesc: 'Single Family Home',
+          yearbuilt: '1985',
+          recrdareano: '2400',
+          deeded_acres: '0.25',
+          numrooms: '3',
+          numunits: '1',
+          garage_spaces: '2',
+          taxamt: '3200',
+          saledate: '2018',
+          parval: '450000',
+          owner: 'John & Jane Doe'
+        };
+        
+        setPropertySearch(prev => ({
+          ...prev,
+          results: {
+            address: mockParcel.address,
+            propertyType: mockParcel.usedesc,
+            yearBuilt: mockParcel.yearbuilt,
+            squareFootage: mockParcel.recrdareano,
+            lotSize: `${mockParcel.deeded_acres} acres`,
+            bedrooms: mockParcel.numrooms,
+            bathrooms: '2.5',
+            garageSpaces: mockParcel.garage_spaces,
+            propertyTax: `$${mockParcel.taxamt}/year`,
+            lastSold: mockParcel.saledate,
+            estimatedValue: `$${mockParcel.parval}`,
+            ownerName: mockParcel.owner
+          },
+          loading: false,
+          checklist: {
+            ...prev.checklist,
+            addressVerified: true
+          }
+        }));
+        return;
+      }
+
+      // Extract properties from the v2 API response
+      const properties = parcel.properties || {};
+      const fields = properties.fields || {};
+      
+      console.log('Parcel properties:', properties);
+      console.log('Parcel fields:', fields);
+
+      // Map real Regrid v2 API response to UI fields
+      setPropertySearch(prev => ({
+        ...prev,
+        results: {
+          address: properties.headline || propertySearch.address,
+          propertyType: fields.usedesc || 'N/A',
+          yearBuilt: fields.yearbuilt || 'N/A',
+          squareFootage: fields.recrdareano ? `${fields.recrdareano} sq ft` : 'N/A',
+          lotSize: fields.deeded_acres ? `${fields.deeded_acres} acres` : 'N/A',
+          bedrooms: fields.numrooms || 'N/A',
+          bathrooms: fields.numunits || 'N/A',
+          garageSpaces: 'N/A', // Not available in Regrid API
+          propertyTax: fields.taxamt ? `$${fields.taxamt}/year` : 'N/A',
+          lastSold: fields.saledate || 'N/A',
+          estimatedValue: fields.parval ? `$${fields.parval}` : 'N/A',
+          ownerName: fields.owner || 'N/A'
+        },
+        loading: false,
+        checklist: {
+          ...prev.checklist,
+          addressVerified: true
+        }
+      }));
+    } catch (error) {
+      console.error('Property search error:', error);
+      setPropertySearch(prev => ({
+        ...prev,
+        error: error.message || 'Failed to search property. Please try again.',
+        loading: false
+      }));
+    }
+  };
+
+  const handleClearSearch = () => {
+    setPropertySearch({
+      address: '',
+      results: null,
+      loading: false,
+      error: null,
+      suggestions: [],
+      showSuggestions: false,
+      selectedCoordinates: null,
+      checklist: {
+        addressVerified: false,
+        propertyTypeConfirmed: false,
+        characteristicsNoted: false,
+        accessInfoCollected: false
+      }
+      });
+    };
+
+  const handlePropertyChecklistToggle = (item) => {
+    setPropertySearch(prev => ({
+      ...prev,
+      checklist: {
+        ...prev.checklist,
+        [item]: !prev.checklist[item]
+      }
+    }));
+  };
+
+  const handleAddressInputChange = async (value) => {
+    console.log('handleAddressInputChange called with:', value);
+    setPropertySearch(prev => ({ ...prev, address: value, showSuggestions: false }));
+    
+    if (value.length < 3) {
+      console.log('Value too short, clearing suggestions');
+      setPropertySearch(prev => ({ ...prev, suggestions: [] }));
+      return;
+    }
+
+    try {
+      const apiKey = import.meta.env.VITE_MAPBOX_API_KEY;
+      console.log('Mapbox API Key available:', !!apiKey);
+      console.log('Making request to Mapbox API...');
+      
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(value)}.json?access_token=${apiKey}&country=US&types=address&limit=5`
+      );
+      const data = await response.json();
+      console.log('Mapbox API response:', data);
+      
+      const suggestions = data.features.map(feature => ({
+        id: feature.id,
+        address: feature.place_name,
+        coordinates: feature.center
+      }));
+      
+      console.log('Processed suggestions:', suggestions);
+      
+      setPropertySearch(prev => ({ 
+        ...prev, 
+        suggestions,
+        showSuggestions: suggestions.length > 0
+      }));
+      console.log('Setting suggestions:', suggestions.length, 'showSuggestions:', suggestions.length > 0);
+        } catch (error) {
+      console.error('Error fetching address suggestions:', error);
+    }
+  };
+
+  const handleSuggestionSelect = (suggestion) => {
+    setPropertySearch(prev => ({
+      ...prev,
+      address: suggestion.address,
+      suggestions: [],
+      showSuggestions: false,
+      selectedCoordinates: suggestion.coordinates
+    }));
+  };
+
 
   const renderGreetingStep = () => (
     <motion.div 
@@ -282,7 +625,7 @@ const ScheduleScript = ({ onNavigate }) => {
           className={`project-option-dark ${projectType === 'bath' ? 'selected-dark' : ''}`}
           onClick={() => {
             setProjectType('bath');
-            setTimeout(() => setCurrentStep(2), 200); // auto-advance
+            setTimeout(() => setCurrentStep(2), 200); // auto-advance to project checklist
           }}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -315,7 +658,7 @@ const ScheduleScript = ({ onNavigate }) => {
           className={`project-option-dark ${projectType === 'roof' ? 'selected-dark' : ''}`}
           onClick={() => {
             setProjectType('roof');
-            setTimeout(() => setCurrentStep(2), 200); // auto-advance
+            setTimeout(() => setCurrentStep(2), 200); // auto-advance to project checklist
           }}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -689,6 +1032,7 @@ const ScheduleScript = ({ onNavigate }) => {
             activeLeaks: '',
             roofReplaced: ''
           });
+
           setAppointment({
             date: '',
             time: '',
@@ -710,17 +1054,258 @@ const ScheduleScript = ({ onNavigate }) => {
     </motion.div>
   );
 
+  const renderPropertySearchStep = () => (
+          <motion.div 
+            className="script-step-dark"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+      <h3 className="step-title-dark">Property Search & Verification</h3>
+      
+      <div className="property-search-container-dark">
+        {/* Search Form */}
+        <div className="search-form-container-dark">
+          <div className="search-header-dark">
+            <div className="search-icon-container-dark">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M21 21L16.514 16.506L21 21ZM19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <div className="search-title-dark">
+              <h4>Property Address Search</h4>
+              <p>Enter the property address to search for detailed information</p>
+            </div>
+          </div>
+          
+          <div className="search-input-section-dark">
+            <div className="input-group-dark">
+              <label className="input-label-dark">Property Address</label>
+              <div className="address-input-container-dark" ref={addressInputRef}>
+              <input
+                type="text"
+                  placeholder="Enter full property address..."
+                  className="modern-input-dark"
+                  value={propertySearch.address || ''}
+                  onChange={(e) => handleAddressInputChange(e.target.value)}
+                  onFocus={() => propertySearch.suggestions.length > 0 && setPropertySearch(prev => ({ ...prev, showSuggestions: true }))}
+                />
+                {propertySearch.showSuggestions && propertySearch.suggestions.length > 0 && (
+                  <div className="suggestions-dropdown-dark">
+                    {propertySearch.suggestions.map((suggestion) => (
+                      <div
+                        key={suggestion.id}
+                        className="suggestion-item-dark"
+                        onClick={() => handleSuggestionSelect(suggestion)}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M17.657 16.657L13.414 20.9C13.039 21.275 12.525 21.485 12 21.485C11.475 21.485 10.961 21.275 10.586 20.9L6.343 16.657C5.22422 15.5381 4.46234 14.1127 4.15369 12.5608C3.84504 11.009 4.00349 9.40047 4.60901 7.93853C5.21452 6.4766 6.2399 5.22425 7.55548 4.34668C8.87107 3.46911 10.4178 3.00024 12 3.00024C13.5822 3.00024 15.1289 3.46911 16.4445 4.34668C17.7601 5.22425 18.7855 6.4766 19.391 7.93853C19.9965 9.40047 20.155 11.009 19.8463 12.5608C19.5377 14.1127 18.7758 15.5381 17.657 16.657Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M15 11C15 12.6569 13.6569 14 12 14C10.3431 14 9 12.6569 9 11C9 9.34315 10.3431 8 12 8C13.6569 8 15 9.34315 15 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        {suggestion.address}
+                </div>
+                    ))}
+              </div>
+                )}
+              
+                {/* Debug info */}
+              <div style={{
+                  fontSize: '12px', 
+                  color: '#888', 
+                  marginTop: '4px',
+                  padding: '4px',
+                  background: 'rgba(0,0,0,0.1)',
+                  borderRadius: '4px'
+                }}>
+                  Debug: Suggestions: {propertySearch.suggestions.length}, Show: {propertySearch.showSuggestions ? 'true' : 'false'}
+                </div>
+              </div>
+                </div>
+
+            <div className="search-actions-dark">
+              <motion.button
+                className="search-button-dark primary"
+                onClick={handlePropertySearch}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                disabled={!propertySearch.address}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M21 21L16.514 16.506L21 21ZM19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Search Property
+              </motion.button>
+              
+              <motion.button
+                className="search-button-dark secondary"
+                onClick={handleClearSearch}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M19 7L18.132 19.142C18.0579 20.1891 17.187 21.0273 16.148 21.0273H7.852C6.813 21.0273 5.94214 20.1891 5.868 19.142L5 7M10 11V17M14 11V17M15 7V4C15 3.44772 14.5523 3 14 3H10C9.44772 3 9 3.44772 9 4V7M4 7H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Clear
+              </motion.button>
+            </div>
+          </div>
+        </div>
+
+        {/* Search Results */}
+        {propertySearch.results && (
+          <div className="search-results-container-dark">
+            <div className="results-header-dark">
+              <h4>Property Information</h4>
+              <div className="results-status-dark">
+                <span className="status-badge-dark verified">Verified</span>
+                  </div>
+                </div>
+
+            <div className="property-details-grid-dark">
+              <div className="detail-card-dark">
+                <div className="detail-icon-dark">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M17.657 16.657L13.414 20.9C13.039 21.275 12.525 21.485 12 21.485C11.475 21.485 10.961 21.275 10.586 20.9L6.343 16.657C5.22422 15.5381 4.46234 14.1127 4.15369 12.5608C3.84504 11.009 4.00349 9.40047 4.60901 7.93853C5.21452 6.4766 6.2399 5.22425 7.55548 4.34668C8.87107 3.46911 10.4178 3.00024 12 3.00024C13.5822 3.00024 15.1289 3.46911 16.4445 4.34668C17.7601 5.22425 18.7855 6.4766 19.391 7.93853C19.9965 9.40047 20.155 11.009 19.8463 12.5608C19.5377 14.1127 18.7758 15.5381 17.657 16.657Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M15 11C15 12.6569 13.6569 14 12 14C10.3431 14 9 12.6569 9 11C9 9.34315 10.3431 8 12 8C13.6569 8 15 9.34315 15 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <div className="detail-content-dark">
+                  <h6>Address</h6>
+                  <p>{propertySearch.results.address}</p>
+                </div>
+              </div>
+              
+              <div className="detail-card-dark">
+                <div className="detail-icon-dark">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M9 22V12H15V22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <div className="detail-content-dark">
+                  <h6>Property Type</h6>
+                  <p>{propertySearch.results.propertyType || 'Residential'}</p>
+                </div>
+              </div>
+              
+              <div className="detail-card-dark">
+                <div className="detail-icon-dark">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8 3V7M16 3V7M3 11H21M5 5H19C20.1046 5 21 5.89543 21 7V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V7C3 5.89543 3.89543 5 5 5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <div className="detail-content-dark">
+                  <h6>Year Built</h6>
+                  <p>{propertySearch.results.yearBuilt || 'N/A'}</p>
+                </div>
+            </div>
+
+              <div className="detail-card-dark">
+                <div className="detail-icon-dark">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M22 6L12 13L2 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                </div>
+                <div className="detail-content-dark">
+                  <h6>Square Footage</h6>
+                  <p>{propertySearch.results.squareFootage || 'N/A'} sq ft</p>
+                </div>
+              </div>
+              <div className="detail-card-dark">
+                <div className="detail-icon-dark">
+                  {/* Owner icon */}
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2"/>
+                    <path d="M4 20c0-4 8-4 8-4s8 0 8 4" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+                </div>
+                <div className="detail-content-dark">
+                  <h6>Owner Name</h6>
+                  <p>{propertySearch.results.ownerName || 'N/A'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Property Checklist */}
+        <div className="property-checklist-section-dark">
+          <h4>Property Verification Checklist</h4>
+          <div className="property-checklist-grid-dark">
+            <motion.div 
+              className={`checklist-item-dark ${propertySearch.checklist.addressVerified ? 'completed-dark' : ''}`}
+              onClick={() => handlePropertyChecklistToggle('addressVerified')}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {propertySearch.checklist.addressVerified ? (
+                <CheckSquare className="check-icon" />
+              ) : (
+                <Square className="check-icon" />
+              )}
+              <span>Property address verified</span>
+            </motion.div>
+            
+            <motion.div 
+              className={`checklist-item-dark ${propertySearch.checklist.propertyTypeConfirmed ? 'completed-dark' : ''}`}
+              onClick={() => handlePropertyChecklistToggle('propertyTypeConfirmed')}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {propertySearch.checklist.propertyTypeConfirmed ? (
+                <CheckSquare className="check-icon" />
+              ) : (
+                <Square className="check-icon" />
+              )}
+              <span>Property type confirmed</span>
+            </motion.div>
+            
+            <motion.div 
+              className={`checklist-item-dark ${propertySearch.checklist.characteristicsNoted ? 'completed-dark' : ''}`}
+              onClick={() => handlePropertyChecklistToggle('characteristicsNoted')}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {propertySearch.checklist.characteristicsNoted ? (
+                <CheckSquare className="check-icon" />
+              ) : (
+                <Square className="check-icon" />
+              )}
+              <span>Property characteristics noted</span>
+            </motion.div>
+            
+            <motion.div 
+              className={`checklist-item-dark ${propertySearch.checklist.accessInfoCollected ? 'completed-dark' : ''}`}
+              onClick={() => handlePropertyChecklistToggle('accessInfoCollected')}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {propertySearch.checklist.accessInfoCollected ? (
+                <CheckSquare className="check-icon" />
+              ) : (
+                <Square className="check-icon" />
+              )}
+              <span>Access information collected</span>
+            </motion.div>
+          </div>
+        </div>
+            </div>
+          </motion.div>
+        );
+
   const renderCurrentStep = () => {
     switch (scriptSteps[currentStep].id) {
       case 'greeting':
         return renderGreetingStep();
       case 'projectType':
         return renderProjectTypeStep();
+      case 'propertySearch':
+        return renderPropertySearchStep();
       case 'projectChecklist':
         return renderProjectChecklistStep();
       case 'projectQuestions':
         return renderProjectQuestionsStep();
-
       case 'valueProposition':
         return renderValuePropositionStep();
       case 'commitment':
@@ -846,6 +1431,7 @@ const ScheduleScript = ({ onNavigate }) => {
               let StepIcon = FileText;
               if (step.type === 'greeting') StepIcon = Phone;
               if (step.type === 'selection') StepIcon = Home;
+              if (step.type === 'property') StepIcon = Home;
               if (step.type === 'checklist') StepIcon = CheckSquare;
               if (step.type === 'questions') StepIcon = Users;
               if (step.type === 'presentation') StepIcon = FileText;

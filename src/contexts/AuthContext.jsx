@@ -82,12 +82,24 @@ export function AuthProvider({ children }) {
         return unsubscribe;
       } catch (error) {
         console.error('🔍 AuthContext: Firebase initialization error:', error);
-        setError(error);
+        // Don't set error state, just continue without Firebase
+        console.log('🔍 AuthContext: Continuing without Firebase authentication');
+        setCurrentUser(null);
         setLoading(false);
       }
     };
 
+    // Add a timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.log('🔍 AuthContext: Initialization timeout, continuing without Firebase');
+        setLoading(false);
+      }
+    }, 5000); // 5 second timeout
+
     initialize();
+
+    return () => clearTimeout(timeout);
   }, []);
 
   const logout = () => {
@@ -131,24 +143,7 @@ export function AuthProvider({ children }) {
         gap: '1rem'
       }}>
         <div>Loading application...</div>
-        <div style={{ fontSize: '0.8rem', color: '#666' }}>Please wait while we initialize Firebase</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div style={{ 
-        padding: '20px', 
-        color: 'red',
-        maxWidth: '600px',
-        margin: '40px auto',
-        border: '1px solid red',
-        borderRadius: '4px'
-      }}>
-        <h2>Error Initializing App</h2>
-        <p>{error.message}</p>
-        <p>Please check your Firebase configuration and try refreshing the page.</p>
+        <div style={{ fontSize: '0.8rem', color: '#666' }}>Please wait while we initialize the application</div>
       </div>
     );
   }

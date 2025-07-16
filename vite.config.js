@@ -17,11 +17,5 @@ export default defineConfig({
     },
     assetsInlineLimit: 0, // Don't inline small assets
     sourcemap: false
-  },
-  server: {
-    headers: {
-      'Content-Type': 'application/javascript'
-    },
-    historyApiFallback: true
   }
 })
