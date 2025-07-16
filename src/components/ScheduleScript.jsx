@@ -106,11 +106,16 @@ const ScheduleScript = ({ onNavigate }) => {
     }
   };
 
-  const projectChecklistItems = [
-    "How old is your (roof/bath/shower)?",
-    "What issues are you currently having with your (product)?",
-    "What would you like to have done? (Ask product related questions)"
-  ];
+  const getProjectChecklistItems = (projectType) => {
+    const productName = projectType === 'bath' ? 'bath/shower' : projectType === 'roof' ? 'roof' : 'product';
+    const specificProduct = projectType === 'bath' ? 'bath/shower' : projectType === 'roof' ? 'roof' : 'product';
+    
+    return [
+      `How old is your ${specificProduct}?`,
+      `What issues are you currently having with your ${specificProduct}?`,
+      `What would you like to have done? (Ask ${productName} related questions)`
+    ];
+  };
 
   const bathChecklistItems = [
     "Do you currently have a tub or shower in the space?",
@@ -710,11 +715,15 @@ const ScheduleScript = ({ onNavigate }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <h3 className="step-title-dark">Project Checklist</h3>
+      <h3 className="step-title-dark">
+        {projectType === 'bath' ? 'Bath/Shower' : projectType === 'roof' ? 'Roof' : 'Project'} Checklist
+      </h3>
       <div className="checklist-container-dark">
-        <h4 className="checklist-title-dark">General Project Questions:</h4>
+        <h4 className="checklist-title-dark">
+          {projectType === 'bath' ? 'Bath/Shower' : projectType === 'roof' ? 'Roof' : 'General'} Project Questions:
+        </h4>
         <div className="checklist-items-dark">
-          {projectChecklistItems.map((item, index) => (
+          {getProjectChecklistItems(projectType).map((item, index) => (
             <motion.div 
               key={index}
               className={`checklist-item-dark ${checklistItems.projectChecklist.includes(index) ? 'completed-dark' : ''}`}
@@ -1442,7 +1451,6 @@ const ScheduleScript = ({ onNavigate }) => {
                   key={step.id}
                   className={`progress-step-prominent ${index < currentStep ? 'completed' : ''} ${index === currentStep ? 'current' : ''}`}
                   onClick={() => setCurrentStep(index)}
-                  whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                   style={{ cursor: 'pointer' }}
                   aria-label={`Go to step: ${step.title}`}

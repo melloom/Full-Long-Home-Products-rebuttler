@@ -930,9 +930,8 @@
 }
 
 .progress-step-prominent.current .step-icon-wrapper {
-  background: #3b82f6;
-  border-color: #10b981;
-  box-shadow: 0 0 0 4px rgba(16,185,129,0.12);
+  background: rgba(59,130,246,0.12);
+  border-color: rgba(59,130,246,0.18);
 }
 
 .progress-step-prominent.completed .step-icon-wrapper {
