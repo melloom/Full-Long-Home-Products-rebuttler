@@ -1,7 +1,7 @@
 // Service Area Checker Utility
 // This utility checks if an address is in Long Home's service area
 
-// Service areas data from CSV
+// Service areas data from CSV - Updated with correct county mappings
 const serviceAreas = {
   MIDA: [
     'Anne Arundel MD', 'Baltimore City MD', 'Baltimore County MD', 'Berkeley WV',
@@ -55,92 +55,96 @@ const serviceAreas = {
 function extractCountyState(address) {
   if (!address) return null;
   
+  console.log('🔍 Checking address:', address);
+  
   // Convert to uppercase for comparison
   const upperAddress = address.toUpperCase();
   
-  // Look for state abbreviations
+  // Look for state abbreviations with word boundaries to avoid false matches
   const states = ['MD', 'VA', 'WV', 'DE', 'MA', 'RI', 'NH', 'ME', 'CT', 'PA', 'FL'];
   let foundState = null;
   let foundCounty = null;
   
-  // Find state in address
+  // Find state in address - use regex to match whole words only
   for (const state of states) {
-    if (upperAddress.includes(state)) {
+    // Use regex to match state as a whole word (not part of another word)
+    const stateRegex = new RegExp(`\\b${state}\\b`);
+    if (stateRegex.test(upperAddress)) {
       foundState = state;
+      console.log('📍 Found state:', foundState);
       break;
     }
   }
   
   // If no state found, try to guess based on common patterns
   if (!foundState) {
-    // Common patterns that might indicate a state
-    if (upperAddress.includes('CIR') || upperAddress.includes('CIRCLE') || 
-        upperAddress.includes('DR') || upperAddress.includes('DRIVE') ||
-        upperAddress.includes('ST') || upperAddress.includes('STREET') ||
-        upperAddress.includes('AVE') || upperAddress.includes('AVENUE') ||
-        upperAddress.includes('RD') || upperAddress.includes('ROAD') ||
-        upperAddress.includes('LN') || upperAddress.includes('LANE')) {
-      
-      // Try to match against all counties to find the best match
-      let bestMatch = null;
-      let bestScore = 0;
-      
-      for (const [region, counties] of Object.entries(serviceAreas)) {
-        for (const countyState of counties) {
-          const [county, state] = countyState.split(' ');
-          const countyUpper = county.toUpperCase();
-          
-          // Check if any part of the address contains the county name
-          if (upperAddress.includes(countyUpper)) {
-            const score = countyUpper.length; // Longer county names get higher score
-            if (score > bestScore) {
-              bestScore = score;
-              bestMatch = countyState;
-            }
-          }
-        }
-      }
-      
-      if (bestMatch) {
-        return bestMatch;
-      }
-    }
-    
-    // If still no match, return null
+    console.log('⚠️ No state found in address');
     return null;
   }
   
-  // Try to extract county name
-  for (const region of Object.values(serviceAreas)) {
-    for (const countyState of region) {
+  // Try to extract county name - improved logic
+  for (const [region, counties] of Object.entries(serviceAreas)) {
+    for (const countyState of counties) {
       const [county, state] = countyState.split(' ');
-      if (state === foundState && upperAddress.includes(county.toUpperCase())) {
-        foundCounty = county;
-        break;
+      if (state === foundState) {
+        const countyUpper = county.toUpperCase();
+        
+        // Check if any part of the address contains the county name
+        if (upperAddress.includes(countyUpper)) {
+          foundCounty = county;
+          console.log('📍 Found county:', foundCounty, 'in region:', region);
+          break;
+        }
       }
     }
     if (foundCounty) break;
   }
   
-  if (foundCounty && foundState) {
-    return `${foundCounty} ${foundState}`;
+  // If no county found, try to determine by zip code or city
+  if (!foundCounty && foundState === 'MD') {
+    // For Maryland, try to determine county by city or zip code
+    if (upperAddress.includes('SEVERN') || upperAddress.includes('21144')) {
+      foundCounty = 'Anne Arundel';
+      console.log('📍 Determined Anne Arundel County from city/zip');
+    } else if (upperAddress.includes('HANOVER') || upperAddress.includes('21076')) {
+      foundCounty = 'Howard';
+      console.log('📍 Determined Howard County from city/zip');
+    } else if (upperAddress.includes('BALTIMORE')) {
+      foundCounty = 'Baltimore';
+      console.log('📍 Determined Baltimore County from city');
+    } else if (upperAddress.includes('ROCKVILLE') || upperAddress.includes('BETHESDA') || upperAddress.includes('SILVER SPRING')) {
+      foundCounty = 'Montgomery';
+      console.log('📍 Determined Montgomery County from city');
+    }
   }
   
+  if (foundCounty && foundState) {
+    const result = `${foundCounty} ${foundState}`;
+    console.log('✅ Final result:', result);
+    return result;
+  }
+  
+  console.log('❌ Could not determine county/state');
   return null;
 }
 
 // Main function to check if address is in service area
 export function checkServiceArea(address) {
-  if (!address) return { inServiceArea: false, region: null, county: null };
+  if (!address) {
+    console.log('❌ No address provided');
+    return { inServiceArea: false, region: null, county: null };
+  }
   
   const countyState = extractCountyState(address);
   if (!countyState) {
+    console.log('❌ Could not extract county/state from address');
     return { inServiceArea: false, region: null, county: null };
   }
   
   // Check if county is in any service area
   for (const [region, counties] of Object.entries(serviceAreas)) {
     if (counties.includes(countyState)) {
+      console.log('✅ Address is in service area:', region, countyState);
       return {
         inServiceArea: true,
         region: region,
@@ -149,6 +153,7 @@ export function checkServiceArea(address) {
     }
   }
   
+  console.log('❌ Address not in any service area:', countyState);
   return { inServiceArea: false, region: null, county: null };
 }
 

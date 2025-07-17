@@ -144,5 +144,31 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAuthenticated();
     }
+
+    // SCHEDULING COLLECTIONS - Allow everyone to read availability and create bookings
+    // Regions collection - public read, admin write
+    match /regions/{regionId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Time blocks collection - public read, admin write
+    match /timeBlocks/{timeBlockId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Availability collection - public read, admin write
+    match /availability/{availabilityId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Bookings collection - public read and create for appointments
+    match /bookings/{bookingId} {
+      allow read: if true;
+      allow create: if true; // Allow anyone to create a booking
+      allow update, delete: if isAdmin(); // Only admins can update/delete bookings
+    }
   }
 }

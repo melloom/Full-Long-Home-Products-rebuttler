@@ -9,6 +9,7 @@ import CustomerServiceManagement from './CustomerServiceManagement';
 import FAQManagement from './FAQManagement';
 import UserManagement from './UserManagement';
 import DashboardView from './DashboardView';
+import TimeBlockManagement from './TimeBlockManagement';
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
@@ -95,6 +96,8 @@ const AdminDashboard = () => {
         return <FAQManagement />;
       case 'users':
         return <UserManagement />;
+      case 'time-blocks':
+        return <TimeBlockManagement />;
       default:
         return null;
   }
@@ -211,6 +214,12 @@ const AdminDashboard = () => {
           onClick={() => setActiveTab('users')}
             >
           <span role="img" aria-label="Users">👤</span> Users
+            </button>
+            <button 
+          className={`nav-tab${activeTab === 'time-blocks' ? ' active' : ''}`} 
+          onClick={() => setActiveTab('time-blocks')}
+            >
+          <span role="img" aria-label="Time Blocks">⏰</span> Time Blocks
             </button>
         </nav>
 

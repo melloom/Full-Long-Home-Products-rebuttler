@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Tesseract from 'tesseract.js';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, Clock, FileText, CheckCircle, ChevronRight, Phone, User, Mail, Users, CheckSquare, Square, Check, Home } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, FileText, CheckCircle, ChevronRight, Phone, User, Mail, Users, CheckSquare, Square, Check, Home } from 'lucide-react';
 import { safePostMessage } from '../utils/iframeErrorHandler';
+import { getTimeBlocks, listenTimeBlocks, getAvailability, addBooking } from '../services/firebase/scheduling';
+import { checkServiceArea } from '../utils/serviceAreaChecker';
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
 
 import '../styles/ScheduleScript.css';
 
@@ -71,7 +75,8 @@ const ScheduleScript = ({ onNavigate }) => {
     secondaryName: '',
     secondaryPhone: '',
     secondaryEmail: '',
-    relationshipToPrimary: ''
+    relationshipToPrimary: '',
+    showSecondary: false
   });
   const [checklistItems, setChecklistItems] = useState({
     projectChecklist: [],
@@ -110,6 +115,12 @@ const ScheduleScript = ({ onNavigate }) => {
   // Add state to show recaps after completion
   const [showRecap, setShowRecap] = useState(false);
   const [repRecapCopied, setRepRecapCopied] = useState(false);
+  const [recapMessage, setRecapMessage] = useState({
+    type: 'success',
+    title: '',
+    message: '',
+    details: ''
+  });
 
   // Define property verification checklist items for screenshot context
   const propertyChecklistItems = [
@@ -127,6 +138,14 @@ const ScheduleScript = ({ onNavigate }) => {
     propertySearch.checklist.propertyTypeConfirmed &&
     propertySearch.checklist.characteristicsNoted &&
     propertySearch.checklist.accessInfoCollected;
+
+  // Clear all data when component mounts (for new appointments)
+  useEffect(() => {
+    // Only clear if we're at the beginning and no data has been entered
+    if (currentStep === 0 && !callType && !projectType && !userName) {
+      clearAllData();
+    }
+  }, []); // Empty dependency array means this runs once on mount
 
   // Run OCR when a new screenshot is set
   useEffect(() => {
@@ -194,19 +213,14 @@ const ScheduleScript = ({ onNavigate }) => {
       type: 'greeting'
     },
     {
-      id: 'customerInfo',
-      title: 'Customer Information',
-      type: 'customer'
+      id: 'propertySearch',
+      title: 'Property Search',
+      type: 'property'
     },
     {
       id: 'projectType',
       title: 'Project Type Selection',
       type: 'selection'
-    },
-    {
-      id: 'propertySearch',
-      title: 'Property Search',
-      type: 'property'
     },
     {
       id: 'projectChecklist',
@@ -222,6 +236,11 @@ const ScheduleScript = ({ onNavigate }) => {
       id: 'valueProposition',
       title: 'Value of the Visit',
       type: 'presentation'
+    },
+    {
+      id: 'customerInfo',
+      title: 'Customer Information',
+      type: 'customer'
     },
     {
       id: 'commitment',
@@ -284,10 +303,8 @@ const ScheduleScript = ({ onNavigate }) => {
     "Verify Product"
   ];
 
-  const timeSlots = [
-    '2:00 PM',
-    '6:00 PM'
-  ];
+  const [timeBlocks, setTimeBlocks] = useState({ weekdays: [], weekends: [] });
+  const [loadingTimeBlocks, setLoadingTimeBlocks] = useState(true);
 
   const addressInputRef = useRef(null);
 
@@ -661,6 +678,68 @@ const ScheduleScript = ({ onNavigate }) => {
     return `${d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })} at ${time}`;
   };
 
+  // Helper functions for time blocks
+  const isWeekend = (date) => {
+    if (!date) return false;
+    const day = new Date(date).getDay();
+    return day === 0 || day === 6;
+  };
+
+  const getTimeBlocksForDate = (date) => {
+    return isWeekend(date) ? timeBlocks.weekends : timeBlocks.weekdays;
+  };
+
+  const getAvailableTimeBlocks = (date) => {
+    const blocks = getTimeBlocksForDate(date);
+    return blocks.filter(block => block.available);
+  };
+
+  // Update getAvailableTimeBlocks to accept region
+  const getAvailableTimeBlocksForRegion = (date, region) => {
+    if (!region) return [];
+    // You may already have a function to get slots by region; if not, filter here
+    const allBlocks = getAvailableTimeBlocks(date);
+    return allBlocks.filter(block => block.region === region || !block.region); // fallback if region not set on block
+  };
+
+  // Load time blocks from Firestore
+  useEffect(() => {
+    const loadTimeBlocks = async () => {
+      try {
+        setLoadingTimeBlocks(true);
+        const blocks = await getTimeBlocks();
+        
+        if (blocks && blocks.length > 0) {
+          const weekdays = blocks.filter(block => block.dayType === 'weekday');
+          const weekends = blocks.filter(block => block.dayType === 'weekend');
+          setTimeBlocks({ weekdays, weekends });
+        } else {
+          console.log('No time blocks found in Firestore');
+          setTimeBlocks({ weekdays: [], weekends: [] });
+        }
+        
+        setLoadingTimeBlocks(false);
+      } catch (error) {
+        console.error('Error loading time blocks from Firestore:', error);
+        setTimeBlocks({ weekdays: [], weekends: [] });
+        setLoadingTimeBlocks(false);
+      }
+    };
+
+    loadTimeBlocks();
+
+    // Set up real-time listener for time blocks
+    const unsubscribe = listenTimeBlocks((blocks) => {
+      if (blocks && blocks.length > 0) {
+        const weekdays = blocks.filter(block => block.dayType === 'weekday');
+        const weekends = blocks.filter(block => block.dayType === 'weekend');
+        setTimeBlocks({ weekdays, weekends });
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   // Gather session summary
   const sessionSummary = {
     address: customerInfo.address || propertySearch.address || (parsedPropertyInfo['Owner Address'] || ''),
@@ -669,52 +748,154 @@ const ScheduleScript = ({ onNavigate }) => {
     countyFips: parsedPropertyInfo['County FIPS'] || '',
     acres: parsedPropertyInfo['Acres'] || '',
     apn: parsedPropertyInfo['APN'] || '',
-    projectType,
-    callType,
-    userName,
+    projectType: projectType || '',
+    callType: callType || '',
+    userName: userName || '',
     customerInfo,
-    appointment,
-    projectDetails,
+    appointment: {
+      date: appointment.date || '',
+      time: appointment.time || ''
+    },
+    projectDetails: projectDetails || {},
     checklistItems,
     propertyInfo: parsedPropertyInfo,
   };
 
   // Rep Recap Text (for copy)
-  const repRecapText = `🔍 Lead Notes – ${sessionSummary.address}
+  const repRecapText = `🔍 Lead Notes – ${sessionSummary.address || 'Address not provided'}
 
 🏠 Homeownership: Yes${sessionSummary.owner ? ` (Owner: ${sessionSummary.owner})` : ''}
 👤 Decision-Makers: All required parties will be present
 📌 Project Interest:
-• ${sessionSummary.projectType === 'bath' ? 'Bathroom remodel – replacing old tub with walk-in shower' : sessionSummary.projectType === 'roof' ? 'Roof replacement' : 'N/A'}
-${sessionSummary.projectDetails.issues ? `• ${sessionSummary.projectDetails.issues}` : ''}
+• ${sessionSummary.projectType === 'bath' ? 'Bathroom remodel – replacing old tub with walk-in shower' : sessionSummary.projectType === 'roof' ? 'Roof replacement' : sessionSummary.projectType || 'N/A'}
+${sessionSummary.projectDetails?.issues ? `• ${sessionSummary.projectDetails.issues}` : ''}
 
 🗂️ Property Details:
 ${sessionSummary.owner ? `• Owner: ${sessionSummary.owner}\n` : ''}${sessionSummary.county ? `• County: ${sessionSummary.county}` : ''}${sessionSummary.countyFips ? ` (FIPS: ${sessionSummary.countyFips})` : ''}
 ${sessionSummary.acres ? `• Acres: ${sessionSummary.acres}\n` : ''}${sessionSummary.apn ? `• APN: ${sessionSummary.apn}\n` : ''}
 
-📅 Appointment Set: ${formatDateTime(sessionSummary.appointment.date, sessionSummary.appointment.time)}
-${appointmentConfirmed ? '✅ Appointment Set (No Follow-up Needed)' : '⏳ Appointment Not Set (Follow-up Required)'}
+📅 Appointment Status: ${sessionSummary.appointment.date && sessionSummary.appointment.time ? formatDateTime(sessionSummary.appointment.date, sessionSummary.appointment.time) : 'Not scheduled'}
+${appointmentConfirmed ? '✅ Appointment Confirmed (No Follow-up Needed)' : '⏳ Appointment Pending (Follow-up Required)'}
 
 ✅ REP NOTES
 Rep Name: ${sessionSummary.userName || 'N/A'}
 Customer Name: ${sessionSummary.owner || 'N/A'}
-Address: ${sessionSummary.address}
-Project Type: ${sessionSummary.projectType === 'bath' ? 'Bathroom remodel' : sessionSummary.projectType === 'roof' ? 'Roof replacement' : 'N/A'}
-Special Details: ${sessionSummary.projectDetails.issues || 'N/A'}
-Appointment Date & Time: ${formatDateTime(sessionSummary.appointment.date, sessionSummary.appointment.time)}
-Confirmation Status: ${appointmentConfirmed ? 'Set' : 'Not Set'}
+Address: ${sessionSummary.address || 'N/A'}
+Project Type: ${sessionSummary.projectType === 'bath' ? 'Bathroom remodel' : sessionSummary.projectType === 'roof' ? 'Roof replacement' : sessionSummary.projectType || 'N/A'}
+Special Details: ${sessionSummary.projectDetails?.issues || 'N/A'}
+Appointment Date & Time: ${sessionSummary.appointment.date && sessionSummary.appointment.time ? formatDateTime(sessionSummary.appointment.date, sessionSummary.appointment.time) : 'Not scheduled'}
+Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
 `;
 
   // Customer Recap Text
-  const customerRecapText = `Thank you for scheduling your appointment with Long Home Products!\n\nHere's what to expect:\n• A design consultant will visit your home at ${sessionSummary.address}.\n• Appointment: ${formatDateTime(sessionSummary.appointment.date, sessionSummary.appointment.time)}\n• We'll review your ${sessionSummary.projectType === 'bath' ? 'bathroom remodel' : sessionSummary.projectType === 'roof' ? 'roof replacement' : 'project'} needs and provide a free estimate.\n• Please ensure all decision-makers are present.\n\nWe look forward to meeting you!`;
+  const customerRecapText = `Thank you for scheduling your appointment with Long Home Products!\n\nHere's what to expect:\n• A design consultant will visit your home at ${sessionSummary.address || 'your address'}.\n• Appointment: ${sessionSummary.appointment.date && sessionSummary.appointment.time ? formatDateTime(sessionSummary.appointment.date, sessionSummary.appointment.time) : 'date and time to be confirmed'}.\n• We'll review your ${sessionSummary.projectType === 'bath' ? 'bathroom remodel' : sessionSummary.projectType === 'roof' ? 'roof replacement' : sessionSummary.projectType || 'project'} needs and provide a free estimate.\n• Please ensure all decision-makers are present.\n\nWe look forward to meeting you!`;
 
-  // Copy to clipboard handler
+  // Function to clear all data when starting a new appointment
+  const clearAllData = useCallback(() => {
+    // Clear all state
+    setCurrentStep(0);
+    setCallType('');
+    setProjectType('');
+    setUserName('');
+    setAppointmentConfirmed(false);
+    setCustomerInfo({
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      address: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      country: 'United States',
+      secondaryName: '',
+      secondaryPhone: '',
+      secondaryEmail: '',
+      relationshipToPrimary: '',
+      showSecondary: false
+    });
+    setProjectDetails({
+      age: '',
+      issues: '',
+      currentSetup: '',
+      replacementType: '',
+      plumbingSetup: '',
+      materialsPurchased: '',
+      roofType: '',
+      activeLeaks: '',
+      roofReplaced: ''
+    });
+    setAppointment({
+      date: '',
+      time: '',
+      confirmed: false
+    });
+    setChecklistItems({
+      projectChecklist: [],
+      bathChecklist: [],
+      roofChecklist: [],
+      commitmentChecklist: []
+    });
+    setPropertySearch({
+      address: '',
+      results: null,
+      loading: false,
+      error: null,
+      suggestions: [],
+      showSuggestions: false,
+      selectedCoordinates: null,
+      checklist: {
+        addressVerified: false,
+        propertyTypeConfirmed: false,
+        characteristicsNoted: false,
+        accessInfoCollected: false
+      }
+    });
+    setPropertySearchCollapsed(true);
+    setBasemapVisited(false);
+    setBasemapVerified(false);
+    setBasemapScreenshot(null);
+    setIsPasteActive(false);
+    setOcrText('');
+    setOcrLoading(false);
+    setParsedPropertyInfo({});
+    setShowRecap(false);
+    setRepRecapCopied(false);
+    setRecapMessage({
+      type: 'success',
+      title: '',
+      message: '',
+      details: ''
+    });
+
+    // Clear localStorage
+    localStorage.removeItem('scheduleScriptData');
+    
+    // Show success notification
+    setRecapMessage({
+      type: 'success',
+      title: '✅ Fresh Start!',
+      message: 'All data has been cleared for a new appointment',
+      details: 'You can now begin a new scheduling session'
+    });
+    
+    console.log('All data cleared for new appointment');
+  }, []);
+
+  // Copy to clipboard handlers
   const handleCopyRepRecap = useCallback(() => {
     navigator.clipboard.writeText(repRecapText).then(() => {
       setRepRecapCopied(true);
       setTimeout(() => setRepRecapCopied(false), 2000);
     });
   }, [repRecapText]);
+
+  const handleCopyCustomerRecap = useCallback(() => {
+    navigator.clipboard.writeText(customerRecapText).then(() => {
+      // You could add a similar state for customer recap copied if needed
+      alert('Customer recap copied to clipboard!');
+    });
+  }, [customerRecapText]);
 
   const renderGreetingStep = () => (
     <motion.div 
@@ -723,30 +904,7 @@ Confirmation Status: ${appointmentConfirmed ? 'Set' : 'Not Set'}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <h3 className="step-title-dark">Agent Information & Call Type</h3>
-      
-      {/* Agent Name Input */}
-      <div className="form-group-dark" style={{ marginBottom: '1.5rem' }}>
-        <label className="form-label-dark">Agent Name</label>
-        <input
-          type="text"
-          placeholder="Enter your name..."
-          value={userName}
-          onChange={(e) => setUserName(e.target.value)}
-          className="form-input-dark"
-          style={{ 
-            background: 'rgba(255, 255, 255, 0.1)', 
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            color: '#fff',
-            padding: '0.75rem 1rem',
-            borderRadius: '8px',
-            fontSize: '1rem',
-            width: '100%',
-            marginTop: '0.5rem'
-          }}
-        />
-      </div>
-      
+      <h3 className="step-title-dark">Select Call Type</h3>
       <div style={{ 
         background: 'rgba(59, 130, 246, 0.1)', 
         padding: '0.5rem 1rem', 
@@ -761,12 +919,8 @@ Confirmation Status: ${appointmentConfirmed ? 'Set' : 'Not Set'}
         <motion.div 
           className={`greeting-option-dark ${callType === 'incoming' ? 'selected-dark' : ''}`}
           onClick={() => {
-            if (!userName.trim()) {
-              alert('Please enter your name before proceeding.');
-              return;
-            }
             setCallType('incoming');
-            setTimeout(() => setCurrentStep(1), 200); // auto-advance
+            setTimeout(() => setCurrentStep(currentStep + 1), 200); // auto-advance
           }}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -799,12 +953,8 @@ Confirmation Status: ${appointmentConfirmed ? 'Set' : 'Not Set'}
         <motion.div 
           className={`greeting-option-dark ${callType === 'outgoing' ? 'selected-dark' : ''}`}
           onClick={() => {
-            if (!userName.trim()) {
-              alert('Please enter your name before proceeding.');
-              return;
-            }
             setCallType('outgoing');
-            setTimeout(() => setCurrentStep(1), 200); // auto-advance
+            setTimeout(() => setCurrentStep(currentStep + 1), 200); // auto-advance
           }}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -834,7 +984,6 @@ Confirmation Status: ${appointmentConfirmed ? 'Set' : 'Not Set'}
           )}
         </motion.div>
       </div>
-      
       <div className="step-navigation-dark">
         <motion.button
           className="nav-button-dark back-button-dark"
@@ -853,193 +1002,326 @@ Confirmation Status: ${appointmentConfirmed ? 'Set' : 'Not Set'}
     </motion.div>
   );
 
-  const renderCustomerInfoStep = () => (
-    <motion.div 
-      className="script-step-dark"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      <h3 className="step-title-dark">Customer Information</h3>
+  const renderCustomerInfoStep = () => {
+    // Auto-fill from property search and parsed property info
+    const autoFillFromProperty = () => {
+      const updates = {};
       
-      <div className="customer-info-container-dark">
-        <div className="customer-info-card-dark">
-          <h4 className="customer-info-title-dark">Primary Contact Information</h4>
-          
-          <div className="form-row-dark">
-            <div className="form-group-dark">
-              <label className="form-label-dark">First Name *</label>
-              <input
-                type="text"
-                value={customerInfo.firstName}
-                onChange={(e) => handleCustomerInfoChange('firstName', e.target.value)}
-                className="form-input-dark"
-                placeholder="Enter first name"
-              />
+      // Auto-fill address from property search
+      if (propertySearch.address && !customerInfo.address) {
+        updates.address = propertySearch.address;
+      }
+      
+      // Auto-fill from parsed property info
+      if (parsedPropertyInfo['Owner Name'] && !customerInfo.firstName && !customerInfo.lastName) {
+        const ownerName = parsedPropertyInfo['Owner Name'];
+        const nameParts = ownerName.split(' ');
+        if (nameParts.length >= 2) {
+          updates.firstName = nameParts[0];
+          updates.lastName = nameParts.slice(1).join(' ');
+        } else {
+          updates.firstName = ownerName;
+        }
+      }
+      
+      // Auto-fill city from property info
+      if (parsedPropertyInfo['Owner City'] && !customerInfo.city) {
+        updates.city = parsedPropertyInfo['Owner City'];
+      }
+      
+      // Auto-fill state from property info
+      if (parsedPropertyInfo['Owner State'] && !customerInfo.state) {
+        updates.state = parsedPropertyInfo['Owner State'];
+      }
+      
+      // Auto-fill zip from property info
+      if (parsedPropertyInfo['Owner Zip Code'] && !customerInfo.zipCode) {
+        updates.zipCode = parsedPropertyInfo['Owner Zip Code'].replace(':', '').trim();
+      }
+      
+      if (Object.keys(updates).length > 0) {
+        setCustomerInfo(prev => ({
+          ...prev,
+          ...updates
+        }));
+      }
+    };
+
+    // State abbreviations for dropdown
+    const stateOptions = [
+      'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
+      'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
+      'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
+      'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
+      'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
+    ];
+
+    return (
+      <motion.div 
+        className="script-step-dark"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        style={{ background: 'rgba(59,130,246,0.03)', borderRadius: 16, padding: '2.5rem 1.5rem', boxShadow: '0 2px 16px rgba(59,130,246,0.07)', maxWidth: 600, margin: '0 auto' }}
+      >
+        <h3 className="step-title-dark" style={{ color: '#2563eb', display: 'flex', alignItems: 'center', gap: 10, fontSize: '2rem', marginBottom: 18 }}>
+          <User style={{ color: '#2563eb', fontSize: 28 }} />
+          Quick Customer Info
+        </h3>
+        
+        {/* Auto-fill button */}
+        {(propertySearch.address || Object.keys(parsedPropertyInfo).length > 0) && (
+          <div style={{ background: '#1e293b', borderRadius: 8, padding: '1rem', marginBottom: '1rem', border: '1px solid #334155' }}>
+            <div style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: '#94a3b8' }}>
+              📋 Available property data:
             </div>
-            <div className="form-group-dark">
-              <label className="form-label-dark">Last Name *</label>
-              <input
-                type="text"
-                value={customerInfo.lastName}
-                onChange={(e) => handleCustomerInfoChange('lastName', e.target.value)}
-                className="form-input-dark"
-                placeholder="Enter last name"
-              />
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
+              {parsedPropertyInfo['Owner Name'] && (
+                <span style={{ background: '#374151', padding: '0.25rem 0.5rem', borderRadius: 4, fontSize: '0.8rem' }}>
+                  👤 {parsedPropertyInfo['Owner Name']}
+                </span>
+              )}
+              {parsedPropertyInfo['Owner City'] && (
+                <span style={{ background: '#374151', padding: '0.25rem 0.5rem', borderRadius: 4, fontSize: '0.8rem' }}>
+                  🏙️ {parsedPropertyInfo['Owner City']}
+                </span>
+              )}
+              {parsedPropertyInfo['Owner State'] && (
+                <span style={{ background: '#374151', padding: '0.25rem 0.5rem', borderRadius: 4, fontSize: '0.8rem' }}>
+                  🗺️ {parsedPropertyInfo['Owner State']}
+                </span>
+              )}
+              {propertySearch.address && (
+                <span style={{ background: '#374151', padding: '0.25rem 0.5rem', borderRadius: 4, fontSize: '0.8rem' }}>
+                  📍 {propertySearch.address}
+                </span>
+              )}
             </div>
+            <button
+              onClick={autoFillFromProperty}
+              style={{
+                background: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: 6,
+                padding: '0.5rem 1rem',
+                cursor: 'pointer',
+                fontSize: '0.9rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8
+              }}
+            >
+              🚀 Auto-fill from property data
+            </button>
           </div>
+        )}
+
+        <div className="customer-info-container-dark" style={{ background: '#1e293b', borderRadius: 12, boxShadow: '0 1px 8px rgba(0,0,0,0.3)', padding: '2rem', marginBottom: 24, border: '1px solid #334155' }}>
           
-          <div className="form-row-dark">
-            <div className="form-group-dark">
-              <label className="form-label-dark">Email</label>
+          {/* Name and Phone - Most Important */}
+          <div className="form-row-dark" style={{ display: 'flex', gap: 18, flexWrap: 'wrap', marginBottom: 16 }}>
+            <div className="form-group-dark" style={{ flex: 1, minWidth: 140 }}>
+              <label className="form-label-dark">Name <span style={{ color: '#ef4444' }}>*</span></label>
               <input
-                type="email"
-                value={customerInfo.email}
-                onChange={(e) => handleCustomerInfoChange('email', e.target.value)}
+                type="text"
+                value={`${customerInfo.firstName} ${customerInfo.lastName}`.trim()}
+                onChange={(e) => {
+                  const names = e.target.value.split(' ');
+                  setCustomerInfo(prev => ({
+                    ...prev,
+                    firstName: names[0] || '',
+                    lastName: names.slice(1).join(' ') || ''
+                  }));
+                }}
                 className="form-input-dark"
-                placeholder="Enter email address"
+                placeholder="First Last"
+                required
               />
             </div>
-            <div className="form-group-dark">
-              <label className="form-label-dark">Phone *</label>
+            <div className="form-group-dark" style={{ flex: 1, minWidth: 140 }}>
+              <label className="form-label-dark">Phone <span style={{ color: '#ef4444' }}>*</span></label>
               <input
                 type="tel"
                 value={customerInfo.phone}
                 onChange={(e) => handleCustomerInfoChange('phone', e.target.value)}
                 className="form-input-dark"
                 placeholder="(555) 123-4567"
+                required
               />
             </div>
           </div>
-          
-          <div className="form-group-dark">
-            <label className="form-label-dark">Address *</label>
+
+          {/* Email - Optional */}
+          <div className="form-group-dark" style={{ marginBottom: 16 }}>
+            <label className="form-label-dark">Email (Optional)</label>
+            <input
+              type="email"
+              value={customerInfo.email}
+              onChange={(e) => handleCustomerInfoChange('email', e.target.value)}
+              className="form-input-dark"
+              placeholder="email@example.com"
+            />
+          </div>
+
+          {/* Address - Auto-filled if possible */}
+          <div className="form-group-dark" style={{ marginBottom: 16 }}>
+            <label className="form-label-dark">Address <span style={{ color: '#ef4444' }}>*</span></label>
             <input
               type="text"
               value={customerInfo.address}
               onChange={(e) => handleCustomerInfoChange('address', e.target.value)}
               className="form-input-dark"
               placeholder="Street address"
+              required
             />
           </div>
-          
-          <div className="form-row-dark">
-            <div className="form-group-dark">
-              <label className="form-label-dark">City *</label>
+
+          {/* City, State, ZIP - Compact */}
+          <div className="form-row-dark" style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <div className="form-group-dark" style={{ flex: 2, minWidth: 120 }}>
+              <label className="form-label-dark">City <span style={{ color: '#ef4444' }}>*</span></label>
               <input
                 type="text"
                 value={customerInfo.city}
                 onChange={(e) => handleCustomerInfoChange('city', e.target.value)}
                 className="form-input-dark"
                 placeholder="City"
+                required
               />
             </div>
-            <div className="form-group-dark">
-              <label className="form-label-dark">State *</label>
-              <input
-                type="text"
+            <div className="form-group-dark" style={{ flex: 1, minWidth: 80 }}>
+              <label className="form-label-dark">State <span style={{ color: '#ef4444' }}>*</span></label>
+              <select
                 value={customerInfo.state}
                 onChange={(e) => handleCustomerInfoChange('state', e.target.value)}
                 className="form-input-dark"
-                placeholder="State"
-              />
+                required
+              >
+                <option value="">State</option>
+                {stateOptions.map(state => (
+                  <option key={state} value={state}>{state}</option>
+                ))}
+              </select>
             </div>
-            <div className="form-group-dark">
-              <label className="form-label-dark">ZIP Code *</label>
+            <div className="form-group-dark" style={{ flex: 1, minWidth: 80 }}>
+              <label className="form-label-dark">ZIP <span style={{ color: '#ef4444' }}>*</span></label>
               <input
                 type="text"
                 value={customerInfo.zipCode}
                 onChange={(e) => handleCustomerInfoChange('zipCode', e.target.value)}
                 className="form-input-dark"
-                placeholder="ZIP Code"
+                placeholder="ZIP"
+                required
               />
             </div>
           </div>
-          
-          <h4 className="customer-info-title-dark" style={{ marginTop: '2rem' }}>Secondary Contact (Optional)</h4>
-          
-          <div className="form-group-dark">
-            <label className="form-label-dark">Secondary Name</label>
-            <input
-              type="text"
-              value={customerInfo.secondaryName}
-              onChange={(e) => handleCustomerInfoChange('secondaryName', e.target.value)}
-              className="form-input-dark"
-              placeholder="Spouse, partner, etc."
-            />
-          </div>
-          
-          <div className="form-row-dark">
-            <div className="form-group-dark">
-              <label className="form-label-dark">Secondary Phone</label>
-              <input
-                type="tel"
-                value={customerInfo.secondaryPhone}
-                onChange={(e) => handleCustomerInfoChange('secondaryPhone', e.target.value)}
-                className="form-input-dark"
-                placeholder="(555) 123-4567"
-              />
-            </div>
-            <div className="form-group-dark">
-              <label className="form-label-dark">Secondary Email</label>
-              <input
-                type="email"
-                value={customerInfo.secondaryEmail}
-                onChange={(e) => handleCustomerInfoChange('secondaryEmail', e.target.value)}
-                className="form-input-dark"
-                placeholder="Email address"
-              />
-            </div>
-          </div>
-          
-          <div className="form-group-dark">
-            <label className="form-label-dark">Relationship to Primary</label>
-            <select
-              value={customerInfo.relationshipToPrimary}
-              onChange={(e) => handleCustomerInfoChange('relationshipToPrimary', e.target.value)}
-              className="form-input-dark"
+
+          {/* Secondary Contact - Collapsible */}
+          <div style={{ marginTop: '1.5rem', borderTop: '1px solid #475569', paddingTop: '1rem' }}>
+            <button
+              onClick={() => setCustomerInfo(prev => ({ ...prev, showSecondary: !prev.showSecondary }))}
+              style={{
+                background: 'transparent',
+                color: '#34d399',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '0.9rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                fontWeight: 600
+              }}
             >
-              <option value="">Select relationship</option>
-              <option value="Spouse">Spouse</option>
-              <option value="Partner">Partner</option>
-              <option value="Parent">Parent</option>
-              <option value="Child">Child</option>
-              <option value="Roommate">Roommate</option>
-              <option value="Other">Other</option>
-            </select>
+              {customerInfo.showSecondary ? '▼' : '▶'} Add Secondary Contact (Optional)
+            </button>
+            
+            {customerInfo.showSecondary && (
+              <div style={{ marginTop: '1rem', padding: '1rem', background: '#0f172a', borderRadius: 8 }}>
+                <div className="form-row-dark" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
+                  <div className="form-group-dark" style={{ flex: 1, minWidth: 140 }}>
+                    <label className="form-label-dark">Secondary Name</label>
+                    <input
+                      type="text"
+                      value={customerInfo.secondaryName}
+                      onChange={(e) => handleCustomerInfoChange('secondaryName', e.target.value)}
+                      className="form-input-dark"
+                      placeholder="Spouse, partner, etc."
+                    />
+                  </div>
+                  <div className="form-group-dark" style={{ flex: 1, minWidth: 140 }}>
+                    <label className="form-label-dark">Secondary Phone</label>
+                    <input
+                      type="tel"
+                      value={customerInfo.secondaryPhone}
+                      onChange={(e) => handleCustomerInfoChange('secondaryPhone', e.target.value)}
+                      className="form-input-dark"
+                      placeholder="(555) 123-4567"
+                    />
+                  </div>
+                </div>
+                <div className="form-row-dark" style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                  <div className="form-group-dark" style={{ flex: 1, minWidth: 140 }}>
+                    <label className="form-label-dark">Secondary Email</label>
+                    <input
+                      type="email"
+                      value={customerInfo.secondaryEmail}
+                      onChange={(e) => handleCustomerInfoChange('secondaryEmail', e.target.value)}
+                      className="form-input-dark"
+                      placeholder="email@example.com"
+                    />
+                  </div>
+                  <div className="form-group-dark" style={{ flex: 1, minWidth: 120 }}>
+                    <label className="form-label-dark">Relationship</label>
+                    <select
+                      value={customerInfo.relationshipToPrimary}
+                      onChange={(e) => handleCustomerInfoChange('relationshipToPrimary', e.target.value)}
+                      className="form-input-dark"
+                    >
+                      <option value="">Select</option>
+                      <option value="Spouse">Spouse</option>
+                      <option value="Partner">Partner</option>
+                      <option value="Parent">Parent</option>
+                      <option value="Child">Child</option>
+                      <option value="Roommate">Roommate</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-      </div>
-      
-      <div className="step-navigation-dark">
-        <motion.button
-          className="nav-button-dark back-button-dark"
-          onClick={handleBack}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          Back
-        </motion.button>
-        
-        <motion.button
-          className="nav-button-dark next-button-dark"
-          onClick={handleNext}
-          disabled={!customerInfo.firstName || !customerInfo.lastName || !customerInfo.phone || !customerInfo.address || !customerInfo.city || !customerInfo.state || !customerInfo.zipCode}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          style={{ opacity: (!customerInfo.firstName || !customerInfo.lastName || !customerInfo.phone || !customerInfo.address || !customerInfo.city || !customerInfo.state || !customerInfo.zipCode) ? 0.5 : 1 }}
-        >
-          Next
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M5 12H19M12 5L19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </motion.button>
-      </div>
-    </motion.div>
-  );
+
+        <div className="step-navigation-dark" style={{ display: 'flex', justifyContent: 'space-between', marginTop: 32 }}>
+          <motion.button
+            className="nav-button-dark back-button-dark"
+            onClick={handleBack}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Back
+          </motion.button>
+          <motion.button
+            className="nav-button-dark next-button-dark"
+            onClick={handleNext}
+            disabled={!customerInfo.firstName || !customerInfo.lastName || !customerInfo.phone || !customerInfo.address || !customerInfo.city || !customerInfo.state || !customerInfo.zipCode}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            style={{ opacity: (!customerInfo.firstName || !customerInfo.lastName || !customerInfo.phone || !customerInfo.address || !customerInfo.city || !customerInfo.state || !customerInfo.zipCode) ? 0.5 : 1 }}
+          >
+            Next
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M5 12H19M12 5L19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </motion.button>
+        </div>
+      </motion.div>
+    );
+  };
 
   const renderProjectTypeStep = () => (
     <motion.div 
@@ -1064,7 +1346,7 @@ Confirmation Status: ${appointmentConfirmed ? 'Set' : 'Not Set'}
           className={`project-option-dark ${projectType === 'bath' ? 'selected-dark' : ''}`}
           onClick={() => {
             setProjectType('bath');
-            setTimeout(() => setCurrentStep(2), 200); // auto-advance to project checklist
+            setTimeout(() => setCurrentStep(4), 200); // auto-advance to project checklist
           }}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -1097,7 +1379,7 @@ Confirmation Status: ${appointmentConfirmed ? 'Set' : 'Not Set'}
           className={`project-option-dark ${projectType === 'roof' ? 'selected-dark' : ''}`}
           onClick={() => {
             setProjectType('roof');
-            setTimeout(() => setCurrentStep(2), 200); // auto-advance to project checklist
+            setTimeout(() => setCurrentStep(4), 200); // auto-advance to project checklist
           }}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -1341,6 +1623,186 @@ Confirmation Status: ${appointmentConfirmed ? 'Set' : 'Not Set'}
     </motion.div>
   );
 
+  // Add state for detected region
+  const [detectedRegion, setDetectedRegion] = useState(null);
+  const [regionDetectionError, setRegionDetectionError] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [availableDates, setAvailableDates] = useState([]);
+  const [dateAvailability, setDateAvailability] = useState({});
+  const [loadingAvailability, setLoadingAvailability] = useState(false);
+
+  // Auto-detect region when address changes
+  useEffect(() => {
+    if (customerInfo.address) {
+      // Construct full address for region detection
+      const fullAddress = [
+        customerInfo.address,
+        customerInfo.city,
+        customerInfo.state,
+        customerInfo.zipCode
+      ].filter(Boolean).join(', ');
+      
+      console.log('🔍 Checking full address for region detection:', fullAddress);
+      
+      const result = checkServiceArea(fullAddress);
+      if (result.inServiceArea) {
+        setDetectedRegion(result.region);
+        setRegionDetectionError(null);
+        console.log('✅ Region detected:', result.region);
+      } else {
+        setDetectedRegion(null);
+        setRegionDetectionError('Region could not be determined from address. Please select manually.');
+        console.log('❌ Region not detected for address:', fullAddress);
+      }
+    } else {
+      setDetectedRegion(null);
+      setRegionDetectionError(null);
+    }
+  }, [customerInfo.address, customerInfo.city, customerInfo.state, customerInfo.zipCode]);
+
+  const REGION_LIST = [
+    'MIDA', 'ESDE', 'NOVA', 'NENG', 'NHME', 'CTWM', 'SOPA', 'WCFL'
+  ];
+
+  // Load availability data for the selected region
+  useEffect(() => {
+    if (detectedRegion) {
+      loadAvailabilityForRegion(detectedRegion);
+    }
+  }, [detectedRegion]);
+
+  const loadAvailabilityForRegion = async (region) => {
+    setLoadingAvailability(true);
+    try {
+      const availability = await getAvailability(region);
+      setDateAvailability(availability);
+      
+      // Extract available dates
+      const availableDatesList = Object.keys(availability).filter(date => {
+        const dayAvailability = availability[date];
+        return Object.values(dayAvailability).some(slots => slots > 0);
+      });
+      setAvailableDates(availableDatesList);
+    } catch (error) {
+      console.error('Error loading availability:', error);
+    } finally {
+      setLoadingAvailability(false);
+    }
+  };
+
+  // Custom tile content for calendar
+  const tileContent = ({ date, view }) => {
+    if (view !== 'month') return null;
+    
+    const dateStr = date.toISOString().split('T')[0];
+    const dayAvailability = dateAvailability[dateStr];
+    
+    if (!dayAvailability) return null;
+    
+    // Debug: log the actual data structure
+    console.log('📅 Day availability for', dateStr, ':', dayAvailability);
+    
+    // Calculate total slots - handle different data structures
+    let totalSlots = 0;
+    if (typeof dayAvailability === 'object') {
+      Object.values(dayAvailability).forEach(slotData => {
+        if (typeof slotData === 'object' && slotData.available) {
+          totalSlots += slotData.available;
+        } else if (typeof slotData === 'number') {
+          totalSlots += slotData;
+        }
+      });
+    }
+    
+    console.log('📊 Total slots for', dateStr, ':', totalSlots);
+    
+    if (totalSlots === 0) return null;
+    
+    return (
+      <div className="calendar-slot-count">
+        <span className="slot-count-badge">{totalSlots}</span>
+      </div>
+    );
+  };
+
+  // Custom tile class for calendar
+  const tileClassName = ({ date, view }) => {
+    if (view !== 'month') return null;
+    
+    const dateStr = date.toISOString().split('T')[0];
+    const dayAvailability = dateAvailability[dateStr];
+    
+    if (!dayAvailability) return 'calendar-day-unavailable';
+    
+    // Calculate total slots - handle different data structures
+    let totalSlots = 0;
+    if (typeof dayAvailability === 'object') {
+      Object.values(dayAvailability).forEach(slotData => {
+        if (typeof slotData === 'object' && slotData.available) {
+          totalSlots += slotData.available;
+        } else if (typeof slotData === 'number') {
+          totalSlots += slotData;
+        }
+      });
+    }
+    
+    if (totalSlots === 0) return 'calendar-day-unavailable';
+    if (totalSlots <= 2) return 'calendar-day-limited';
+    if (totalSlots <= 5) return 'calendar-day-moderate';
+    return 'calendar-day-available';
+  };
+
+  // Handle date selection
+  const handleDateSelect = (date) => {
+    setSelectedDate(date);
+    setAppointment(prev => ({ ...prev, date: date.toISOString().split('T')[0], time: '' }));
+  };
+
+  // Get available time blocks for selected date and region
+  const getAvailableTimeBlocksForDate = (date, region) => {
+    if (!date || !region) return [];
+    
+    const dateStr = date.toISOString().split('T')[0];
+    const dayAvailability = dateAvailability[dateStr];
+    
+    if (!dayAvailability) return [];
+    
+    return Object.entries(dayAvailability)
+      .filter(([time, slotData]) => {
+        // Handle different data structures
+        if (typeof slotData === 'object' && slotData.available) {
+          return slotData.available > 0;
+        } else if (typeof slotData === 'number') {
+          return slotData > 0;
+        }
+        return false;
+      })
+      .map(([timeId, slotData]) => {
+        // Extract slot count and time information
+        let availableSlots = 0;
+        let timeLabel = timeId;
+        let timeDisplay = timeId;
+        
+        if (typeof slotData === 'object' && slotData.available) {
+          availableSlots = slotData.available;
+          timeDisplay = slotData.time || timeId;
+          timeLabel = slotData.label || timeId;
+        } else if (typeof slotData === 'number') {
+          availableSlots = slotData;
+          // Use the timeId as fallback
+          timeDisplay = timeId;
+          timeLabel = timeId;
+        }
+        
+        return {
+          time: timeDisplay,
+          timeId: timeId,
+          availableSlots,
+          label: `${timeDisplay} (${availableSlots} slot${availableSlots > 1 ? 's' : ''} available)`
+        };
+      });
+  };
+
   const renderCommitmentStep = () => (
     <motion.div 
       className="script-step-dark"
@@ -1358,31 +1820,97 @@ Confirmation Status: ${appointmentConfirmed ? 'Set' : 'Not Set'}
           </p>
           
           <div className="appointment-scheduling-dark">
-            <h5>Select Appointment Time:</h5>
-            <div className="time-slots-dark">
-              {timeSlots.map((time) => (
-                <motion.button
-                  key={time}
-                  className={`time-slot-dark ${appointment.time === time ? 'selected-dark' : ''}`}
-                  onClick={() => handleAppointmentChange('time', time)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Clock className="time-icon" />
-                  {time}
-                </motion.button>
-              ))}
+            {/* Region Selection */}
+            <div className="region-selection-container">
+              <h5>Service Region:</h5>
+              {detectedRegion ? (
+                <div className="region-info">
+                  <span className="region-badge">Region: {detectedRegion}</span>
+                </div>
+              ) : (
+                <div className="region-info error">
+                  <span>{regionDetectionError || 'Region not detected.'}</span>
+                  <select
+                    value={detectedRegion || ''}
+                    onChange={e => setDetectedRegion(e.target.value)}
+                    className="region-select"
+                  >
+                    <option value="">Select Region</option>
+                    {REGION_LIST.map(region => (
+                      <option key={region} value={region}>{region}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
+
+            {/* Modern Calendar */}
+            {detectedRegion && (
+              <div className="calendar-container">
+                <h5>Select Appointment Date:</h5>
+                {loadingAvailability ? (
+                  <div className="loading-calendar">
+                    <div className="loading-spinner"></div>
+                    <p>Loading availability...</p>
+                  </div>
+                ) : (
+                  <div className="modern-calendar-wrapper">
+                    <Calendar
+                      onChange={handleDateSelect}
+                      value={selectedDate}
+                      tileContent={tileContent}
+                      tileClassName={tileClassName}
+                      minDate={new Date()}
+                      maxDate={new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)} // 30 days from now
+                      className="modern-calendar"
+                    />
+                    <div className="calendar-legend">
+                      <div className="legend-item">
+                        <span className="legend-color available"></span>
+                        <span>Available (5+ slots)</span>
+                      </div>
+                      <div className="legend-item">
+                        <span className="legend-color moderate"></span>
+                        <span>Moderate (3-5 slots)</span>
+                      </div>
+                      <div className="legend-item">
+                        <span className="legend-color limited"></span>
+                        <span>Limited (1-2 slots)</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             
-            <div className="form-group-dark">
-              <label className="form-label-dark">Appointment Date</label>
-              <input
-                type="date"
-                value={appointment.date}
-                onChange={(e) => handleAppointmentChange('date', e.target.value)}
-                className="form-input-dark"
-              />
-            </div>
+            {/* Time Slot Selection */}
+            {selectedDate && detectedRegion && (
+              <div className="time-selection-container">
+                <h5>Select Appointment Time:</h5>
+                <div className="time-slots-grid">
+                  {getAvailableTimeBlocksForDate(selectedDate, detectedRegion).map((block) => (
+                    <motion.button
+                      key={block.timeId}
+                      className={`time-slot-modern ${appointment.time === block.time ? 'selected-modern' : ''}`}
+                      onClick={() => handleAppointmentChange('time', block.time)}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <Clock className="time-icon" />
+                      <div className="time-block-info">
+                        <span className="time-block-time">{block.time}</span>
+                        <span className="time-block-slots">{block.availableSlots} slot{block.availableSlots > 1 ? 's' : ''} available</span>
+                      </div>
+                    </motion.button>
+                  ))}
+                </div>
+                {getAvailableTimeBlocksForDate(selectedDate, detectedRegion).length === 0 && (
+                  <div className="no-availability-modern">
+                    <p>No available time slots for this date. Please select a different date.</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -1428,50 +1956,115 @@ Confirmation Status: ${appointmentConfirmed ? 'Set' : 'Not Set'}
       
       <div className="confirmation-container-dark">
         <div className="confirmation-card-dark">
-          <h4 className="confirmation-title-dark">Confirm Appointment Details:</h4>
-          
-          <div className="appointment-summary-dark">
-            <div className="summary-item-dark">
-              <strong>Date:</strong> {appointment.date ? new Date(appointment.date).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) : 'Not set'}
+          <div className="confirmation-header">
+            <div className="confirmation-icon">
+              <CheckCircle size={48} />
             </div>
-            <div className="summary-item-dark">
-              <strong>Time:</strong> {appointment.time || 'Not set'}
-            </div>
-            <div className="summary-item-dark">
-              <strong>Project Type:</strong> {projectType === 'bath' ? 'Bathroom Remodel' : projectType === 'roof' ? 'Roof Replacement' : 'Not selected'}
-            </div>
-            <div className="summary-item-dark">
-              <strong>Property Address:</strong> {propertySearch.address || 'Not entered'}
-            </div>
+            <h4 className="confirmation-title">Appointment Confirmed!</h4>
+            <p className="confirmation-subtitle">Your appointment has been successfully scheduled</p>
           </div>
           
-          <div className="confirmation-checkbox-dark">
-            <motion.div 
-              className={`confirmation-item-dark ${appointmentConfirmed ? 'confirmed-dark' : ''}`}
-              onClick={() => setAppointmentConfirmed(!appointmentConfirmed)}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              {appointmentConfirmed ? (
-                <CheckSquare className="check-icon" />
-              ) : (
-                <Square className="check-icon" />
-              )}
-              <div className="confirmation-content-dark">
-                               <span className="confirmation-label-dark">✅ Appointment is fully confirmed</span>
-               <span className="confirmation-description-dark">
-                 Customer has confirmed the appointment and no follow-up is needed. 
-                 This will update the Salesforce status to "Set".
-               </span>
+          <div className="appointment-details">
+            <h5 className="details-title">Appointment Details</h5>
+            
+            <div className="details-grid">
+              <div className="detail-item">
+                <div className="detail-icon">
+                  <Calendar size={20} />
+                </div>
+                <div className="detail-content">
+                  <span className="detail-label">Date</span>
+                  <span className="detail-value">{formatDateTime(appointment.date, '')}</span>
+                </div>
               </div>
-            </motion.div>
+              
+              <div className="detail-item">
+                <div className="detail-icon">
+                  <Clock size={20} />
+                </div>
+                <div className="detail-content">
+                  <span className="detail-label">Time</span>
+                  <span className="detail-value">{appointment.time}</span>
+                </div>
+              </div>
+              
+              <div className="detail-item">
+                <div className="detail-icon">
+                  <Home size={20} />
+                </div>
+                <div className="detail-content">
+                  <span className="detail-label">Project Type</span>
+                  <span className="detail-value">
+                    {projectType === 'bath' ? 'Bathroom Remodel' : 
+                     projectType === 'roof' ? 'Roof Replacement' : 
+                     projectType}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="detail-item">
+                <div className="detail-icon">
+                  <User size={20} />
+                </div>
+                <div className="detail-content">
+                  <span className="detail-label">Customer</span>
+                  <span className="detail-value">
+                    {customerInfo.firstName && customerInfo.lastName ? 
+                     `${customerInfo.firstName} ${customerInfo.lastName}` : 
+                     'Not provided'}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="detail-item">
+                <div className="detail-icon">
+                  <Phone size={20} />
+                </div>
+                <div className="detail-content">
+                  <span className="detail-label">Phone</span>
+                  <span className="detail-value">
+                    {customerInfo.phone || 'Not provided'}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="detail-item">
+                <div className="detail-icon">
+                  <Mail size={20} />
+                </div>
+                <div className="detail-content">
+                  <span className="detail-label">Email</span>
+                  <span className="detail-value">
+                    {customerInfo.email || 'Not provided'}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
           
-                     {appointmentConfirmed && (
-             <div className="confirmation-note-dark">
-               <p>✅ This appointment will be marked as "Set" in Salesforce with no follow-up required.</p>
-             </div>
-           )}
+          <div className="confirmation-status">
+            <div className="status-badge">
+              <CheckCircle size={20} />
+              <span>Appointment Fully Confirmed</span>
+            </div>
+            <p className="status-description">
+              Customer has confirmed the appointment and no follow-up is needed. 
+              This will update the Salesforce status to "Set".
+            </p>
+          </div>
+          
+          <div className="confirmation-actions">
+            <button 
+              className="action-button secondary"
+              onClick={() => {
+                // Handle customer confirmation
+                setAppointmentConfirmed(true);
+              }}
+            >
+              <Check size={16} />
+              Confirm with Customer
+            </button>
+          </div>
         </div>
       </div>
       
@@ -1537,7 +2130,7 @@ Confirmation Status: ${appointmentConfirmed ? 'Set' : 'Not Set'}
           <div className="closing-script-dark">
             <h5>Closing Script:</h5>
             <p>
-              "Before I finalize everything, could you do a few things for me? Please mention the appointment to (if any other parties involved), and mark your calendar, to avoid rescheduling. Also, do not make any decisions until Long gets a chance to show you our product and how we can offer you peace of mind at a great price. Does that make sense? OK FANTASTIC…. The next point of contact will be the rep at your home on {appointment.date} at {appointment.time} to do the estimate for you on a total replacement of your {projectType}. Thank You and have a wonderful day!"
+              "Before I finalize everything, could you do a few things for me? Please mention the appointment to any other parties involved, and mark your calendar to avoid rescheduling. Also, do not make any decisions until Long gets a chance to show you our product and how we can offer you peace of mind at a great price. Does that make sense? OK FANTASTIC…. The next point of contact will be the rep at your home on {appointment.date} at {appointment.time} to do the estimate for you on a total replacement of your {projectType}. Thank you and have a wonderful day!"
             </p>
           </div>
         </div>
@@ -1546,9 +2139,10 @@ Confirmation Status: ${appointmentConfirmed ? 'Set' : 'Not Set'}
       <motion.button 
         className="complete-button-dark"
         onClick={async () => {
-          // Send data to Salesforce backend before resetting state
+          // Send data to Salesforce backend and write booking to Firestore
           try {
-            await fetch('http://localhost:3001/api/sendToSalesforce', {
+            console.log('Attempting to send data to Salesforce...');
+            const response = await fetch('http://localhost:3001/api/sendToSalesforce', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -1562,54 +2156,65 @@ Confirmation Status: ${appointmentConfirmed ? 'Set' : 'Not Set'}
                 status: appointmentConfirmed ? 'Set' : 'Not Set'
               })
             });
+            
+            if (!response.ok) {
+              const errorData = await response.json();
+              console.error('Salesforce API error:', errorData);
+              setShowRecap(true);
+              setRecapMessage({
+                type: 'error',
+                title: '❌ Salesforce Upload Failed',
+                message: errorData.error || 'Unknown error occurred',
+                details: 'Please check your connection and try again.'
+              });
+              return;
+            }
+            
+            const result = await response.json();
+            console.log('Salesforce API success:', result);
+
+            // Write booking to Firestore
+            try {
+              const booking = {
+                date: appointment.date,
+                time: appointment.time,
+                customerInfo,
+                projectType,
+                callType,
+                userName,
+                appointmentConfirmed,
+                propertyInfo: parsedPropertyInfo,
+                salesforceId: result.id || null,
+                createdAt: new Date().toISOString()
+              };
+              
+              await addBooking(booking);
+              console.log('Booking added to Firestore successfully');
+            } catch (firestoreError) {
+              console.error('Error adding booking to Firestore:', firestoreError);
+              // Don't fail the whole process if Firestore fails
+            }
+
+            setShowRecap(true);
+            setRecapMessage({
+              type: 'success',
+              title: '✅ Successfully Sent to Salesforce!',
+              message: 'Your lead has been created in Salesforce',
+              details: `Lead ID: ${result.id || 'N/A'}`
+            });
           } catch (err) {
-            alert('Failed to send data to Salesforce.');
+            console.error('Salesforce API error:', err);
+            setShowRecap(true);
+            setRecapMessage({
+              type: 'error',
+              title: '❌ Connection Error',
+              message: err.message,
+              details: 'Make sure the backend server is running on localhost:3001'
+            });
           }
           setShowRecap(true);
-          // Reset script state after completion
-          setCurrentStep(0);
-          setCallType('');
-          setProjectType('');
-          setUserName('');
-          setAppointmentConfirmed(false);
-          setCustomerInfo({
-            firstName: '',
-            lastName: '',
-            email: '',
-            phone: '',
-            address: '',
-            city: '',
-            state: '',
-            zipCode: '',
-            country: 'United States',
-            secondaryName: '',
-            secondaryPhone: '',
-            secondaryEmail: '',
-            relationshipToPrimary: ''
-          });
-          setProjectDetails({
-            age: '',
-            issues: '',
-            currentSetup: '',
-            replacementType: '',
-            plumbingSetup: '',
-            materialsPurchased: '',
-            roofType: '',
-            activeLeaks: '',
-            roofReplaced: ''
-          });
-
-          setAppointment({
-            date: '',
-            time: '',
-            confirmed: false
-          });
-          setChecklistItems({
-            projectChecklist: [],
-            bathChecklist: [],
-            roofChecklist: [],
-            commitmentChecklist: []
-          });
+          // Clear all data after completion
+          clearAllData();
         }}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
@@ -1721,7 +2326,7 @@ Confirmation Status: ${appointmentConfirmed ? 'Set' : 'Not Set'}
           >
             <div style={{ fontSize: 13, color: '#2563eb', marginBottom: 6, fontWeight: 500 }}>
               You can <b>paste</b> (Ctrl+V) a copied screenshot here!
-            </div>
+      </div>
             <label style={{ fontWeight: 700, color: '#2563eb', display: 'block', marginBottom: 14, fontSize: '1.1rem', letterSpacing: 0.2 }}>
               Upload Basemap Screenshot (property info)
             </label>
@@ -1857,10 +2462,10 @@ Confirmation Status: ${appointmentConfirmed ? 'Set' : 'Not Set'}
         </div>
         {!propertySearchCollapsed && (
           <div style={{ background: 'rgba(59,130,246,0.04)', border: '1px solid #e5e7eb', borderRadius: 8, padding: '1rem', marginTop: 8, marginBottom: 8, maxWidth: 420, marginLeft: 'auto', marginRight: 'auto', boxShadow: '0 1px 4px rgba(59,130,246,0.04)' }}>
-            <div className="search-input-section-dark">
+        <div className="search-input-section-dark">
               <label className="input-label-dark" style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: 8, display: 'block', color: '#3b82f6' }}>Regrid Property Search</label>
-              <input
-                type="text"
+            <input
+              type="text"
                 placeholder="Enter full property address..."
                 className="modern-input-dark"
                 value={propertySearch.address || ''}
@@ -1881,50 +2486,50 @@ Confirmation Status: ${appointmentConfirmed ? 'Set' : 'Not Set'}
                         <path d="M15 11C15 12.6569 13.6569 14 12 14C10.3431 14 9 12.6569 9 11C9 9.34315 10.3431 8 12 8C13.6569 8 15 9.34315 15 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                       {suggestion.address}
-                    </div>
-                  ))}
                 </div>
-              )}
+                    ))}
+              </div>
+                )}
               {/* Search and Clear buttons */}
               <div className="search-actions-dark" style={{ marginTop: 12 }}>
-                <motion.button
-                  className="search-button-dark primary"
-                  onClick={handlePropertySearch}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  disabled={!propertySearch.address}
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M21 21L16.514 16.506L21 21ZM19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  Search Property
-                </motion.button>
-                <motion.button
-                  className="search-button-dark secondary"
-                  onClick={handleClearSearch}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M19 7L18.132 19.142C18.0579 20.1891 17.187 21.0273 16.148 21.0273H7.852C6.813 21.0273 5.94214 20.1891 5.868 19.142L5 7M10 11V17M14 11V17M15 7V4C15 3.44772 14.5523 3 14 3H10C9.44772 3 9 3.44772 9 4V7M4 7H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  Clear
-                </motion.button>
-              </div>
+              <motion.button
+                className="search-button-dark primary"
+                onClick={handlePropertySearch}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                disabled={!propertySearch.address}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M21 21L16.514 16.506L21 21ZM19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Search Property
+              </motion.button>
+              <motion.button
+                className="search-button-dark secondary"
+                onClick={handleClearSearch}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M19 7L18.132 19.142C18.0579 20.1891 17.187 21.0273 16.148 21.0273H7.852C6.813 21.0273 5.94214 20.1891 5.868 19.142L5 7M10 11V17M14 11V17M15 7V4C15 3.44772 14.5523 3 14 3H10C9.44772 3 9 3.44772 9 4V7M4 7H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Clear
+              </motion.button>
             </div>
-            {/* Search Results */}
-            {propertySearch.results && (
+          </div>
+        {/* Search Results */}
+        {propertySearch.results && (
               <div className="search-results-container-dark">{/* ...existing results code... */}</div>
             )}
           </div>
         )}
       </div>
       {/* Property Verification Checklist always visible below */}
-      <div className="property-checklist-section-dark">
-        <h4>Property Verification Checklist</h4>
-        <div className="property-checklist-grid-dark">
+        <div className="property-checklist-section-dark">
+          <h4>Property Verification Checklist</h4>
+          <div className="property-checklist-grid-dark">
           {propertyChecklistItems.map(item => (
-            <motion.div
+            <motion.div 
               key={item.key}
               className={`checklist-item-dark ${(item.key === 'basemapVerified' ? basemapVerified : propertySearch.checklist[item.key]) ? 'completed-dark' : ''}`}
               onClick={() => {
@@ -1971,9 +2576,9 @@ Confirmation Status: ${appointmentConfirmed ? 'Set' : 'Not Set'}
             <path d="M5 12H19M12 5L19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </motion.button>
-      </div>
-    </motion.div>
-  );
+            </div>
+          </motion.div>
+        );
 
   const renderCurrentStep = () => {
     switch (scriptSteps[currentStep].id) {
@@ -2099,6 +2704,22 @@ Confirmation Status: ${appointmentConfirmed ? 'Set' : 'Not Set'}
               </svg>
               FAQ
             </motion.button>
+            <motion.button
+              onClick={clearAllData}
+              className="nav-button-dark"
+              style={{
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                color: '#fff',
+                fontWeight: 600
+              }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Start New Appointment
+            </motion.button>
           </div>
         </motion.div>
       </motion.div>
@@ -2120,15 +2741,12 @@ Confirmation Status: ${appointmentConfirmed ? 'Set' : 'Not Set'}
               if (step.type === 'checklist') StepIcon = CheckSquare;
               if (step.type === 'questions') StepIcon = Users;
               if (step.type === 'presentation') StepIcon = FileText;
-              if (step.type === 'scheduling') StepIcon = Calendar;
+              if (step.type === 'scheduling') StepIcon = CalendarIcon;
               if (step.type === 'confirmation') StepIcon = CheckCircle;
               return (
                 <motion.div
                   key={step.id}
                   className={`progress-step-prominent ${index < currentStep ? 'completed' : ''} ${index === currentStep ? 'current' : ''}`}
-                  onClick={() => setCurrentStep(index)}
-                  whileTap={{ scale: 0.95 }}
-                  style={{ cursor: 'pointer' }}
                   aria-label={`Go to step: ${step.title}`}
                 >
                   <div className="step-icon-wrapper">
@@ -2149,42 +2767,290 @@ Confirmation Status: ${appointmentConfirmed ? 'Set' : 'Not Set'}
 
       {showRecap && (
         <div style={{
-          display: 'flex', flexDirection: 'row', gap: '2rem', justifyContent: 'center', marginTop: 40, marginBottom: 40, flexWrap: 'wrap',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          backdropFilter: 'blur(8px)',
+          padding: '2rem'
         }}>
-          {/* Rep Recap Card */}
-          <div style={{
-            background: '#fff', borderRadius: 12, boxShadow: '0 4px 24px rgba(59,130,246,0.13)', padding: '2rem', maxWidth: 480, minWidth: 320, color: '#222', position: 'relative',
-          }}>
-            <h2 style={{ color: '#2563eb', marginBottom: 12 }}>Rep Recap</h2>
-            <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: '1.08rem', marginBottom: 16 }}>{repRecapText}</pre>
+          <motion.div 
+            style={{
+              background: '#fff',
+              borderRadius: 20,
+              padding: '2rem',
+              maxWidth: 1200,
+              width: '100%',
+              maxHeight: '90vh',
+              overflow: 'auto',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+              position: 'relative'
+            }}
+            initial={{ opacity: 0, scale: 0.8, y: 50 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.5, type: 'spring' }}
+          >
+            {/* Close Button */}
             <button
-              onClick={handleCopyRepRecap}
+              onClick={() => setShowRecap(false)}
               style={{
-                background: repRecapCopied ? '#10b981' : '#3b82f6',
-                color: '#fff',
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: '#f1f5f9',
                 border: 'none',
-                borderRadius: 6,
-                padding: '0.5rem 1.5rem',
-                fontWeight: 600,
-                fontSize: '1rem',
+                borderRadius: '50%',
+                width: '2.5rem',
+                height: '2.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 cursor: 'pointer',
-                transition: 'background 0.2s',
+                fontSize: '1.2rem',
+                color: '#64748b',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = '#e2e8f0';
+                e.target.style.color = '#475569';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = '#f1f5f9';
+                e.target.style.color = '#64748b';
               }}
             >
-              {repRecapCopied ? 'Copied!' : 'Copy Recap'}
+              ✕
             </button>
-          </div>
-          {/* Customer Recap Card */}
-          <div style={{
-            background: '#f3f4f6', borderRadius: 12, boxShadow: '0 2px 12px rgba(59,130,246,0.07)', padding: '2rem', maxWidth: 420, minWidth: 280, color: '#222',
-          }}>
-            <h2 style={{ color: '#10b981', marginBottom: 12 }}>Customer Recap</h2>
-            <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: '1.08rem' }}>{customerRecapText}</pre>
-          </div>
+
+            <h1 style={{ 
+              color: '#1e293b', 
+              marginBottom: '2rem', 
+              textAlign: 'center',
+              fontSize: '2rem',
+              fontWeight: 700
+            }}>
+              📋 Appointment Recaps
+            </h1>
+
+            <div style={{
+              display: 'flex', 
+              flexDirection: 'row', 
+              gap: '2rem', 
+              justifyContent: 'center', 
+              flexWrap: 'wrap'
+            }}>
+              {/* Rep Recap Card */}
+              <div style={{
+                background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                borderRadius: 16,
+                padding: '2rem',
+                maxWidth: 500,
+                minWidth: 350,
+                color: '#fff',
+                position: 'relative',
+                boxShadow: '0 8px 32px rgba(59,130,246,0.3)'
+              }}>
+                <h2 style={{ 
+                  color: '#fff', 
+                  marginBottom: 16,
+                  fontSize: '1.5rem',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}>
+                  👨‍💼 Rep Recap
+                </h2>
+                <pre style={{ 
+                  whiteSpace: 'pre-wrap', 
+                  fontFamily: 'inherit', 
+                  fontSize: '1rem', 
+                  marginBottom: 20,
+                  lineHeight: '1.5',
+                  color: '#e2e8f0'
+                }}>
+                  {repRecapText}
+                </pre>
+                <button
+                  onClick={handleCopyRepRecap}
+                  style={{
+                    background: repRecapCopied ? '#10b981' : 'rgba(255, 255, 255, 0.2)',
+                    color: '#fff',
+                    border: '2px solid rgba(255, 255, 255, 0.3)',
+                    borderRadius: 8,
+                    padding: '0.75rem 1.5rem',
+                    fontWeight: 600,
+                    fontSize: '1rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    backdropFilter: 'blur(10px)'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!repRecapCopied) {
+                      e.target.style.background = 'rgba(255, 255, 255, 0.3)';
+                      e.target.style.transform = 'scale(1.05)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!repRecapCopied) {
+                      e.target.style.background = 'rgba(255, 255, 255, 0.2)';
+                      e.target.style.transform = 'scale(1)';
+                    }
+                  }}
+                >
+                  {repRecapCopied ? '✅ Copied!' : '📋 Copy Rep Recap'}
+                </button>
+              </div>
+
+              {/* Customer Recap Card */}
+              <div style={{
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                borderRadius: 16,
+                padding: '2rem',
+                maxWidth: 450,
+                minWidth: 320,
+                color: '#fff',
+                boxShadow: '0 8px 32px rgba(16,185,129,0.3)'
+              }}>
+                <h2 style={{ 
+                  color: '#fff', 
+                  marginBottom: 16,
+                  fontSize: '1.5rem',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}>
+                  👤 Customer Recap
+                </h2>
+                <pre style={{ 
+                  whiteSpace: 'pre-wrap', 
+                  fontFamily: 'inherit', 
+                  fontSize: '1rem',
+                  lineHeight: '1.5',
+                  color: '#d1fae5'
+                }}>
+                  {customerRecapText}
+                </pre>
+                <button
+                  onClick={handleCopyCustomerRecap}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    color: '#fff',
+                    border: '2px solid rgba(255, 255, 255, 0.3)',
+                    borderRadius: 8,
+                    padding: '0.75rem 1.5rem',
+                    fontWeight: 600,
+                    fontSize: '1rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    backdropFilter: 'blur(10px)',
+                    marginTop: '1rem'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = 'rgba(255, 255, 255, 0.3)';
+                    e.target.style.transform = 'scale(1.05)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = 'rgba(255, 255, 255, 0.2)';
+                    e.target.style.transform = 'scale(1)';
+                  }}
+                >
+                  📋 Copy Customer Recap
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+      
+      {/* Beautiful Salesforce Confirmation Modal */}
+      {recapMessage.title && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          backdropFilter: 'blur(8px)'
+        }}>
+          <motion.div 
+            style={{
+              background: recapMessage.type === 'success' 
+                ? 'linear-gradient(135deg, #059669 0%, #10b981 100%)' 
+                : 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)',
+              borderRadius: 20,
+              padding: '2rem',
+              maxWidth: 500,
+              width: '90%',
+              color: 'white',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+              textAlign: 'center'
+            }}
+            initial={{ opacity: 0, scale: 0.8, y: 50 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.5, type: 'spring' }}
+          >
+            <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>
+              {recapMessage.type === 'success' ? '✅' : '❌'}
+            </div>
+            <h2 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '1rem' }}>
+              {recapMessage.title}
+            </h2>
+            <p style={{ fontSize: '1.1rem', marginBottom: '1rem', opacity: 0.9 }}>
+              {recapMessage.message}
+            </p>
+            {recapMessage.details && (
+              <p style={{ fontSize: '0.9rem', opacity: 0.8, marginBottom: '1.5rem' }}>
+                {recapMessage.details}
+              </p>
+            )}
+            <button
+              onClick={() => {
+                setRecapMessage({ type: 'success', title: '', message: '', details: '' });
+                if (recapMessage.type === 'success') {
+                  setShowRecap(true);
+                }
+              }}
+              style={{
+                background: 'rgba(255, 255, 255, 0.2)',
+                color: 'white',
+                border: '2px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: 12,
+                padding: '0.75rem 2rem',
+                fontSize: '1rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                backdropFilter: 'blur(10px)'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'rgba(255, 255, 255, 0.3)';
+                e.target.style.transform = 'scale(1.05)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'rgba(255, 255, 255, 0.2)';
+                e.target.style.transform = 'scale(1)';
+              }}
+            >
+              {recapMessage.type === 'success' ? 'Continue' : 'Close'}
+            </button>
+          </motion.div>
         </div>
       )}
     </div>
   );
 }
 
-export default ScheduleScript; 
+  export default ScheduleScript; 

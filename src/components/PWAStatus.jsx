@@ -10,48 +10,92 @@ const PWAStatus = ({ isCollapsed = false }) => {
     cacheSize: '0 MB',
     swRegistered: false,
     swActive: false,
-    swError: null
+    swError: null,
+    isLoading: true
   });
 
   useEffect(() => {
     const checkPWAStatus = async () => {
-      const status = {
+      console.log('Checking PWA status...');
+      
+      // Set initial status immediately
+      const initialStatus = {
         isInstalled: window.matchMedia('(display-mode: standalone)').matches || 
                     window.navigator.standalone === true,
         isStandalone: window.matchMedia('(display-mode: standalone)').matches,
         hasServiceWorker: 'serviceWorker' in navigator && navigator.serviceWorker.controller,
-        isOnline: navigator.onLine
+        isOnline: navigator.onLine,
+        swRegistered: false,
+        swActive: false,
+        swError: null,
+        cacheSize: '0 MB',
+        isLoading: true
       };
+      
+      setPwaStatus(initialStatus);
 
-      // Check service worker status
+      // Check service worker status with timeout
       try {
-        const swStatus = await checkServiceWorkerStatus();
-        status.swRegistered = swStatus.registered;
-        status.swActive = swStatus.active;
-        status.swError = swStatus.error;
+        const swStatusPromise = checkServiceWorkerStatus();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Service worker check timeout')), 3000)
+        );
+        
+        const swStatus = await Promise.race([swStatusPromise, timeoutPromise]);
+        console.log('Service worker status:', swStatus);
+        
+        setPwaStatus(prev => ({
+          ...prev,
+          swRegistered: swStatus.registered || false,
+          swActive: swStatus.active || false,
+          swError: swStatus.error || null,
+          isLoading: false
+        }));
       } catch (error) {
-        status.swError = error.message;
+        console.log('Service worker check failed:', error.message);
+        setPwaStatus(prev => ({
+          ...prev,
+          swError: error.message,
+          isLoading: false
+        }));
       }
 
       // Check cache size if possible
       if ('caches' in window) {
         try {
-          const cacheNames = await caches.keys();
-          let totalSize = 0;
+          const cachePromise = (async () => {
+            const cacheNames = await caches.keys();
+            let totalSize = 0;
+            
+            for (const cacheName of cacheNames) {
+              const cache = await caches.open(cacheName);
+              const keys = await cache.keys();
+              totalSize += keys.length; // Rough estimate
+            }
+            
+            return `${Math.round(totalSize / 10)} MB`;
+          })();
           
-          for (const cacheName of cacheNames) {
-            const cache = await caches.open(cacheName);
-            const keys = await cache.keys();
-            totalSize += keys.length; // Rough estimate
-          }
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Cache check timeout')), 2000)
+          );
           
-          status.cacheSize = `${Math.round(totalSize / 10)} MB`;
+          const cacheSize = await Promise.race([cachePromise, timeoutPromise]);
+          
+          setPwaStatus(prev => ({
+            ...prev,
+            cacheSize,
+            isLoading: false
+          }));
         } catch (error) {
-          status.cacheSize = 'Unknown';
+          console.log('Cache check failed:', error.message);
+          setPwaStatus(prev => ({
+            ...prev,
+            cacheSize: 'Unknown',
+            isLoading: false
+          }));
         }
       }
-
-      setPwaStatus(status);
     };
 
     checkPWAStatus();
@@ -71,6 +115,7 @@ const PWAStatus = ({ isCollapsed = false }) => {
   }, []);
 
   const getStatusIcon = () => {
+    if (pwaStatus.isLoading) return '⏳';
     if (pwaStatus.isInstalled) return '✅';
     if (pwaStatus.swActive) return '⚡';
     if (pwaStatus.swRegistered) return '🔄';
@@ -79,6 +124,7 @@ const PWAStatus = ({ isCollapsed = false }) => {
   };
 
   const getStatusText = () => {
+    if (pwaStatus.isLoading) return 'Checking...';
     if (pwaStatus.isInstalled) return 'App Installed';
     if (pwaStatus.swActive) return 'SW Active';
     if (pwaStatus.swRegistered) return 'SW Registered';
@@ -87,6 +133,7 @@ const PWAStatus = ({ isCollapsed = false }) => {
   };
 
   const getStatusColor = () => {
+    if (pwaStatus.isLoading) return '#F59E0B'; // Orange for loading
     if (pwaStatus.isInstalled) return '#10B981'; // Green
     if (pwaStatus.swActive) return '#3B82F6'; // Blue
     if (pwaStatus.swRegistered) return '#F59E0B'; // Yellow

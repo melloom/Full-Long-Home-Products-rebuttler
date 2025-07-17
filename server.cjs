@@ -1,5 +1,6 @@
 const express = require('express');
 const jsforce = require('jsforce');
+const cors = require('cors');
 require('dotenv').config({ path: '.env.local' });
 
 console.log('USERNAME:', process.env.SALESFORCE_USERNAME);
@@ -7,6 +8,10 @@ console.log('PASSWORD:', process.env.SALESFORCE_PASSWORD ? '***' : '(empty)');
 console.log('TOKEN:', process.env.SALESFORCE_SECURITY_TOKEN ? '***' : '(empty)');
 
 const app = express();
+
+// Enable CORS for all routes
+app.use(cors());
+
 app.use(express.json());
 
 app.get('/', (req, res) => {
@@ -14,6 +19,7 @@ app.get('/', (req, res) => {
 });
 
 app.post('/api/sendToSalesforce', async (req, res) => {
+  console.log('Received Salesforce API request:', req.body);
   const { appointment, propertyInfo, customerInfo, projectType, callType, userName, appointmentConfirmed } = req.body;
 
   const conn = new jsforce.Connection();
@@ -48,6 +54,23 @@ app.post('/api/sendToSalesforce', async (req, res) => {
       if (!date || !time) return '';
       const d = new Date(date);
       return `${d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })} at ${time}`;
+    };
+
+    // Convert state abbreviation to full state name for Salesforce
+    const getFullStateName = (stateAbbr) => {
+      const stateMap = {
+        'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas', 'CA': 'California',
+        'CO': 'Colorado', 'CT': 'Connecticut', 'DE': 'Delaware', 'FL': 'Florida', 'GA': 'Georgia',
+        'HI': 'Hawaii', 'ID': 'Idaho', 'IL': 'Illinois', 'IN': 'Indiana', 'IA': 'Iowa',
+        'KS': 'Kansas', 'KY': 'Kentucky', 'LA': 'Louisiana', 'ME': 'Maine', 'MD': 'Maryland',
+        'MA': 'Massachusetts', 'MI': 'Michigan', 'MN': 'Minnesota', 'MS': 'Mississippi', 'MO': 'Missouri',
+        'MT': 'Montana', 'NE': 'Nebraska', 'NV': 'Nevada', 'NH': 'New Hampshire', 'NJ': 'New Jersey',
+        'NM': 'New Mexico', 'NY': 'New York', 'NC': 'North Carolina', 'ND': 'North Dakota', 'OH': 'Ohio',
+        'OK': 'Oklahoma', 'OR': 'Oregon', 'PA': 'Pennsylvania', 'RI': 'Rhode Island', 'SC': 'South Carolina',
+        'SD': 'South Dakota', 'TN': 'Tennessee', 'TX': 'Texas', 'UT': 'Utah', 'VT': 'Vermont',
+        'VA': 'Virginia', 'WA': 'Washington', 'WV': 'West Virginia', 'WI': 'Wisconsin', 'WY': 'Wyoming'
+      };
+      return stateMap[stateAbbr?.toUpperCase()] || stateAbbr;
     };
 
     // Determine market segment based on state/region
@@ -111,7 +134,7 @@ Market Segment: ${getMarketSegment(customerInfo?.state)}`;
       Phone: customerInfo?.phone || '',
       Street: customerInfo?.address || propertyInfo?.address || '',
       City: customerInfo?.city || '',
-      State: customerInfo?.state || '',
+      State: getFullStateName(customerInfo?.state) || '',
       PostalCode: customerInfo?.zipCode || '',
       Country: customerInfo?.country || 'United States',
       Status: req.body.status || "Set",
@@ -139,10 +162,15 @@ Market Segment: ${getMarketSegment(customerInfo?.state)}`;
       // Market_Segment__c: getMarketSegment(customerInfo?.state)
     };
 
+    console.log('Creating Lead with data:', leadData);
+    console.log('Original state:', customerInfo?.state);
+    console.log('Converted state:', getFullStateName(customerInfo?.state));
     const result = await conn.sobject("Lead").create(leadData);
+    console.log('Lead created successfully:', result);
 
     res.json({ success: true, result });
   } catch (error) {
+    console.error('Salesforce API error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
