@@ -38,6 +38,7 @@ const ScheduleScript = ({ onNavigate }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [callType, setCallType] = useState('');
   const [projectType, setProjectType] = useState('');
+  const [userName, setUserName] = useState('');
 
   const [projectDetails, setProjectDetails] = useState({
     issues: '',
@@ -55,6 +56,22 @@ const ScheduleScript = ({ onNavigate }) => {
     date: '',
     time: '',
     confirmed: false
+  });
+  const [appointmentConfirmed, setAppointmentConfirmed] = useState(false);
+  const [customerInfo, setCustomerInfo] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    country: 'United States',
+    secondaryName: '',
+    secondaryPhone: '',
+    secondaryEmail: '',
+    relationshipToPrimary: ''
   });
   const [checklistItems, setChecklistItems] = useState({
     projectChecklist: [],
@@ -177,6 +194,11 @@ const ScheduleScript = ({ onNavigate }) => {
       type: 'greeting'
     },
     {
+      id: 'customerInfo',
+      title: 'Customer Information',
+      type: 'customer'
+    },
+    {
       id: 'projectType',
       title: 'Project Type Selection',
       type: 'selection'
@@ -207,9 +229,14 @@ const ScheduleScript = ({ onNavigate }) => {
       type: 'scheduling'
     },
     {
-      id: 'buttonUp',
-      title: 'Button Up & Confirmation',
+      id: 'confirmation',
+      title: 'Appointment Confirmation',
       type: 'confirmation'
+    },
+    {
+      id: 'buttonUp',
+      title: 'Button Up & Final Steps',
+      type: 'final'
     }
   ];
 
@@ -299,6 +326,13 @@ const ScheduleScript = ({ onNavigate }) => {
 
   const handleAppointmentChange = (field, value) => {
     setAppointment(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleCustomerInfoChange = (field, value) => {
+    setCustomerInfo(prev => ({
       ...prev,
       [field]: value
     }));
@@ -629,14 +663,16 @@ const ScheduleScript = ({ onNavigate }) => {
 
   // Gather session summary
   const sessionSummary = {
-    address: propertySearch.address || (parsedPropertyInfo['Owner Address'] || ''),
-    owner: parsedPropertyInfo['Owner Name'] || '',
+    address: customerInfo.address || propertySearch.address || (parsedPropertyInfo['Owner Address'] || ''),
+    owner: `${customerInfo.firstName} ${customerInfo.lastName}`.trim() || parsedPropertyInfo['Owner Name'] || '',
     county: parsedPropertyInfo['County Name'] || '',
     countyFips: parsedPropertyInfo['County FIPS'] || '',
     acres: parsedPropertyInfo['Acres'] || '',
     apn: parsedPropertyInfo['APN'] || '',
     projectType,
     callType,
+    userName,
+    customerInfo,
     appointment,
     projectDetails,
     checklistItems,
@@ -657,13 +693,16 @@ ${sessionSummary.owner ? `• Owner: ${sessionSummary.owner}\n` : ''}${sessionSu
 ${sessionSummary.acres ? `• Acres: ${sessionSummary.acres}\n` : ''}${sessionSummary.apn ? `• APN: ${sessionSummary.apn}\n` : ''}
 
 📅 Appointment Set: ${formatDateTime(sessionSummary.appointment.date, sessionSummary.appointment.time)}
+${appointmentConfirmed ? '✅ Appointment Set (No Follow-up Needed)' : '⏳ Appointment Not Set (Follow-up Required)'}
 
 ✅ REP NOTES
-Name: ${sessionSummary.owner || 'N/A'}
+Rep Name: ${sessionSummary.userName || 'N/A'}
+Customer Name: ${sessionSummary.owner || 'N/A'}
 Address: ${sessionSummary.address}
 Project Type: ${sessionSummary.projectType === 'bath' ? 'Bathroom remodel' : sessionSummary.projectType === 'roof' ? 'Roof replacement' : 'N/A'}
 Special Details: ${sessionSummary.projectDetails.issues || 'N/A'}
 Appointment Date & Time: ${formatDateTime(sessionSummary.appointment.date, sessionSummary.appointment.time)}
+Confirmation Status: ${appointmentConfirmed ? 'Set' : 'Not Set'}
 `;
 
   // Customer Recap Text
@@ -684,7 +723,30 @@ Appointment Date & Time: ${formatDateTime(sessionSummary.appointment.date, sessi
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <h3 className="step-title-dark">Select Call Type</h3>
+      <h3 className="step-title-dark">Agent Information & Call Type</h3>
+      
+      {/* Agent Name Input */}
+      <div className="form-group-dark" style={{ marginBottom: '1.5rem' }}>
+        <label className="form-label-dark">Agent Name</label>
+        <input
+          type="text"
+          placeholder="Enter your name..."
+          value={userName}
+          onChange={(e) => setUserName(e.target.value)}
+          className="form-input-dark"
+          style={{ 
+            background: 'rgba(255, 255, 255, 0.1)', 
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            color: '#fff',
+            padding: '0.75rem 1rem',
+            borderRadius: '8px',
+            fontSize: '1rem',
+            width: '100%',
+            marginTop: '0.5rem'
+          }}
+        />
+      </div>
+      
       <div style={{ 
         background: 'rgba(59, 130, 246, 0.1)', 
         padding: '0.5rem 1rem', 
@@ -699,6 +761,10 @@ Appointment Date & Time: ${formatDateTime(sessionSummary.appointment.date, sessi
         <motion.div 
           className={`greeting-option-dark ${callType === 'incoming' ? 'selected-dark' : ''}`}
           onClick={() => {
+            if (!userName.trim()) {
+              alert('Please enter your name before proceeding.');
+              return;
+            }
             setCallType('incoming');
             setTimeout(() => setCurrentStep(1), 200); // auto-advance
           }}
@@ -733,6 +799,10 @@ Appointment Date & Time: ${formatDateTime(sessionSummary.appointment.date, sessi
         <motion.div 
           className={`greeting-option-dark ${callType === 'outgoing' ? 'selected-dark' : ''}`}
           onClick={() => {
+            if (!userName.trim()) {
+              alert('Please enter your name before proceeding.');
+              return;
+            }
             setCallType('outgoing');
             setTimeout(() => setCurrentStep(1), 200); // auto-advance
           }}
@@ -778,6 +848,194 @@ Appointment Date & Time: ${formatDateTime(sessionSummary.appointment.date, sessi
             <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
           Back
+        </motion.button>
+      </div>
+    </motion.div>
+  );
+
+  const renderCustomerInfoStep = () => (
+    <motion.div 
+      className="script-step-dark"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <h3 className="step-title-dark">Customer Information</h3>
+      
+      <div className="customer-info-container-dark">
+        <div className="customer-info-card-dark">
+          <h4 className="customer-info-title-dark">Primary Contact Information</h4>
+          
+          <div className="form-row-dark">
+            <div className="form-group-dark">
+              <label className="form-label-dark">First Name *</label>
+              <input
+                type="text"
+                value={customerInfo.firstName}
+                onChange={(e) => handleCustomerInfoChange('firstName', e.target.value)}
+                className="form-input-dark"
+                placeholder="Enter first name"
+              />
+            </div>
+            <div className="form-group-dark">
+              <label className="form-label-dark">Last Name *</label>
+              <input
+                type="text"
+                value={customerInfo.lastName}
+                onChange={(e) => handleCustomerInfoChange('lastName', e.target.value)}
+                className="form-input-dark"
+                placeholder="Enter last name"
+              />
+            </div>
+          </div>
+          
+          <div className="form-row-dark">
+            <div className="form-group-dark">
+              <label className="form-label-dark">Email</label>
+              <input
+                type="email"
+                value={customerInfo.email}
+                onChange={(e) => handleCustomerInfoChange('email', e.target.value)}
+                className="form-input-dark"
+                placeholder="Enter email address"
+              />
+            </div>
+            <div className="form-group-dark">
+              <label className="form-label-dark">Phone *</label>
+              <input
+                type="tel"
+                value={customerInfo.phone}
+                onChange={(e) => handleCustomerInfoChange('phone', e.target.value)}
+                className="form-input-dark"
+                placeholder="(555) 123-4567"
+              />
+            </div>
+          </div>
+          
+          <div className="form-group-dark">
+            <label className="form-label-dark">Address *</label>
+            <input
+              type="text"
+              value={customerInfo.address}
+              onChange={(e) => handleCustomerInfoChange('address', e.target.value)}
+              className="form-input-dark"
+              placeholder="Street address"
+            />
+          </div>
+          
+          <div className="form-row-dark">
+            <div className="form-group-dark">
+              <label className="form-label-dark">City *</label>
+              <input
+                type="text"
+                value={customerInfo.city}
+                onChange={(e) => handleCustomerInfoChange('city', e.target.value)}
+                className="form-input-dark"
+                placeholder="City"
+              />
+            </div>
+            <div className="form-group-dark">
+              <label className="form-label-dark">State *</label>
+              <input
+                type="text"
+                value={customerInfo.state}
+                onChange={(e) => handleCustomerInfoChange('state', e.target.value)}
+                className="form-input-dark"
+                placeholder="State"
+              />
+            </div>
+            <div className="form-group-dark">
+              <label className="form-label-dark">ZIP Code *</label>
+              <input
+                type="text"
+                value={customerInfo.zipCode}
+                onChange={(e) => handleCustomerInfoChange('zipCode', e.target.value)}
+                className="form-input-dark"
+                placeholder="ZIP Code"
+              />
+            </div>
+          </div>
+          
+          <h4 className="customer-info-title-dark" style={{ marginTop: '2rem' }}>Secondary Contact (Optional)</h4>
+          
+          <div className="form-group-dark">
+            <label className="form-label-dark">Secondary Name</label>
+            <input
+              type="text"
+              value={customerInfo.secondaryName}
+              onChange={(e) => handleCustomerInfoChange('secondaryName', e.target.value)}
+              className="form-input-dark"
+              placeholder="Spouse, partner, etc."
+            />
+          </div>
+          
+          <div className="form-row-dark">
+            <div className="form-group-dark">
+              <label className="form-label-dark">Secondary Phone</label>
+              <input
+                type="tel"
+                value={customerInfo.secondaryPhone}
+                onChange={(e) => handleCustomerInfoChange('secondaryPhone', e.target.value)}
+                className="form-input-dark"
+                placeholder="(555) 123-4567"
+              />
+            </div>
+            <div className="form-group-dark">
+              <label className="form-label-dark">Secondary Email</label>
+              <input
+                type="email"
+                value={customerInfo.secondaryEmail}
+                onChange={(e) => handleCustomerInfoChange('secondaryEmail', e.target.value)}
+                className="form-input-dark"
+                placeholder="Email address"
+              />
+            </div>
+          </div>
+          
+          <div className="form-group-dark">
+            <label className="form-label-dark">Relationship to Primary</label>
+            <select
+              value={customerInfo.relationshipToPrimary}
+              onChange={(e) => handleCustomerInfoChange('relationshipToPrimary', e.target.value)}
+              className="form-input-dark"
+            >
+              <option value="">Select relationship</option>
+              <option value="Spouse">Spouse</option>
+              <option value="Partner">Partner</option>
+              <option value="Parent">Parent</option>
+              <option value="Child">Child</option>
+              <option value="Roommate">Roommate</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      <div className="step-navigation-dark">
+        <motion.button
+          className="nav-button-dark back-button-dark"
+          onClick={handleBack}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Back
+        </motion.button>
+        
+        <motion.button
+          className="nav-button-dark next-button-dark"
+          onClick={handleNext}
+          disabled={!customerInfo.firstName || !customerInfo.lastName || !customerInfo.phone || !customerInfo.address || !customerInfo.city || !customerInfo.state || !customerInfo.zipCode}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          style={{ opacity: (!customerInfo.firstName || !customerInfo.lastName || !customerInfo.phone || !customerInfo.address || !customerInfo.city || !customerInfo.state || !customerInfo.zipCode) ? 0.5 : 1 }}
+        >
+          Next
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 12H19M12 5L19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
         </motion.button>
       </div>
     </motion.div>
@@ -1159,6 +1417,92 @@ Appointment Date & Time: ${formatDateTime(sessionSummary.appointment.date, sessi
     </motion.div>
   );
 
+  const renderConfirmationStep = () => (
+    <motion.div 
+      className="script-step-dark"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <h3 className="step-title-dark">Appointment Confirmation</h3>
+      
+      <div className="confirmation-container-dark">
+        <div className="confirmation-card-dark">
+          <h4 className="confirmation-title-dark">Confirm Appointment Details:</h4>
+          
+          <div className="appointment-summary-dark">
+            <div className="summary-item-dark">
+              <strong>Date:</strong> {appointment.date ? new Date(appointment.date).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) : 'Not set'}
+            </div>
+            <div className="summary-item-dark">
+              <strong>Time:</strong> {appointment.time || 'Not set'}
+            </div>
+            <div className="summary-item-dark">
+              <strong>Project Type:</strong> {projectType === 'bath' ? 'Bathroom Remodel' : projectType === 'roof' ? 'Roof Replacement' : 'Not selected'}
+            </div>
+            <div className="summary-item-dark">
+              <strong>Property Address:</strong> {propertySearch.address || 'Not entered'}
+            </div>
+          </div>
+          
+          <div className="confirmation-checkbox-dark">
+            <motion.div 
+              className={`confirmation-item-dark ${appointmentConfirmed ? 'confirmed-dark' : ''}`}
+              onClick={() => setAppointmentConfirmed(!appointmentConfirmed)}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {appointmentConfirmed ? (
+                <CheckSquare className="check-icon" />
+              ) : (
+                <Square className="check-icon" />
+              )}
+              <div className="confirmation-content-dark">
+                               <span className="confirmation-label-dark">✅ Appointment is fully confirmed</span>
+               <span className="confirmation-description-dark">
+                 Customer has confirmed the appointment and no follow-up is needed. 
+                 This will update the Salesforce status to "Set".
+               </span>
+              </div>
+            </motion.div>
+          </div>
+          
+                     {appointmentConfirmed && (
+             <div className="confirmation-note-dark">
+               <p>✅ This appointment will be marked as "Set" in Salesforce with no follow-up required.</p>
+             </div>
+           )}
+        </div>
+      </div>
+      
+      <div className="step-navigation-dark">
+        <motion.button
+          className="nav-button-dark back-button-dark"
+          onClick={handleBack}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Back
+        </motion.button>
+        
+        <motion.button
+          className="nav-button-dark next-button-dark"
+          onClick={handleNext}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          Next
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 12H19M12 5L19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </motion.button>
+      </div>
+    </motion.div>
+  );
+
   const renderButtonUpStep = () => (
     <motion.div 
       className="script-step-dark"
@@ -1201,12 +1545,48 @@ Appointment Date & Time: ${formatDateTime(sessionSummary.appointment.date, sessi
       
       <motion.button 
         className="complete-button-dark"
-        onClick={() => {
+        onClick={async () => {
+          // Send data to Salesforce backend before resetting state
+          try {
+            await fetch('http://localhost:3001/api/sendToSalesforce', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                appointment,
+                propertyInfo: parsedPropertyInfo,
+                customerInfo,
+                projectType,
+                callType,
+                userName,
+                appointmentConfirmed,
+                status: appointmentConfirmed ? 'Set' : 'Not Set'
+              })
+            });
+          } catch (err) {
+            alert('Failed to send data to Salesforce.');
+          }
           setShowRecap(true);
           // Reset script state after completion
           setCurrentStep(0);
           setCallType('');
           setProjectType('');
+          setUserName('');
+          setAppointmentConfirmed(false);
+          setCustomerInfo({
+            firstName: '',
+            lastName: '',
+            email: '',
+            phone: '',
+            address: '',
+            city: '',
+            state: '',
+            zipCode: '',
+            country: 'United States',
+            secondaryName: '',
+            secondaryPhone: '',
+            secondaryEmail: '',
+            relationshipToPrimary: ''
+          });
           setProjectDetails({
             age: '',
             issues: '',
@@ -1599,6 +1979,8 @@ Appointment Date & Time: ${formatDateTime(sessionSummary.appointment.date, sessi
     switch (scriptSteps[currentStep].id) {
       case 'greeting':
         return renderGreetingStep();
+      case 'customerInfo':
+        return renderCustomerInfoStep();
       case 'projectType':
         return renderProjectTypeStep();
       case 'propertySearch':
@@ -1611,6 +1993,8 @@ Appointment Date & Time: ${formatDateTime(sessionSummary.appointment.date, sessi
         return renderValuePropositionStep();
       case 'commitment':
         return renderCommitmentStep();
+      case 'confirmation':
+        return renderConfirmationStep();
       case 'buttonUp':
         return renderButtonUpStep();
       default:
