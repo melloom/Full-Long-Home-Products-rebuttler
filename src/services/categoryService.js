@@ -1,4 +1,4 @@
-import { db } from '../services/firebase/config';
+import { getDb } from '../services/firebase/config';
 import {
   collection,
   getDocs,
@@ -66,9 +66,9 @@ const DEFAULT_REBUTTALS = [
 
 class CategoryService {
   constructor() {
-    this.categoriesCollection = collection(db, CATEGORIES_COLLECTION);
-    this.rebuttalsCollection = collection(db, REBUTTALS_COLLECTION);
-    this.archivedRebuttalsCollection = collection(db, ARCHIVED_REBUTTALS_COLLECTION);
+    this.categoriesCollection = collection(getDb(), CATEGORIES_COLLECTION);
+    this.rebuttalsCollection = collection(getDb(), REBUTTALS_COLLECTION);
+    this.archivedRebuttalsCollection = collection(getDb(), ARCHIVED_REBUTTALS_COLLECTION);
   }
 
   // Initialize default categories if none exist
@@ -154,7 +154,7 @@ class CategoryService {
   async deleteCategory(id) {
     try {
       // Start a batch write
-      const batch = writeBatch(db);
+      const batch = writeBatch(getDb());
       
       // Get the category to be deleted
       const categoryRef = doc(this.categoriesCollection, id);
@@ -210,7 +210,7 @@ class CategoryService {
   // Restore archived rebuttals to a new category
   async restoreArchivedRebuttals(newCategoryName) {
     try {
-      const batch = writeBatch(db);
+      const batch = writeBatch(getDb());
       
       // Find all archived rebuttals that were archived due to category deletion
       const archivedQuery = query(
@@ -287,7 +287,7 @@ class CategoryService {
       const querySnapshot = await getDocs(rebuttalsQuery);
       
       // Delete existing rebuttals
-      const batch = writeBatch(db);
+      const batch = writeBatch(getDb());
       querySnapshot.docs.forEach(doc => {
         batch.delete(doc.ref);
       });

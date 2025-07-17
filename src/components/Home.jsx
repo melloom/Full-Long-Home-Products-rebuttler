@@ -4,7 +4,7 @@ import BackToTop from './BackToTop';
 import '../styles/Home.css';
 import { useNavigate } from 'react-router-dom';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
-import { db } from '../services/firebase/config';
+import { getDb } from '../services/firebase/config';
 import categoryService from '../services/categoryService';
 import rebuttalsService from '../services/rebuttalsService';
 import SearchBar from './SearchBar';
@@ -1385,7 +1385,7 @@ const Home = () => {
         
         // Set up real-time listener for rebuttals
         const rebuttalsQuery = query(
-          collection(db, 'rebuttals'),
+          collection(getDb(), 'rebuttals'),
           orderBy('createdAt', 'desc')
         );
 

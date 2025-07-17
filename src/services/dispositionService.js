@@ -1,4 +1,4 @@
-import { db } from '../services/firebase/config';
+import { getDb } from '../services/firebase/config';
 import {
   collection,
   getDocs,
@@ -18,7 +18,7 @@ const DISPOSITIONS_COLLECTION = 'dispositions';
 
 class DispositionService {
   constructor() {
-    this.db = db;
+    this.db = getDb();
     this.dispositionsCollection = collection(this.db, DISPOSITIONS_COLLECTION);
   }
 

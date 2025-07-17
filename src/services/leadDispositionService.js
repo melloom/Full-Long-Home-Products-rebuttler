@@ -1,4 +1,4 @@
-import { db, auth } from '../services/firebase/config';
+import { getDb, auth } from '../services/firebase/config';
 import {
   collection,
   getDocs,
@@ -18,7 +18,7 @@ const DISPOSITIONS_COLLECTION = 'dispositions';
 
 // Helper function to check if Firebase is properly initialized
 const checkFirebaseConnection = () => {
-  if (!db) {
+  if (!getDb()) {
     throw new Error('Firebase is not properly initialized. Please check your Firebase configuration.');
   }
 };
@@ -37,7 +37,7 @@ const leadDispositionService = {
     try {
       checkFirebaseConnection();
       const dispositionsQuery = query(
-        collection(db, DISPOSITIONS_COLLECTION),
+        collection(getDb(), DISPOSITIONS_COLLECTION),
         orderBy('createdAt', 'desc')
       );
       const querySnapshot = await getDocs(dispositionsQuery);
@@ -71,7 +71,7 @@ const leadDispositionService = {
       console.log(`Fetching dispositions for category: ${category}`);
       
       const dispositionsQuery = query(
-        collection(db, DISPOSITIONS_COLLECTION),
+        collection(getDb(), DISPOSITIONS_COLLECTION),
         where('category', '==', category),
         orderBy('createdAt', 'desc')
       );
@@ -96,7 +96,7 @@ const leadDispositionService = {
       console.log('Searching dispositions...');
       
       const dispositionsQuery = query(
-        collection(db, DISPOSITIONS_COLLECTION),
+        collection(getDb(), DISPOSITIONS_COLLECTION),
         orderBy('createdAt', 'desc')
       );
       const querySnapshot = await getDocs(dispositionsQuery);
@@ -127,7 +127,7 @@ const leadDispositionService = {
     try {
       checkFirebaseConnection();
       const user = checkAuth();
-      const docRef = await addDoc(collection(db, DISPOSITIONS_COLLECTION), {
+      const docRef = await addDoc(collection(getDb(), DISPOSITIONS_COLLECTION), {
         ...dispositionData,
         createdBy: user.uid,
         createdAt: serverTimestamp(),
@@ -145,7 +145,7 @@ const leadDispositionService = {
     try {
       checkFirebaseConnection();
       const user = checkAuth();
-      const dispositionRef = doc(db, DISPOSITIONS_COLLECTION, dispositionId);
+      const dispositionRef = doc(getDb(), DISPOSITIONS_COLLECTION, dispositionId);
       await updateDoc(dispositionRef, {
         ...dispositionData,
         updatedBy: user.uid,
@@ -162,7 +162,7 @@ const leadDispositionService = {
     try {
       checkFirebaseConnection();
       checkAuth();
-      const dispositionRef = doc(db, DISPOSITIONS_COLLECTION, dispositionId);
+      const dispositionRef = doc(getDb(), DISPOSITIONS_COLLECTION, dispositionId);
       await deleteDoc(dispositionRef);
     } catch (error) {
       console.error('Error deleting disposition:', error);
@@ -174,7 +174,7 @@ const leadDispositionService = {
   debugListDispositions: async () => {
     try {
       console.log('Debug: Listing all dispositions...');
-      const dispositionsQuery = query(collection(db, DISPOSITIONS_COLLECTION));
+      const dispositionsQuery = query(collection(getDb(), DISPOSITIONS_COLLECTION));
       const querySnapshot = await getDocs(dispositionsQuery);
       
       console.log(`Debug: Found ${querySnapshot.size} dispositions in database:`);
@@ -204,13 +204,13 @@ const leadDispositionService = {
       }
 
       // Get existing dispositions
-      const existingDispositions = await getDocs(collection(db, DISPOSITIONS_COLLECTION));
+      const existingDispositions = await getDocs(collection(getDb(), DISPOSITIONS_COLLECTION));
       console.log(`Found ${existingDispositions.size} existing dispositions`);
 
       // Delete all existing dispositions
       if (existingDispositions.size > 0) {
         console.log('Deleting existing dispositions...');
-        const batch = writeBatch(db);
+        const batch = writeBatch(getDb());
         existingDispositions.docs.forEach(doc => {
           batch.delete(doc.ref);
         });
@@ -220,10 +220,10 @@ const leadDispositionService = {
 
       // Add all default dispositions
       console.log('Adding all default dispositions...');
-      const addBatch = writeBatch(db);
+      const addBatch = writeBatch(getDb());
       
       DEFAULT_DISPOSITIONS.forEach(disposition => {
-        const docRef = doc(collection(db, DISPOSITIONS_COLLECTION));
+        const docRef = doc(collection(getDb(), DISPOSITIONS_COLLECTION));
         addBatch.set(docRef, {
           ...disposition,
           createdAt: new Date().toISOString(),
@@ -253,14 +253,14 @@ const leadDispositionService = {
       }
 
       // Get all existing dispositions
-      const dispositionsQuery = query(collection(db, DISPOSITIONS_COLLECTION));
+      const dispositionsQuery = query(collection(getDb(), DISPOSITIONS_COLLECTION));
       const existingDispositions = await getDocs(dispositionsQuery);
       
       console.log(`Found ${existingDispositions.size} existing dispositions to delete`);
       
       // Delete all existing dispositions
       if (existingDispositions.size > 0) {
-        const deleteBatch = writeBatch(db);
+        const deleteBatch = writeBatch(getDb());
         existingDispositions.docs.forEach(doc => {
           deleteBatch.delete(doc.ref);
         });
@@ -270,10 +270,10 @@ const leadDispositionService = {
 
       // Add all dispositions from dispositions.js
       console.log('Adding all dispositions from dispositions.js...');
-      const addBatch = writeBatch(db);
+      const addBatch = writeBatch(getDb());
       
       DEFAULT_DISPOSITIONS.forEach(disposition => {
-        const docRef = doc(collection(db, DISPOSITIONS_COLLECTION));
+        const docRef = doc(collection(getDb(), DISPOSITIONS_COLLECTION));
         addBatch.set(docRef, {
           ...disposition,
           createdAt: new Date().toISOString(),
@@ -285,7 +285,7 @@ const leadDispositionService = {
       console.log(`Successfully added ${DEFAULT_DISPOSITIONS.length} dispositions`);
 
       // Verify the dispositions were added
-      const verifyQuery = query(collection(db, DISPOSITIONS_COLLECTION));
+      const verifyQuery = query(collection(getDb(), DISPOSITIONS_COLLECTION));
       const verifySnapshot = await getDocs(verifyQuery);
       console.log(`Verification: Found ${verifySnapshot.size} dispositions in database`);
       
@@ -300,7 +300,7 @@ const leadDispositionService = {
   getDispositionCategories: async () => {
     try {
       checkFirebaseConnection();
-      const dispositionsQuery = query(collection(db, DISPOSITIONS_COLLECTION));
+      const dispositionsQuery = query(collection(getDb(), DISPOSITIONS_COLLECTION));
       const querySnapshot = await getDocs(dispositionsQuery);
       
       // Get unique categories from dispositions

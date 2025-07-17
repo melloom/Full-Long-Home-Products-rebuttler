@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { initializeFirebase, auth, db } from '../../services/firebase/config';
+import { initializeFirebase, auth, getDb } from '../../services/firebase/config';
 import { getDocs, collection } from 'firebase/firestore';
 
 const FirebaseTest = () => {
@@ -46,7 +46,7 @@ const FirebaseTest = () => {
         // Test 3: Firestore
         try {
           console.log('🔍 FirebaseTest: Testing Firestore...');
-          if (db) {
+          if (getDb()) {
             console.log('✅ FirebaseTest: Firestore is available');
             setTestResults(prev => ({ ...prev, firestore: 'success' }));
           } else {
@@ -65,7 +65,7 @@ const FirebaseTest = () => {
 
           for (const collectionName of collections) {
             try {
-              const snapshot = await getDocs(collection(db, collectionName));
+              const snapshot = await getDocs(collection(getDb(), collectionName));
               console.log(`✅ FirebaseTest: Collection '${collectionName}' is accessible (${snapshot.size} documents)`);
               accessibleCollections.push(collectionName);
             } catch (error) {

@@ -1,9 +1,38 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import Tesseract from 'tesseract.js';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, Clock, FileText, CheckCircle, ChevronRight, Phone, User, Mail, Users, CheckSquare, Square, Check, Home } from 'lucide-react';
 import { safePostMessage } from '../utils/iframeErrorHandler';
 
 import '../styles/ScheduleScript.css';
+
+// Add a function to parse property info from OCR text
+function parsePropertyInfo(ocrText) {
+  // Simple regex-based extraction for common fields
+  const fields = [
+    { label: 'Owner Name', keys: ['Owner Name', 'Nome'] },
+    { label: 'Owner Address', keys: ['Owner Address', 'Mailing Address'] },
+    { label: 'Owner City', keys: ['Owner Cty', 'Owner City'] },
+    { label: 'Owner State', keys: ['Owner sate', 'Owner State', 'State'] },
+    { label: 'Owner Zip Code', keys: ['OwnerZip Code', 'Owner Zip', 'Zip'] },
+    { label: 'County Name', keys: ['CountyNeme', 'County Name'] },
+    { label: 'County FIPS', keys: ['County Fips Code', 'County FIPS'] },
+    { label: 'Acres', keys: ['Acres'] },
+    { label: 'APN', keys: ['Ap', 'APN'] },
+  ];
+  const result = {};
+  for (const field of fields) {
+    for (const key of field.keys) {
+      const regex = new RegExp(`${key}\s*[:=]?\s*([^\n]+)`, 'i');
+      const match = ocrText.match(regex);
+      if (match) {
+        result[field.label] = match[1].trim();
+        break;
+      }
+    }
+  }
+  return result;
+}
 
 const ScheduleScript = ({ onNavigate }) => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -49,6 +78,97 @@ const ScheduleScript = ({ onNavigate }) => {
       accessInfoCollected: false
     }
   });
+
+  const [propertySearchCollapsed, setPropertySearchCollapsed] = useState(true);
+  const [basemapVisited, setBasemapVisited] = useState(false);
+  const [basemapVerified, setBasemapVerified] = useState(false);
+  const [basemapScreenshot, setBasemapScreenshot] = useState(null);
+  const [isPasteActive, setIsPasteActive] = useState(false);
+  const [ocrText, setOcrText] = useState('');
+  const [ocrLoading, setOcrLoading] = useState(false);
+
+  // Add state for parsed property info
+  const [parsedPropertyInfo, setParsedPropertyInfo] = useState({});
+
+  // Add state to show recaps after completion
+  const [showRecap, setShowRecap] = useState(false);
+  const [repRecapCopied, setRepRecapCopied] = useState(false);
+
+  // Define property verification checklist items for screenshot context
+  const propertyChecklistItems = [
+    { key: 'basemapVerified', label: 'Screenshot Uploaded & Owner Verified' },
+    { key: 'addressVerified', label: 'Address Matches Screenshot' },
+    { key: 'propertyTypeConfirmed', label: 'Property Type Matches Screenshot' },
+    { key: 'characteristicsNoted', label: 'Key Characteristics Noted' },
+    { key: 'accessInfoCollected', label: 'Access/Entry Info from Screenshot' },
+  ];
+
+  // Define checklist completion for Next button
+  const allPropertyChecklistChecked =
+    basemapVerified &&
+    propertySearch.checklist.addressVerified &&
+    propertySearch.checklist.propertyTypeConfirmed &&
+    propertySearch.checklist.characteristicsNoted &&
+    propertySearch.checklist.accessInfoCollected;
+
+  // Run OCR when a new screenshot is set
+  useEffect(() => {
+    if (basemapScreenshot) {
+      setOcrLoading(true);
+      setOcrText('');
+      Tesseract.recognize(
+        basemapScreenshot,
+        'eng',
+        { logger: m => {/* Optionally log progress */} }
+      ).then(({ data: { text } }) => {
+        setOcrText(text);
+        setOcrLoading(false);
+      }).catch(() => {
+        setOcrText('Could not extract text from image.');
+        setOcrLoading(false);
+      });
+    } else {
+      setOcrText('');
+      setOcrLoading(false);
+    }
+  }, [basemapScreenshot]);
+
+  // Update OCR effect to parse info after extracting text
+  useEffect(() => {
+    if (ocrText && !ocrLoading) {
+      const parsed = parsePropertyInfo(ocrText);
+      setParsedPropertyInfo(parsed);
+    } else {
+      setParsedPropertyInfo({});
+    }
+  }, [ocrText, ocrLoading]);
+
+  // In the component, update the effect that runs when basemapScreenshot or ocrText changes:
+  useEffect(() => {
+    if (basemapScreenshot && ocrText && !ocrLoading) {
+      setBasemapVerified(true);
+      setPropertySearch(prev => ({
+        ...prev,
+        checklist: {
+          addressVerified: true,
+          propertyTypeConfirmed: true,
+          characteristicsNoted: true,
+          accessInfoCollected: true
+        }
+      }));
+    } else if (!basemapScreenshot) {
+      setBasemapVerified(false);
+      setPropertySearch(prev => ({
+        ...prev,
+        checklist: {
+          addressVerified: false,
+          propertyTypeConfirmed: false,
+          characteristicsNoted: false,
+          accessInfoCollected: false
+        }
+      }));
+    }
+  }, [basemapScreenshot, ocrText, ocrLoading]);
 
   const scriptSteps = [
     {
@@ -500,6 +620,62 @@ const ScheduleScript = ({ onNavigate }) => {
     }));
   };
 
+  // Helper to format date/time
+  const formatDateTime = (date, time) => {
+    if (!date || !time) return '';
+    const d = new Date(date);
+    return `${d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })} at ${time}`;
+  };
+
+  // Gather session summary
+  const sessionSummary = {
+    address: propertySearch.address || (parsedPropertyInfo['Owner Address'] || ''),
+    owner: parsedPropertyInfo['Owner Name'] || '',
+    county: parsedPropertyInfo['County Name'] || '',
+    countyFips: parsedPropertyInfo['County FIPS'] || '',
+    acres: parsedPropertyInfo['Acres'] || '',
+    apn: parsedPropertyInfo['APN'] || '',
+    projectType,
+    callType,
+    appointment,
+    projectDetails,
+    checklistItems,
+    propertyInfo: parsedPropertyInfo,
+  };
+
+  // Rep Recap Text (for copy)
+  const repRecapText = `🔍 Lead Notes – ${sessionSummary.address}
+
+🏠 Homeownership: Yes${sessionSummary.owner ? ` (Owner: ${sessionSummary.owner})` : ''}
+👤 Decision-Makers: All required parties will be present
+📌 Project Interest:
+• ${sessionSummary.projectType === 'bath' ? 'Bathroom remodel – replacing old tub with walk-in shower' : sessionSummary.projectType === 'roof' ? 'Roof replacement' : 'N/A'}
+${sessionSummary.projectDetails.issues ? `• ${sessionSummary.projectDetails.issues}` : ''}
+
+🗂️ Property Details:
+${sessionSummary.owner ? `• Owner: ${sessionSummary.owner}\n` : ''}${sessionSummary.county ? `• County: ${sessionSummary.county}` : ''}${sessionSummary.countyFips ? ` (FIPS: ${sessionSummary.countyFips})` : ''}
+${sessionSummary.acres ? `• Acres: ${sessionSummary.acres}\n` : ''}${sessionSummary.apn ? `• APN: ${sessionSummary.apn}\n` : ''}
+
+📅 Appointment Set: ${formatDateTime(sessionSummary.appointment.date, sessionSummary.appointment.time)}
+
+✅ REP NOTES
+Name: ${sessionSummary.owner || 'N/A'}
+Address: ${sessionSummary.address}
+Project Type: ${sessionSummary.projectType === 'bath' ? 'Bathroom remodel' : sessionSummary.projectType === 'roof' ? 'Roof replacement' : 'N/A'}
+Special Details: ${sessionSummary.projectDetails.issues || 'N/A'}
+Appointment Date & Time: ${formatDateTime(sessionSummary.appointment.date, sessionSummary.appointment.time)}
+`;
+
+  // Customer Recap Text
+  const customerRecapText = `Thank you for scheduling your appointment with Long Home Products!\n\nHere's what to expect:\n• A design consultant will visit your home at ${sessionSummary.address}.\n• Appointment: ${formatDateTime(sessionSummary.appointment.date, sessionSummary.appointment.time)}\n• We'll review your ${sessionSummary.projectType === 'bath' ? 'bathroom remodel' : sessionSummary.projectType === 'roof' ? 'roof replacement' : 'project'} needs and provide a free estimate.\n• Please ensure all decision-makers are present.\n\nWe look forward to meeting you!`;
+
+  // Copy to clipboard handler
+  const handleCopyRepRecap = useCallback(() => {
+    navigator.clipboard.writeText(repRecapText).then(() => {
+      setRepRecapCopied(true);
+      setTimeout(() => setRepRecapCopied(false), 2000);
+    });
+  }, [repRecapText]);
 
   const renderGreetingStep = () => (
     <motion.div 
@@ -1026,6 +1202,7 @@ const ScheduleScript = ({ onNavigate }) => {
       <motion.button 
         className="complete-button-dark"
         onClick={() => {
+          setShowRecap(true);
           // Reset script state after completion
           setCurrentStep(0);
           setCallType('');
@@ -1064,244 +1241,359 @@ const ScheduleScript = ({ onNavigate }) => {
   );
 
   const renderPropertySearchStep = () => (
-          <motion.div 
-            className="script-step-dark"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
+    <motion.div 
+      className="script-step-dark"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       <h3 className="step-title-dark">Property Search & Verification</h3>
-      
-      <div className="property-search-container-dark">
-        {/* Search Form */}
-        <div className="search-form-container-dark">
-          <div className="search-header-dark">
-            <div className="search-icon-container-dark">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M21 21L16.514 16.506L21 21ZM19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+      {/* Basemap First Instruction and Button */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '2rem' }}>
+        <p style={{ fontSize: '1.1rem', fontWeight: 500, marginBottom: '0.5rem', color: '#fff' }}>
+          For best results, use the Basemap tool to visually locate the property first. Then return here to enter the address for search and verification.
+        </p>
+        <a
+          href="https://app.basemap.com/?_gl=1*1s9rt3w*_gcl_au*MTg4MTc1NjgwOC4xNzUyNzU4NzU5*_ga*MTE3ODIzOTY4Ni4xNzUyNzU4NzU5*_ga_4XG891YZD4*czE3NTI3NTg3NTkkbzEkZzAkdDE3NTI3NTg3NTkkajYwJGwwJGgw*_ga_8X0CQ17R59*czE3NTI3NTg3NTkkbzEkZzAkdDE3NTI3NTg3NTkkajYwJGwwJGgw"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="basemap-link-dark prominent"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '12px',
+            background: 'linear-gradient(90deg, #3b82f6 0%, #06b6d4 100%)',
+            color: '#fff',
+            textDecoration: 'none',
+            fontWeight: 700,
+            fontSize: '1.2rem',
+            borderRadius: '8px',
+            padding: '1rem 2rem',
+            margin: '0.5rem 0 0 0',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+            transition: 'background 0.2s',
+          }}
+          onClick={() => setBasemapVisited(true)}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 13V19C18 20.1046 17.1046 21 16 21H5C3.89543 21 3 20.1046 3 19V8C3 6.89543 3.89543 6 5 6H11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M15 3H21V9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M10 14L21 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Open Basemap Tool
+        </a>
+        {basemapVisited && !basemapVerified && (
+          <button
+            style={{
+              marginTop: '1rem',
+              padding: '0.5rem 1.5rem',
+              background: '#10b981',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px',
+              fontWeight: 600,
+              fontSize: '1rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+            onClick={() => setBasemapVerified(true)}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 13l4 4L19 7" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            Mark as Verified from Basemap
+          </button>
+        )}
+        {basemapVisited && (
+          <div
+            style={{
+              marginTop: '1.5rem',
+              marginBottom: '1rem',
+              textAlign: 'center',
+              border: isPasteActive ? '2.5px solid #3b82f6' : '1.5px solid #e5e7eb',
+              borderRadius: 12,
+              background: 'rgba(59,130,246,0.06)',
+              padding: '1.5rem 1rem',
+              maxWidth: 400,
+              marginLeft: 'auto',
+              marginRight: 'auto',
+              boxShadow: '0 2px 12px rgba(59,130,246,0.07)',
+              transition: 'border 0.2s'
+            }}
+            tabIndex={0}
+            onPaste={e => {
+              if (e.clipboardData && e.clipboardData.items) {
+                for (let i = 0; i < e.clipboardData.items.length; i++) {
+                  const item = e.clipboardData.items[i];
+                  if (item.type.indexOf('image') !== -1) {
+                    const file = item.getAsFile();
+                    const reader = new FileReader();
+                    reader.onload = ev => setBasemapScreenshot(ev.target.result);
+                    reader.readAsDataURL(file);
+                    e.preventDefault();
+                    break;
+                  }
+                }
+              }
+            }}
+            onFocus={() => setIsPasteActive(true)}
+            onBlur={() => setIsPasteActive(false)}
+          >
+            <div style={{ fontSize: 13, color: '#2563eb', marginBottom: 6, fontWeight: 500 }}>
+              You can <b>paste</b> (Ctrl+V) a copied screenshot here!
             </div>
-            <div className="search-title-dark">
-              <h4>Property Address Search</h4>
-              <p>Enter the property address to search for detailed information</p>
-            </div>
-          </div>
-          
-          <div className="search-input-section-dark">
-            <div className="input-group-dark">
-              <label className="input-label-dark">Property Address</label>
-              <div className="address-input-container-dark" ref={addressInputRef}>
+            <label style={{ fontWeight: 700, color: '#2563eb', display: 'block', marginBottom: 14, fontSize: '1.1rem', letterSpacing: 0.2 }}>
+              Upload Basemap Screenshot (property info)
+            </label>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 10 }}>
               <input
-                type="text"
-                  placeholder="Enter full property address..."
-                  className="modern-input-dark"
-                  value={propertySearch.address || ''}
-                  onChange={(e) => handleAddressInputChange(e.target.value)}
-                  onFocus={() => propertySearch.suggestions.length > 0 && setPropertySearch(prev => ({ ...prev, showSuggestions: true }))}
+                id="basemap-screenshot-upload"
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={e => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onload = ev => setBasemapScreenshot(ev.target.result);
+                    reader.readAsDataURL(file);
+                  }
+                }}
+              />
+              <label htmlFor="basemap-screenshot-upload" style={{
+                background: 'linear-gradient(90deg, #3b82f6 0%, #06b6d4 100%)',
+                color: '#fff',
+                padding: '0.5rem 1.2rem',
+                borderRadius: 8,
+                fontWeight: 600,
+                fontSize: '1rem',
+                cursor: 'pointer',
+                boxShadow: '0 1px 4px rgba(59,130,246,0.08)',
+                border: 'none',
+                display: 'inline-block',
+                transition: 'background 0.2s',
+                marginRight: 4
+              }}>
+                Choose Screenshot
+              </label>
+              <span style={{ color: '#555', fontSize: '0.98rem', fontWeight: 500, minWidth: 120, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block' }}>
+                {basemapScreenshot ? 'Screenshot selected' : 'No file chosen'}
+              </span>
+              {basemapScreenshot && (
+                <button
+                  onClick={() => setBasemapScreenshot(null)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#ef4444',
+                    fontSize: 18,
+                    marginLeft: 4,
+                    cursor: 'pointer',
+                    padding: 0,
+                    lineHeight: 1
+                  }}
+                  title="Remove screenshot"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+            {basemapScreenshot && (
+              <div style={{ marginTop: 16 }}>
+                <img
+                  src={basemapScreenshot}
+                  alt="Basemap Screenshot Preview"
+                  style={{ maxWidth: '100%', maxHeight: 320, borderRadius: 10, boxShadow: '0 4px 24px rgba(59,130,246,0.13)' }}
                 />
-                {propertySearch.showSuggestions && propertySearch.suggestions.length > 0 && (
-                  <div className="suggestions-dropdown-dark">
-                    {propertySearch.suggestions.map((suggestion) => (
-                      <div
-                        key={suggestion.id}
-                        className="suggestion-item-dark"
-                        onClick={() => handleSuggestionSelect(suggestion)}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M17.657 16.657L13.414 20.9C13.039 21.275 12.525 21.485 12 21.485C11.475 21.485 10.961 21.275 10.586 20.9L6.343 16.657C5.22422 15.5381 4.46234 14.1127 4.15369 12.5608C3.84504 11.009 4.00349 9.40047 4.60901 7.93853C5.21452 6.4766 6.2399 5.22425 7.55548 4.34668C8.87107 3.46911 10.4178 3.00024 12 3.00024C13.5822 3.00024 15.1289 3.46911 16.4445 4.34668C17.7601 5.22425 18.7855 6.4766 19.391 7.93853C19.9965 9.40047 20.155 11.009 19.8463 12.5608C19.5377 14.1127 18.7758 15.5381 17.657 16.657Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M15 11C15 12.6569 13.6569 14 12 14C10.3431 14 9 12.6569 9 11C9 9.34315 10.3431 8 12 8C13.6569 8 15 9.34315 15 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                        {suggestion.address}
-                </div>
-                    ))}
-              </div>
-                )}
-              
-                {/* Debug info */}
-              <div style={{
-                  fontSize: '12px', 
-                  color: '#888', 
-                  marginTop: '4px',
-                  padding: '4px',
-                  background: 'rgba(0,0,0,0.1)',
-                  borderRadius: '4px'
+                <div style={{ fontSize: 13, color: '#2563eb', marginTop: 6, fontWeight: 500 }}>Screenshot attached</div>
+                {/* Enhanced property info card */}
+                <div style={{
+                  marginTop: 18,
+                  background: '#f3f4f6',
+                  border: '1px solid #d1d5db',
+                  borderRadius: 8,
+                  padding: '1rem',
+                  color: '#222',
+                  fontSize: '1rem',
+                  minHeight: 48,
+                  maxWidth: 420,
+                  marginLeft: 'auto',
+                  marginRight: 'auto',
+                  boxShadow: '0 1px 4px rgba(59,130,246,0.06)'
                 }}>
-                  Debug: Suggestions: {propertySearch.suggestions.length}, Show: {propertySearch.showSuggestions ? 'true' : 'false'}
+                  {ocrLoading ? (
+                    <span style={{ color: '#3b82f6', fontWeight: 500 }}>Extracting text from screenshot...</span>
+                  ) : (
+                    Object.keys(parsedPropertyInfo).length > 0 ? (
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem 1.5rem' }}>
+                        {Object.entries(parsedPropertyInfo).map(([label, value]) => (
+                          <React.Fragment key={label}>
+                            <div style={{ fontWeight: 600, color: '#2563eb' }}>{label}:</div>
+                            <div style={{ color: '#222', wordBreak: 'break-word' }}>{value}</div>
+                          </React.Fragment>
+                        ))}
+                      </div>
+                    ) : (
+                      <span style={{ color: '#888' }}>{ocrText ? ocrText : 'No text extracted yet.'}</span>
+                    )
+                  )}
                 </div>
               </div>
-                </div>
-
-            <div className="search-actions-dark">
-              <motion.button
-                className="search-button-dark primary"
-                onClick={handlePropertySearch}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                disabled={!propertySearch.address}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M21 21L16.514 16.506L21 21ZM19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                Search Property
-              </motion.button>
-              
-              <motion.button
-                className="search-button-dark secondary"
-                onClick={handleClearSearch}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M19 7L18.132 19.142C18.0579 20.1891 17.187 21.0273 16.148 21.0273H7.852C6.813 21.0273 5.94214 20.1891 5.868 19.142L5 7M10 11V17M14 11V17M15 7V4C15 3.44772 14.5523 3 14 3H10C9.44772 3 9 3.44772 9 4V7M4 7H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                Clear
-              </motion.button>
-            </div>
-          </div>
-        </div>
-
-        {/* Search Results */}
-        {propertySearch.results && (
-          <div className="search-results-container-dark">
-            <div className="results-header-dark">
-              <h4>Property Information</h4>
-              <div className="results-status-dark">
-                <span className="status-badge-dark verified">Verified</span>
-                  </div>
-                </div>
-
-            <div className="property-details-grid-dark">
-              <div className="detail-card-dark">
-                <div className="detail-icon-dark">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M17.657 16.657L13.414 20.9C13.039 21.275 12.525 21.485 12 21.485C11.475 21.485 10.961 21.275 10.586 20.9L6.343 16.657C5.22422 15.5381 4.46234 14.1127 4.15369 12.5608C3.84504 11.009 4.00349 9.40047 4.60901 7.93853C5.21452 6.4766 6.2399 5.22425 7.55548 4.34668C8.87107 3.46911 10.4178 3.00024 12 3.00024C13.5822 3.00024 15.1289 3.46911 16.4445 4.34668C17.7601 5.22425 18.7855 6.4766 19.391 7.93853C19.9965 9.40047 20.155 11.009 19.8463 12.5608C19.5377 14.1127 18.7758 15.5381 17.657 16.657Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M15 11C15 12.6569 13.6569 14 12 14C10.3431 14 9 12.6569 9 11C9 9.34315 10.3431 8 12 8C13.6569 8 15 9.34315 15 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-                <div className="detail-content-dark">
-                  <h6>Address</h6>
-                  <p>{propertySearch.results.address}</p>
-                </div>
-              </div>
-              
-              <div className="detail-card-dark">
-                <div className="detail-icon-dark">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M9 22V12H15V22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-                <div className="detail-content-dark">
-                  <h6>Property Type</h6>
-                  <p>{propertySearch.results.propertyType || 'Residential'}</p>
-                </div>
-              </div>
-              
-              <div className="detail-card-dark">
-                <div className="detail-icon-dark">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M8 3V7M16 3V7M3 11H21M5 5H19C20.1046 5 21 5.89543 21 7V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V7C3 5.89543 3.89543 5 5 5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-                <div className="detail-content-dark">
-                  <h6>Year Built</h6>
-                  <p>{propertySearch.results.yearBuilt || 'N/A'}</p>
-                </div>
-            </div>
-
-              <div className="detail-card-dark">
-                <div className="detail-icon-dark">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M22 6L12 13L2 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                </div>
-                <div className="detail-content-dark">
-                  <h6>Square Footage</h6>
-                  <p>{propertySearch.results.squareFootage || 'N/A'} sq ft</p>
-                </div>
-              </div>
-              <div className="detail-card-dark">
-                <div className="detail-icon-dark">
-                  {/* Owner icon */}
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2"/>
-                    <path d="M4 20c0-4 8-4 8-4s8 0 8 4" stroke="currentColor" strokeWidth="2"/>
-                </svg>
-                </div>
-                <div className="detail-content-dark">
-                  <h6>Owner Name</h6>
-                  <p>{propertySearch.results.ownerName || 'N/A'}</p>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         )}
-
-        {/* Property Checklist */}
-        <div className="property-checklist-section-dark">
-          <h4>Property Verification Checklist</h4>
-          <div className="property-checklist-grid-dark">
-            <motion.div 
-              className={`checklist-item-dark ${propertySearch.checklist.addressVerified ? 'completed-dark' : ''}`}
-              onClick={() => handlePropertyChecklistToggle('addressVerified')}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              {propertySearch.checklist.addressVerified ? (
-                <CheckSquare className="check-icon" />
-              ) : (
-                <Square className="check-icon" />
-              )}
-              <span>Property address verified</span>
-            </motion.div>
-            
-            <motion.div 
-              className={`checklist-item-dark ${propertySearch.checklist.propertyTypeConfirmed ? 'completed-dark' : ''}`}
-              onClick={() => handlePropertyChecklistToggle('propertyTypeConfirmed')}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              {propertySearch.checklist.propertyTypeConfirmed ? (
-                <CheckSquare className="check-icon" />
-              ) : (
-                <Square className="check-icon" />
-              )}
-              <span>Property type confirmed</span>
-            </motion.div>
-            
-            <motion.div 
-              className={`checklist-item-dark ${propertySearch.checklist.characteristicsNoted ? 'completed-dark' : ''}`}
-              onClick={() => handlePropertyChecklistToggle('characteristicsNoted')}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              {propertySearch.checklist.characteristicsNoted ? (
-                <CheckSquare className="check-icon" />
-              ) : (
-                <Square className="check-icon" />
-              )}
-              <span>Property characteristics noted</span>
-            </motion.div>
-            
-            <motion.div 
-              className={`checklist-item-dark ${propertySearch.checklist.accessInfoCollected ? 'completed-dark' : ''}`}
-              onClick={() => handlePropertyChecklistToggle('accessInfoCollected')}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              {propertySearch.checklist.accessInfoCollected ? (
-                <CheckSquare className="check-icon" />
-              ) : (
-                <Square className="check-icon" />
-              )}
-              <span>Access information collected</span>
-            </motion.div>
+        {basemapVerified && (
+          <div style={{ marginTop: '1rem', color: '#10b981', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 13l4 4L19 7" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            Verified from Basemap
+          </div>
+        )}
+      </div>
+      <div className="search-form-container-dark">
+        <div className="search-header-dark" style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => setPropertySearchCollapsed(v => !v)}>
+          <div className="search-icon-container-dark">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21 21L16.514 16.506L21 21ZM19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <div className="search-title-dark">
+            <h4 style={{ display: 'inline-block', marginRight: 8 }}>
+              Property Address Search
+              <span style={{
+                background: '#f59e42',
+                color: '#fff',
+                fontWeight: 700,
+                fontSize: '0.75rem',
+                borderRadius: '6px',
+                padding: '2px 8px',
+                marginLeft: 8,
+                verticalAlign: 'middle',
+                letterSpacing: 0.5,
+              }}>Beta</span>
+            </h4>
+            <span style={{ fontSize: 18, verticalAlign: 'middle', transition: 'transform 0.2s', display: 'inline-block', transform: propertySearchCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}>▶</span>
+            <p style={{ fontSize: '0.92rem', color: '#aaa', margin: 0 }}>Enter the property address to search for detailed information</p>
           </div>
         </div>
+        {!propertySearchCollapsed && (
+          <div style={{ background: 'rgba(59,130,246,0.04)', border: '1px solid #e5e7eb', borderRadius: 8, padding: '1rem', marginTop: 8, marginBottom: 8, maxWidth: 420, marginLeft: 'auto', marginRight: 'auto', boxShadow: '0 1px 4px rgba(59,130,246,0.04)' }}>
+            <div className="search-input-section-dark">
+              <label className="input-label-dark" style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: 8, display: 'block', color: '#3b82f6' }}>Regrid Property Search</label>
+              <input
+                type="text"
+                placeholder="Enter full property address..."
+                className="modern-input-dark"
+                value={propertySearch.address || ''}
+                onChange={(e) => handleAddressInputChange(e.target.value)}
+                onFocus={() => propertySearch.suggestions.length > 0 && setPropertySearch(prev => ({ ...prev, showSuggestions: true }))}
+              />
+              {/* Suggestions dropdown */}
+              {propertySearch.showSuggestions && propertySearch.suggestions.length > 0 && (
+                <div className="suggestions-dropdown-dark">
+                  {propertySearch.suggestions.map((suggestion) => (
+                    <div
+                      key={suggestion.id}
+                      className="suggestion-item-dark"
+                      onClick={() => handleSuggestionSelect(suggestion)}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17.657 16.657L13.414 20.9C13.039 21.275 12.525 21.485 12 21.485C11.475 21.485 10.961 21.275 10.586 20.9L6.343 16.657C5.22422 15.5381 4.46234 14.1127 4.15369 12.5608C3.84504 11.009 4.00349 9.40047 4.60901 7.93853C5.21452 6.4766 6.2399 5.22425 7.55548 4.34668C8.87107 3.46911 10.4178 3.00024 12 3.00024C13.5822 3.00024 15.1289 3.46911 16.4445 4.34668C17.7601 5.22425 18.7855 6.4766 19.391 7.93853C19.9965 9.40047 20.155 11.009 19.8463 12.5608C19.5377 14.1127 18.7758 15.5381 17.657 16.657Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M15 11C15 12.6569 13.6569 14 12 14C10.3431 14 9 12.6569 9 11C9 9.34315 10.3431 8 12 8C13.6569 8 15 9.34315 15 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      {suggestion.address}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* Search and Clear buttons */}
+              <div className="search-actions-dark" style={{ marginTop: 12 }}>
+                <motion.button
+                  className="search-button-dark primary"
+                  onClick={handlePropertySearch}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  disabled={!propertySearch.address}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M21 21L16.514 16.506L21 21ZM19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Search Property
+                </motion.button>
+                <motion.button
+                  className="search-button-dark secondary"
+                  onClick={handleClearSearch}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19 7L18.132 19.142C18.0579 20.1891 17.187 21.0273 16.148 21.0273H7.852C6.813 21.0273 5.94214 20.1891 5.868 19.142L5 7M10 11V17M14 11V17M15 7V4C15 3.44772 14.5523 3 14 3H10C9.44772 3 9 3.44772 9 4V7M4 7H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Clear
+                </motion.button>
+              </div>
             </div>
-          </motion.div>
-        );
+            {/* Search Results */}
+            {propertySearch.results && (
+              <div className="search-results-container-dark">{/* ...existing results code... */}</div>
+            )}
+          </div>
+        )}
+      </div>
+      {/* Property Verification Checklist always visible below */}
+      <div className="property-checklist-section-dark">
+        <h4>Property Verification Checklist</h4>
+        <div className="property-checklist-grid-dark">
+          {propertyChecklistItems.map(item => (
+            <motion.div
+              key={item.key}
+              className={`checklist-item-dark ${(item.key === 'basemapVerified' ? basemapVerified : propertySearch.checklist[item.key]) ? 'completed-dark' : ''}`}
+              onClick={() => {
+                if (item.key === 'basemapVerified') setBasemapVerified(v => !v);
+                else handlePropertyChecklistToggle(item.key);
+              }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              style={{ cursor: 'pointer' }}
+            >
+              {(item.key === 'basemapVerified' ? basemapVerified : propertySearch.checklist[item.key]) ? (
+                <CheckSquare className="check-icon" />
+              ) : (
+                <Square className="check-icon" />
+              )}
+              <span>{item.label}</span>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+      {/* Navigation buttons always visible */}
+      <div className="step-navigation-dark">
+        <motion.button
+          className="nav-button-dark back-button-dark"
+          onClick={handleBack}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Back
+        </motion.button>
+        <motion.button
+          className="nav-button-dark next-button-dark"
+          onClick={handleNext}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          disabled={!allPropertyChecklistChecked}
+          style={{ opacity: allPropertyChecklistChecked ? 1 : 0.5 }}
+        >
+          Next
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 12H19M12 5L19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </motion.button>
+      </div>
+    </motion.div>
+  );
 
   const renderCurrentStep = () => {
     switch (scriptSteps[currentStep].id) {
@@ -1470,8 +1762,45 @@ const ScheduleScript = ({ onNavigate }) => {
           {renderCurrentStep()}
         </div>
       </motion.div>
+
+      {showRecap && (
+        <div style={{
+          display: 'flex', flexDirection: 'row', gap: '2rem', justifyContent: 'center', marginTop: 40, marginBottom: 40, flexWrap: 'wrap',
+        }}>
+          {/* Rep Recap Card */}
+          <div style={{
+            background: '#fff', borderRadius: 12, boxShadow: '0 4px 24px rgba(59,130,246,0.13)', padding: '2rem', maxWidth: 480, minWidth: 320, color: '#222', position: 'relative',
+          }}>
+            <h2 style={{ color: '#2563eb', marginBottom: 12 }}>Rep Recap</h2>
+            <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: '1.08rem', marginBottom: 16 }}>{repRecapText}</pre>
+            <button
+              onClick={handleCopyRepRecap}
+              style={{
+                background: repRecapCopied ? '#10b981' : '#3b82f6',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 6,
+                padding: '0.5rem 1.5rem',
+                fontWeight: 600,
+                fontSize: '1rem',
+                cursor: 'pointer',
+                transition: 'background 0.2s',
+              }}
+            >
+              {repRecapCopied ? 'Copied!' : 'Copy Recap'}
+            </button>
+          </div>
+          {/* Customer Recap Card */}
+          <div style={{
+            background: '#f3f4f6', borderRadius: 12, boxShadow: '0 2px 12px rgba(59,130,246,0.07)', padding: '2rem', maxWidth: 420, minWidth: 280, color: '#222',
+          }}>
+            <h2 style={{ color: '#10b981', marginBottom: 12 }}>Customer Recap</h2>
+            <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: '1.08rem' }}>{customerRecapText}</pre>
+          </div>
+        </div>
+      )}
     </div>
   );
-    };
+}
 
-  export default ScheduleScript; 
+export default ScheduleScript; 

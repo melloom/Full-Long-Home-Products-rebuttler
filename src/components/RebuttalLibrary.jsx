@@ -3,7 +3,7 @@ import categoryService from '../services/categoryService';
 import '../styles/RebuttalLibrary.css';
 import Header from './Header';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
-import { db } from '../services/firebase/config';
+import { getDb } from '../services/firebase/config';
 import rebuttalsService from '../services/rebuttalsService';
 import SearchBar from './SearchBar';
 
@@ -47,7 +47,7 @@ const RebuttalLibrary = ({ onNavigate, searchQuery }) => {
   useEffect(() => {
     // Set up real-time listener for rebuttals
     const rebuttalsQuery = query(
-      collection(db, 'rebuttals'),
+      collection(getDb(), 'rebuttals'),
       orderBy('createdAt', 'desc')
     );
 

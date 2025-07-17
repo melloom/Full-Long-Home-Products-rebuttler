@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../services/firebase/config';
+import { getDb } from '../services/firebase/config';
 import { getServiceTopics, getServiceTopicsByCategory, getUrgentServiceTopics, getCategories } from '../services/customerServiceService';
 import '../styles/CustomerService.css';
 import Header from './Header';

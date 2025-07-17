@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import userService from '../../services/userService';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../../services/firebase/config';
+import { getDb } from '../../services/firebase/config';
 import './AdminLogin.css';
 
 const AdminLogin = () => {
@@ -25,7 +25,7 @@ const AdminLogin = () => {
   const verifyAdminStatus = async (user) => {
     try {
       // Check if user exists in admins collection
-      const adminRef = doc(db, 'admins', user.uid);
+      const adminRef = doc(getDb(), 'admins', user.uid);
       const adminDoc = await getDoc(adminRef);
 
       if (!adminDoc.exists()) {

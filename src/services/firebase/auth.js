@@ -6,12 +6,12 @@ import {
   updateProfile
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { auth, db } from './config';
+import { auth, getDb } from './config';
 
 // Helper function to create admin entry
 const createAdminEntry = async (user, additionalData = {}) => {
   try {
-    const adminRef = doc(db, 'admins', user.uid);
+    const adminRef = doc(getDb(), 'admins', user.uid);
     await setDoc(adminRef, {
       email: user.email,
       role: 'admin',

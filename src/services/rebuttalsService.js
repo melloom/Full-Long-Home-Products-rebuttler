@@ -15,7 +15,7 @@ import {
   getFirestore,
   writeBatch
 } from 'firebase/firestore';
-import { db, auth } from '../services/firebase/config';
+import { getDb, auth } from '../services/firebase/config';
 import {
   enableNetwork,
   disableNetwork,
@@ -26,14 +26,14 @@ const REBUTTALS_COLLECTION = 'rebuttals';
 
 // Helper function to check if Firebase is properly initialized
 const checkFirebaseConnection = () => {
-  if (!db) {
+  if (!getDb()) {
     throw new Error('Firebase is not properly initialized. Please check your Firebase configuration.');
   }
 };
 
 class RebuttalsService {
   constructor() {
-    this.db = db || getFirestore();
+    this.db = getDb() || getFirestore();
     this.rebuttalsCollection = collection(this.db, REBUTTALS_COLLECTION);
     this.archivedCollection = collection(this.db, 'archived_rebuttals');
     this.categoriesCollection = collection(this.db, 'categories');
@@ -395,7 +395,7 @@ class RebuttalsService {
       }
 
       // Check if user is admin
-      const adminRef = doc(db, 'admins', user.uid);
+      const adminRef = doc(getDb(), 'admins', user.uid);
       const adminDoc = await getDoc(adminRef);
       if (!adminDoc.exists()) {
         throw new Error('Only admins can add rebuttals');
@@ -554,7 +554,7 @@ class RebuttalsService {
       }
 
       // Check if user is admin
-      const adminRef = doc(db, 'admins', user.uid);
+      const adminRef = doc(getDb(), 'admins', user.uid);
       const adminDoc = await getDoc(adminRef);
       if (!adminDoc.exists()) {
         throw new Error('Only admins can unarchive rebuttals');
@@ -1297,7 +1297,7 @@ const DEFAULT_REBUTTALS = [
 // Initialize default rebuttals if none exist
 const initializeDefaultRebuttals = async () => {
   try {
-    const rebuttalsRef = collection(this.db, 'rebuttals');
+    const rebuttalsRef = collection(getDb(), 'rebuttals');
     const snapshot = await getDocs(rebuttalsRef);
     
     if (snapshot.empty) {
@@ -1342,7 +1342,7 @@ export const getRebuttals = async () => {
     // Initialize default rebuttals if none exist
     await initializeDefaultRebuttals();
     
-    const rebuttalsRef = collection(this.db, 'rebuttals');
+    const rebuttalsRef = collection(getDb(), 'rebuttals');
     const snapshot = await getDocs(rebuttalsRef);
     
     if (snapshot.empty) {
@@ -1374,7 +1374,7 @@ export const addRebuttal = async (rebuttal) => {
       throw new Error('User must be authenticated to add rebuttals');
     }
     
-    const rebuttalsRef = collection(this.db, 'rebuttals');
+    const rebuttalsRef = collection(getDb(), 'rebuttals');
     const docRef = await addDoc(rebuttalsRef, {
       title: rebuttal.title,
       category: rebuttal.category,
@@ -1407,7 +1407,7 @@ export const updateRebuttal = async (rebuttalId, rebuttal) => {
       throw new Error('User must be authenticated to update rebuttals');
     }
     
-    const rebuttalRef = doc(this.db, 'rebuttals', rebuttalId);
+    const rebuttalRef = doc(getDb(), 'rebuttals', rebuttalId);
     await updateDoc(rebuttalRef, {
       title: rebuttal.title,
       category: rebuttal.category,
@@ -1439,7 +1439,7 @@ export const deleteRebuttal = async (rebuttalId) => {
       throw new Error('User must be authenticated to delete rebuttals');
     }
     
-    const rebuttalRef = doc(this.db, 'rebuttals', rebuttalId);
+    const rebuttalRef = doc(getDb(), 'rebuttals', rebuttalId);
     await deleteDoc(rebuttalRef);
     return rebuttalId;
   } catch (error) {

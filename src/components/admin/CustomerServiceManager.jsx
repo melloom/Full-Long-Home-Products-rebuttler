@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '../../services/firebase/config';
+import { getDb } from '../../services/firebase/config';
 import './CustomerServiceManager.css';
 
 const CustomerServiceManager = () => {
@@ -23,7 +23,7 @@ const CustomerServiceManager = () => {
 
   const loadCategories = async () => {
     try {
-      const categoriesRef = collection(db, 'customerServiceCategories');
+      const categoriesRef = collection(getDb(), 'customerServiceCategories');
       const snapshot = await getDocs(categoriesRef);
       const categoriesData = snapshot.docs.map(doc => ({
         id: doc.id,
@@ -37,7 +37,7 @@ const CustomerServiceManager = () => {
 
   const handleAddCategory = async () => {
     try {
-      const categoriesRef = collection(db, 'customerServiceCategories');
+      const categoriesRef = collection(getDb(), 'customerServiceCategories');
       await addDoc(categoriesRef, {
         ...formData,
         createdAt: new Date().toISOString(),
@@ -54,7 +54,7 @@ const CustomerServiceManager = () => {
   const handleEditCategory = async () => {
     try {
       if (!selectedCategory) return;
-      const categoryRef = doc(db, 'customerServiceCategories', selectedCategory.id);
+      const categoryRef = doc(getDb(), 'customerServiceCategories', selectedCategory.id);
       await updateDoc(categoryRef, {
         ...formData,
         updatedAt: new Date().toISOString()
@@ -70,7 +70,7 @@ const CustomerServiceManager = () => {
   const handleDeleteCategory = async (categoryId) => {
     if (window.confirm('Are you sure you want to delete this category?')) {
       try {
-        const categoryRef = doc(db, 'customerServiceCategories', categoryId);
+        const categoryRef = doc(getDb(), 'customerServiceCategories', categoryId);
         await deleteDoc(categoryRef);
         loadCategories();
       } catch (error) {

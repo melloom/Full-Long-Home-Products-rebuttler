@@ -1,6 +1,6 @@
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile } from 'firebase/auth';
 import { collection, addDoc, getDocs, deleteDoc, doc, query, where, updateDoc, setDoc, getDoc } from 'firebase/firestore';
-import { db, auth, initializeFirebase } from './firebase/config';
+import { getDb, auth, initializeFirebase } from './firebase/config';
 
 // Ensure Firebase is initialized
 initializeFirebase().catch(error => {
@@ -65,7 +65,7 @@ const userService = {
       };
       console.log('User data to be saved:', userData);
       
-      await setDoc(doc(db, 'users', user.uid), userData);
+      await setDoc(doc(getDb(), 'users', user.uid), userData);
       console.log('User document created in Firestore');
 
       // Sign out the newly created user
@@ -104,17 +104,17 @@ const userService = {
       }
 
       // Get all users from Firestore
-      const firestoreUsers = await getDocs(collection(db, 'users'));
+      const firestoreUsers = await getDocs(collection(getDb(), 'users'));
       const existingUserIds = new Set(firestoreUsers.docs.map(doc => doc.data().uid));
 
       // Get all users from Firestore users collection
-      const usersSnapshot = await getDocs(collection(db, 'users'));
+      const usersSnapshot = await getDocs(collection(getDb(), 'users'));
       
       // Create Firestore documents for users that don't exist
       for (const doc of usersSnapshot.docs) {
         const userData = doc.data();
         if (!existingUserIds.has(userData.uid)) {
-          await setDoc(doc(db, 'users', userData.uid), {
+          await setDoc(doc(getDb(), 'users', userData.uid), {
             uid: userData.uid,
             email: userData.email,
             role: 'user', // Default role
@@ -145,7 +145,7 @@ const userService = {
 
       // Get users from Firestore
       console.log('Fetching users from Firestore...');
-      const usersCollection = collection(db, 'users');
+      const usersCollection = collection(getDb(), 'users');
       console.log('Created users collection reference');
       
       const usersSnapshot = await getDocs(usersCollection);
@@ -207,7 +207,7 @@ const userService = {
   // Update user's last sign-in time
   async updateUserLastSignIn(userId) {
     try {
-      const userRef = doc(db, 'users', userId);
+      const userRef = doc(getDb(), 'users', userId);
       await updateDoc(userRef, {
         lastSignIn: new Date().toISOString()
       });
@@ -240,7 +240,7 @@ const userService = {
       }
 
       console.log('🔍 userService: Current user authenticated, updating role...');
-      const userRef = doc(db, 'users', userId);
+      const userRef = doc(getDb(), 'users', userId);
       await updateDoc(userRef, {
         role: newRole,
         updatedAt: new Date().toISOString(),
@@ -291,7 +291,7 @@ const userService = {
 
       console.log('🔍 userService: Current user authenticated, deleting user...');
       // Delete from Firestore
-      await deleteDoc(doc(db, 'users', userId));
+      await deleteDoc(doc(getDb(), 'users', userId));
       console.log('🔍 userService: User deleted from Firestore successfully');
       
       // Note: Firebase Auth user deletion requires server-side implementation
@@ -322,7 +322,7 @@ const userService = {
       const user = userCredential.user;
       
       // Check if user document exists in Firestore
-      const userRef = doc(db, 'users', user.uid);
+      const userRef = doc(getDb(), 'users', user.uid);
       const userDoc = await getDoc(userRef);
       
       let needsDisplayName = false;
@@ -387,7 +387,7 @@ const userService = {
     try {
       if (!auth.currentUser) return false;
 
-      const usersSnapshot = await getDocs(query(collection(db, 'users'), where('uid', '==', auth.currentUser.uid)));
+      const usersSnapshot = await getDocs(query(collection(getDb(), 'users'), where('uid', '==', auth.currentUser.uid)));
       if (usersSnapshot.empty) return false;
 
       const userData = usersSnapshot.docs[0].data();
@@ -405,7 +405,7 @@ const userService = {
         throw new Error('You must be logged in to update display name');
       }
 
-      const userRef = doc(db, 'users', userId);
+      const userRef = doc(getDb(), 'users', userId);
       await updateDoc(userRef, {
         displayName: displayName,
         needsDisplayName: false,

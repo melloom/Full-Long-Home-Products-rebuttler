@@ -1,7 +1,7 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
-import { db } from '../services/firebase/config';
+import { getDb } from '../services/firebase/config';
 import RebuttalCard from '../components/RebuttalCard';
 
 export default function Rebuttals() {
@@ -12,7 +12,7 @@ export default function Rebuttals() {
   useEffect(() => {
     // Set up real-time listener for rebuttals
     const rebuttalsQuery = query(
-      collection(db, 'rebuttals'),
+      collection(getDb(), 'rebuttals'),
       orderBy('createdAt', 'desc')
     );
 

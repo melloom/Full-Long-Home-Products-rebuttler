@@ -50,18 +50,21 @@ function App() {
 
   // Register service worker
   React.useEffect(() => {
-    const initializePWA = async () => {
-      try {
-        console.log('Initializing PWA...');
-        await registerServiceWorker();
-        handleServiceWorkerUpdates();
-        console.log('PWA initialized successfully');
-      } catch (error) {
-        console.error('Failed to initialize PWA:', error);
-      }
-    };
-
-    initializePWA();
+    if (import.meta.env.PROD) {
+      const initializePWA = async () => {
+        try {
+          console.log('Initializing PWA...');
+          await registerServiceWorker();
+          handleServiceWorkerUpdates();
+          console.log('PWA initialized successfully');
+        } catch (error) {
+          console.error('Failed to initialize PWA:', error);
+        }
+      };
+      initializePWA();
+    } else {
+      console.log('Skipping service worker registration in development');
+    }
   }, []);
 
   React.useEffect(() => {

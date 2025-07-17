@@ -1,4 +1,4 @@
-import { db } from './firebase/config';
+import { getDb } from './firebase/config';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, where, writeBatch } from 'firebase/firestore';
 import { checkFirebaseConnection } from './firebase/config';
 
@@ -300,16 +300,16 @@ const DEFAULT_CATEGORIES = [
 const initializeDefaultServiceTopics = async () => {
   try {
     console.log('Checking if service topics need initialization...');
-    const q = query(collection(db, SERVICE_TOPICS_COLLECTION));
+    const q = query(collection(getDb(), SERVICE_TOPICS_COLLECTION));
     const querySnapshot = await getDocs(q);
     
     if (querySnapshot.empty) {
       console.log('No service topics found. Initializing default topics...');
-      const batch = writeBatch(db);
+      const batch = writeBatch(getDb());
       
       // Add all new topics
       for (const topic of DEFAULT_SERVICE_TOPICS) {
-        const docRef = doc(collection(db, SERVICE_TOPICS_COLLECTION));
+        const docRef = doc(collection(getDb(), SERVICE_TOPICS_COLLECTION));
         batch.set(docRef, {
           ...topic,
           createdAt: new Date().toISOString(),
@@ -332,15 +332,15 @@ const initializeDefaultServiceTopics = async () => {
 const initializeDefaultCategories = async () => {
   try {
     console.log('Checking if categories need initialization...');
-    const q = query(collection(db, CATEGORIES_COLLECTION));
+    const q = query(collection(getDb(), CATEGORIES_COLLECTION));
     const querySnapshot = await getDocs(q);
     
     if (querySnapshot.empty) {
       console.log('No categories found. Initializing default categories...');
-      const batch = writeBatch(db);
+      const batch = writeBatch(getDb());
       
       for (const category of DEFAULT_CATEGORIES) {
-        const docRef = doc(collection(db, CATEGORIES_COLLECTION));
+        const docRef = doc(collection(getDb(), CATEGORIES_COLLECTION));
         batch.set(docRef, {
           ...category,
           createdAt: new Date().toISOString(),
@@ -362,7 +362,7 @@ const initializeDefaultCategories = async () => {
 export const verifyAndReinitializeTopics = async () => {
   try {
     console.log('Verifying service topics in database...');
-    const q = query(collection(db, SERVICE_TOPICS_COLLECTION));
+    const q = query(collection(getDb(), SERVICE_TOPICS_COLLECTION));
     const querySnapshot = await getDocs(q);
     
     console.log(`Found ${querySnapshot.docs.length} topics in database`);
@@ -396,7 +396,7 @@ export const getServiceTopics = async () => {
     await checkFirebaseConnection();
     
     console.log('Fetching service topics...');
-    const q = query(collection(db, SERVICE_TOPICS_COLLECTION));
+    const q = query(collection(getDb(), SERVICE_TOPICS_COLLECTION));
     const querySnapshot = await getDocs(q);
     
     if (querySnapshot.empty) {
@@ -430,7 +430,7 @@ export const getServiceTopicsByCategory = async (category) => {
     
     console.log(`Fetching service topics for category: ${category}`);
     const q = query(
-      collection(db, SERVICE_TOPICS_COLLECTION),
+      collection(getDb(), SERVICE_TOPICS_COLLECTION),
       where('topic', '==', category),
       orderBy('title')
     );
@@ -455,7 +455,7 @@ export const getUrgentServiceTopics = async () => {
     
     console.log('Fetching urgent service topics...');
     const q = query(
-      collection(db, SERVICE_TOPICS_COLLECTION),
+      collection(getDb(), SERVICE_TOPICS_COLLECTION),
       where('isUrgent', '==', true),
       orderBy('title')
     );
@@ -479,7 +479,7 @@ export const addServiceTopic = async (topicData) => {
     await checkFirebaseConnection();
     
     console.log('Adding new service topic...');
-    const docRef = await addDoc(collection(db, SERVICE_TOPICS_COLLECTION), {
+    const docRef = await addDoc(collection(getDb(), SERVICE_TOPICS_COLLECTION), {
       ...topicData,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -503,7 +503,7 @@ export const updateServiceTopic = async (topicId, topicData) => {
     await checkFirebaseConnection();
     
     console.log('Updating service topic:', topicId);
-    const topicRef = doc(db, SERVICE_TOPICS_COLLECTION, topicId);
+    const topicRef = doc(getDb(), SERVICE_TOPICS_COLLECTION, topicId);
     await updateDoc(topicRef, {
       ...topicData,
       updatedAt: new Date().toISOString()
@@ -526,7 +526,7 @@ export const deleteServiceTopic = async (topicId) => {
     await checkFirebaseConnection();
     
     console.log('Deleting service topic:', topicId);
-    const topicRef = doc(db, SERVICE_TOPICS_COLLECTION, topicId);
+    const topicRef = doc(getDb(), SERVICE_TOPICS_COLLECTION, topicId);
     await deleteDoc(topicRef);
 
     console.log('Service topic deleted successfully');
@@ -545,7 +545,7 @@ export const getCategories = async () => {
     // Initialize default categories if needed
     await initializeDefaultCategories();
     
-    const q = query(collection(db, CATEGORIES_COLLECTION), orderBy('title'));
+    const q = query(collection(getDb(), CATEGORIES_COLLECTION), orderBy('title'));
     const querySnapshot = await getDocs(q);
     
     const categories = querySnapshot.docs.map(doc => ({
@@ -567,13 +567,13 @@ export const resetServiceTopics = async () => {
     await checkFirebaseConnection();
 
     // Get a reference to the service topics collection
-    const topicsRef = collection(db, SERVICE_TOPICS_COLLECTION);
+    const topicsRef = collection(getDb(), SERVICE_TOPICS_COLLECTION);
     
     // Get all existing topics
     const snapshot = await getDocs(topicsRef);
     
     // Create a batch write
-    const batch = writeBatch(db);
+    const batch = writeBatch(getDb());
     
     // Delete all existing topics
     snapshot.docs.forEach((doc) => {

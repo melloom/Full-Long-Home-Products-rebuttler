@@ -1,4 +1,4 @@
-import { db } from './firebase/config';
+import { getDb } from './firebase/config';
 import { 
   collection, 
   doc, 
@@ -18,7 +18,7 @@ const faqService = {
   // Get all FAQ items
   async getAllFAQs() {
     try {
-      const q = query(collection(db, FAQ_COLLECTION), orderBy('createdAt', 'desc'));
+      const q = query(collection(getDb(), FAQ_COLLECTION), orderBy('createdAt', 'desc'));
       const querySnapshot = await getDocs(q);
       return querySnapshot.docs.map(doc => ({
         id: doc.id,
@@ -33,7 +33,7 @@ const faqService = {
   // Get a single FAQ by ID
   async getFAQById(id) {
     try {
-      const docRef = doc(db, FAQ_COLLECTION, id);
+      const docRef = doc(getDb(), FAQ_COLLECTION, id);
       const docSnap = await getDoc(docRef);
       
       if (docSnap.exists()) {
@@ -53,7 +53,7 @@ const faqService = {
   // Add a new FAQ
   async addFAQ(faqData) {
     try {
-      const docRef = await addDoc(collection(db, FAQ_COLLECTION), {
+      const docRef = await addDoc(collection(getDb(), FAQ_COLLECTION), {
         ...faqData,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
@@ -74,7 +74,7 @@ const faqService = {
   // Update an existing FAQ
   async updateFAQ(id, faqData) {
     try {
-      const docRef = doc(db, FAQ_COLLECTION, id);
+      const docRef = doc(getDb(), FAQ_COLLECTION, id);
       await updateDoc(docRef, {
         ...faqData,
         updatedAt: serverTimestamp()
@@ -94,7 +94,7 @@ const faqService = {
   // Delete an FAQ
   async deleteFAQ(id) {
     try {
-      const docRef = doc(db, FAQ_COLLECTION, id);
+      const docRef = doc(getDb(), FAQ_COLLECTION, id);
       await deleteDoc(docRef);
       return id;
     } catch (error) {

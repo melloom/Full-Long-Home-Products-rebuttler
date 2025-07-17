@@ -170,5 +170,15 @@ initializeFirebase().catch(error => {
   console.error('Failed to initialize Firebase:', error);
 });
 
-export { auth, db, messaging };
+// Defensive getter for db
+export function getDb() {
+  if (!db) {
+    throw new Error('Firestore has not been initialized. Please ensure initializeFirebase() is called before using Firestore.');
+  }
+  return db;
+}
+
+// Update export: do not export db directly
+// export { app, auth, db, messaging };
+export { app, auth, messaging };
 export default app; 

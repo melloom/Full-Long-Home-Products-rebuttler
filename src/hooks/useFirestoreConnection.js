@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { db } from '../services/firebase/config';
+import { getDb } from '../services/firebase/config';
 import { onSnapshotsInSync } from 'firebase/firestore';
 
 export const useFirestoreConnection = () => {
@@ -24,7 +24,7 @@ export const useFirestoreConnection = () => {
     window.addEventListener('offline', handleOffline);
 
     // Listen for Firestore sync status
-    const unsubscribe = onSnapshotsInSync(db, () => {
+    const unsubscribe = onSnapshotsInSync(getDb(), () => {
       setIsSynced(true);
       setRetryCount(0);
     });
@@ -43,7 +43,7 @@ export const useFirestoreConnection = () => {
     }
 
     try {
-      await db.enableNetwork();
+      await getDb().enableNetwork();
       setRetryCount(prev => prev + 1);
       return true;
     } catch (error) {

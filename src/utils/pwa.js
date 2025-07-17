@@ -1,6 +1,6 @@
 // PWA Service Worker Registration
 export const registerServiceWorker = async () => {
-  if ('serviceWorker' in navigator) {
+  if ('serviceWorker' in navigator && import.meta.env.PROD) {
     try {
       console.log('Registering service worker...');
       
@@ -88,7 +88,7 @@ export const registerServiceWorker = async () => {
       throw error; // Re-throw the error so it can be handled by the caller
     }
   } else {
-    console.log('Service Worker not supported in this browser');
+    console.log('Service Worker not supported in this browser or not in production');
   }
 };
 

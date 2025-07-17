@@ -1,12 +1,12 @@
 import { getAuth } from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from './config';
+import { getDb } from './config';
 
 // Function to list all users (using client SDK)
 export const listAllUsers = async (maxResults = 1000) => {
   try {
     // Get all users from the users collection
-    const usersRef = collection(db, 'users');
+    const usersRef = collection(getDb(), 'users');
     const usersQuery = query(usersRef);
     const usersSnapshot = await getDocs(usersQuery);
     
@@ -23,7 +23,7 @@ export const listAllUsers = async (maxResults = 1000) => {
 // Function to check if a user is an admin
 export const isUserAdmin = async (userId) => {
   try {
-    const adminRef = collection(db, 'admins');
+    const adminRef = collection(getDb(), 'admins');
     const adminQuery = query(adminRef, where('uid', '==', userId));
     const adminSnapshot = await getDocs(adminQuery);
     
