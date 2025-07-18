@@ -3,7 +3,7 @@ import Tesseract from 'tesseract.js';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar as CalendarIcon, Clock, FileText, CheckCircle, ChevronRight, Phone, User, Mail, Users, CheckSquare, Square, Check, Home } from 'lucide-react';
 import { safePostMessage } from '../utils/iframeErrorHandler';
-import { getTimeBlocks, listenTimeBlocks, getAvailability, listenAvailability, listenAvailabilityForRegion, addBooking } from '../services/firebase/scheduling';
+import { getTimeBlocks, listenTimeBlocks, getAvailability, listenAvailability, listenAvailabilityForRegion, addBooking, setAvailability } from '../services/firebase/scheduling';
 import { checkServiceArea } from '../utils/serviceAreaChecker';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
@@ -825,6 +825,50 @@ const ScheduleScript = ({ onNavigate }) => {
     return allBlocks.filter(block => block.region === region || !block.region); // fallback if region not set on block
   };
 
+  // Function to sync availability data with current time blocks
+  const syncAvailabilityWithTimeBlocks = async (currentTimeBlocks) => {
+    try {
+      console.log('🔄 Syncing availability with time blocks:', currentTimeBlocks);
+      
+      // Get all availability data
+      const allAvailability = await getAvailability();
+      
+      // For each date in availability, update the slots
+      for (const [dateStr, dateAvailability] of Object.entries(allAvailability)) {
+        if (!dateAvailability || !dateAvailability.slots) continue;
+        
+        const date = new Date(dateStr);
+        const isWeekendDate = isWeekend(date);
+        const validTimeBlocks = isWeekendDate ? currentTimeBlocks.weekends : currentTimeBlocks.weekdays;
+        const validTimeBlockIds = new Set(validTimeBlocks.map(block => block.id));
+        
+        // Create updated slots object
+        const updatedSlots = {};
+        
+        // Add slots for valid time blocks
+        for (const timeBlock of validTimeBlocks) {
+          const existingSlot = dateAvailability.slots[timeBlock.id];
+          updatedSlots[timeBlock.id] = existingSlot || {
+            available: true,
+            booked: 0,
+            capacity: 3
+          };
+        }
+        
+        // Update the availability for this date
+        const updatedAvailability = {
+          ...dateAvailability,
+          slots: updatedSlots
+        };
+        
+        await setAvailability(dateStr, updatedAvailability);
+        console.log('✅ Updated availability for date:', dateStr, updatedSlots);
+      }
+    } catch (error) {
+      console.error('❌ Error syncing availability:', error);
+    }
+  };
+
   // Load time blocks from Firestore
   useEffect(() => {
     const loadTimeBlocks = async () => {
@@ -857,6 +901,12 @@ const ScheduleScript = ({ onNavigate }) => {
         const weekdays = blocks.filter(block => block.dayType === 'weekday');
         const weekends = blocks.filter(block => block.dayType === 'weekend');
         setTimeBlocks({ weekdays, weekends });
+        
+        // Log the current time blocks for debugging
+        console.log('🕐 Current time blocks updated:', { weekdays, weekends });
+        
+        // Sync availability data with current time blocks
+        syncAvailabilityWithTimeBlocks({ weekdays, weekends });
       }
     });
 
@@ -2002,8 +2052,26 @@ Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
 
     if (!dayAvailability) return [];
 
+    // Get current time blocks for this date type (weekday/weekend)
+    const isWeekendDate = isWeekend(date);
+    const currentTimeBlocks = isWeekendDate ? timeBlocks.weekends : timeBlocks.weekdays;
+    
+    // Create a map of valid time block IDs for this date
+    const validTimeBlockIds = new Set(currentTimeBlocks.map(block => block.id));
+    
+    // Debug logging
+    console.log('📅 Date:', dateStr, 'Weekend:', isWeekendDate);
+    console.log('🕐 Current time blocks:', currentTimeBlocks);
+    console.log('✅ Valid time block IDs:', Array.from(validTimeBlockIds));
+    console.log('📊 Day availability keys:', Object.keys(dayAvailability));
+
     return Object.entries(dayAvailability)
-      .filter(([time, slotData]) => {
+      .filter(([timeId, slotData]) => {
+        // Only include slots that exist in current time blocks
+        if (!validTimeBlockIds.has(timeId)) {
+          return false;
+        }
+        
         // Handle different data structures
         if (typeof slotData === 'object' && slotData.available) {
           return slotData.available > 0;
@@ -2013,20 +2081,18 @@ Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
         return false;
       })
       .map(([timeId, slotData]) => {
+        // Find the corresponding time block to get proper time and label
+        const timeBlock = currentTimeBlocks.find(block => block.id === timeId);
+        
         // Extract slot count and time information
         let availableSlots = 0;
-        let timeLabel = timeId;
-        let timeDisplay = timeId;
+        let timeDisplay = timeBlock ? timeBlock.time : timeId;
+        let timeLabel = timeBlock ? timeBlock.label : timeId;
 
         if (typeof slotData === 'object' && slotData.available) {
           availableSlots = slotData.available;
-          timeDisplay = slotData.time || timeId;
-          timeLabel = slotData.label || timeId;
         } else if (typeof slotData === 'number') {
           availableSlots = slotData;
-          // Use the timeId as fallback
-          timeDisplay = timeId;
-          timeLabel = timeId;
         }
 
         return {
