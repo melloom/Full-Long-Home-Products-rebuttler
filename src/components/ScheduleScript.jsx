@@ -3746,7 +3746,14 @@ Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
               flexWrap: 'wrap'
             }}>
               <motion.button 
-                onClick={() => { window.open(duplicateModal.duplicates[0]?.salesforceUrl, '_blank'); }}
+                onClick={() => { 
+                  const url = duplicateModal.duplicates[0]?.salesforceUrl;
+                  if (url && url !== 'https://login.salesforce.com' && url.startsWith('http')) {
+                    window.open(url, '_blank');
+                  } else {
+                    alert('Unable to open Salesforce record. Please log into Salesforce and search for the lead manually.');
+                  }
+                }}
                 style={{ 
                   background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
                   color: 'white', 

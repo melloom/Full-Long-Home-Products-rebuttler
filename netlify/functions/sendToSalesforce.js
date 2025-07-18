@@ -229,8 +229,27 @@ Market Segment: ${getMarketSegment(customerInfo?.state)}`;
                   console.error('fullRecord.Id is undefined');
                   return 'https://login.salesforce.com';
                 }
-                const orgId = fullRecord.Id.substring(0, 3);
-                return `https://${orgId}.salesforce.com/lightning/r/Lead/${fullRecord.Id}/view`;
+                
+                // Try to get the org ID from the connection instance URL first
+                let orgId = null;
+                if (conn.instanceUrl) {
+                  const instanceMatch = conn.instanceUrl.match(/https:\/\/([^.]+)\.salesforce\.com/);
+                  if (instanceMatch) {
+                    orgId = instanceMatch[1];
+                  }
+                }
+                
+                // Fallback to extracting from record ID if instance URL method failed
+                if (!orgId && fullRecord.Id.length >= 3) {
+                  orgId = fullRecord.Id.substring(0, 3);
+                }
+                
+                if (orgId) {
+                  return `https://${orgId}.salesforce.com/lightning/r/Lead/${fullRecord.Id}/view`;
+                } else {
+                  console.error('Could not determine org ID for record:', fullRecord.Id);
+                  return 'https://login.salesforce.com';
+                }
               })()
             };
           } catch (fetchError) {
@@ -257,8 +276,27 @@ Market Segment: ${getMarketSegment(customerInfo?.state)}`;
                   console.error('recordId is undefined');
                   return 'https://login.salesforce.com';
                 }
-                const orgId = recordId.substring(0, 3);
-                return `https://${orgId}.salesforce.com/lightning/r/Lead/${recordId}/view`;
+                
+                // Try to get the org ID from the connection instance URL first
+                let orgId = null;
+                if (conn.instanceUrl) {
+                  const instanceMatch = conn.instanceUrl.match(/https:\/\/([^.]+)\.salesforce\.com/);
+                  if (instanceMatch) {
+                    orgId = instanceMatch[1];
+                  }
+                }
+                
+                // Fallback to extracting from record ID if instance URL method failed
+                if (!orgId && recordId.length >= 3) {
+                  orgId = recordId.substring(0, 3);
+                }
+                
+                if (orgId) {
+                  return `https://${orgId}.salesforce.com/lightning/r/Lead/${recordId}/view`;
+                } else {
+                  console.error('Could not determine org ID for record:', recordId);
+                  return 'https://login.salesforce.com';
+                }
               })()
             };
           }
