@@ -3,12 +3,13 @@ import Tesseract from 'tesseract.js';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar as CalendarIcon, Clock, FileText, CheckCircle, ChevronRight, Phone, User, Mail, Users, CheckSquare, Square, Check, Home } from 'lucide-react';
 import { safePostMessage } from '../utils/iframeErrorHandler';
-import { getTimeBlocks, listenTimeBlocks, getAvailability, addBooking } from '../services/firebase/scheduling';
+import { getTimeBlocks, listenTimeBlocks, getAvailability, listenAvailability, addBooking } from '../services/firebase/scheduling';
 import { checkServiceArea } from '../utils/serviceAreaChecker';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 
 import '../styles/ScheduleScript.css';
+import RebuttalSidebar from './RebuttalSidebar';
 
 // Add a function to parse property info from OCR text
 function parsePropertyInfo(ocrText) {
@@ -122,6 +123,13 @@ const ScheduleScript = ({ onNavigate }) => {
     details: ''
   });
 
+  // Add state for progress notifications
+  const [showProgressNotification, setShowProgressNotification] = useState(false);
+  const [progressMessage, setProgressMessage] = useState('');
+
+  // Add state to track if there's saved progress
+  const [hasSavedProgress, setHasSavedProgress] = useState(false);
+
   // Define property verification checklist items for screenshot context
   const propertyChecklistItems = [
     { key: 'basemapVerified', label: 'Screenshot Uploaded & Owner Verified' },
@@ -146,6 +154,121 @@ const ScheduleScript = ({ onNavigate }) => {
       clearAllData();
     }
   }, []); // Empty dependency array means this runs once on mount
+
+  // Auto-save functionality - save progress whenever data changes
+  useEffect(() => {
+    // Don't save if we're at step 0 with no data (fresh start)
+    if (currentStep === 0 && !callType && !projectType && !userName) {
+      return;
+    }
+
+    // Save current progress to localStorage
+    const progressData = {
+      currentStep,
+      callType,
+      projectType,
+      userName,
+      customerInfo,
+      projectDetails,
+      appointment,
+      appointmentConfirmed,
+      checklistItems,
+      propertySearch,
+      propertySearchCollapsed,
+      basemapVisited,
+      basemapVerified,
+      basemapScreenshot,
+      parsedPropertyInfo,
+      timestamp: new Date().toISOString()
+    };
+
+    localStorage.setItem('scheduleScriptData', JSON.stringify(progressData));
+    console.log('💾 Auto-saved progress:', { currentStep, callType, projectType });
+    
+    // Set flag that there's saved progress
+    setHasSavedProgress(true);
+    
+    // Show brief notification that progress was saved
+    setProgressMessage('Progress saved automatically');
+    setShowProgressNotification(true);
+    setTimeout(() => setShowProgressNotification(false), 2000);
+  }, [
+    currentStep,
+    callType,
+    projectType,
+    userName,
+    customerInfo,
+    projectDetails,
+    appointment,
+    appointmentConfirmed,
+    checklistItems,
+    propertySearch,
+    propertySearchCollapsed,
+    basemapVisited,
+    basemapVerified,
+    basemapScreenshot,
+    parsedPropertyInfo
+  ]);
+
+  // Load saved progress when component mounts
+  useEffect(() => {
+    const savedData = localStorage.getItem('scheduleScriptData');
+    if (savedData) {
+      try {
+        const parsedData = JSON.parse(savedData);
+        
+        // Check if the saved data is recent (within last 24 hours)
+        const savedTime = new Date(parsedData.timestamp);
+        const now = new Date();
+        const hoursDiff = (now - savedTime) / (1000 * 60 * 60);
+        
+        if (hoursDiff < 24) {
+          console.log('🔄 Loading saved progress from localStorage');
+          
+          // Set flag that there's saved progress
+          setHasSavedProgress(true);
+          
+          // Restore all saved state
+          if (parsedData.currentStep !== undefined) setCurrentStep(parsedData.currentStep);
+          if (parsedData.callType) setCallType(parsedData.callType);
+          if (parsedData.projectType) setProjectType(parsedData.projectType);
+          if (parsedData.userName) setUserName(parsedData.userName);
+          if (parsedData.customerInfo) setCustomerInfo(parsedData.customerInfo);
+          if (parsedData.projectDetails) setProjectDetails(parsedData.projectDetails);
+          if (parsedData.appointment) setAppointment(parsedData.appointment);
+          if (parsedData.appointmentConfirmed !== undefined) setAppointmentConfirmed(parsedData.appointmentConfirmed);
+          if (parsedData.checklistItems) setChecklistItems(parsedData.checklistItems);
+          if (parsedData.propertySearch) setPropertySearch(parsedData.propertySearch);
+          if (parsedData.propertySearchCollapsed !== undefined) setPropertySearchCollapsed(parsedData.propertySearchCollapsed);
+          if (parsedData.basemapVisited !== undefined) setBasemapVisited(parsedData.basemapVisited);
+          if (parsedData.basemapVerified !== undefined) setBasemapVerified(parsedData.basemapVerified);
+          if (parsedData.basemapScreenshot) setBasemapScreenshot(parsedData.basemapScreenshot);
+          if (parsedData.parsedPropertyInfo) setParsedPropertyInfo(parsedData.parsedPropertyInfo);
+          
+          console.log('✅ Progress restored:', { 
+            currentStep: parsedData.currentStep, 
+            callType: parsedData.callType, 
+            projectType: parsedData.projectType 
+          });
+          
+          // Show notification that progress was restored
+          setProgressMessage(`Welcome back! Continuing from step ${parsedData.currentStep + 1}`);
+          setShowProgressNotification(true);
+          setTimeout(() => setShowProgressNotification(false), 3000);
+        } else {
+          console.log('⏰ Saved data is too old, starting fresh');
+          localStorage.removeItem('scheduleScriptData');
+          setHasSavedProgress(false);
+        }
+      } catch (error) {
+        console.error('❌ Error loading saved progress:', error);
+        localStorage.removeItem('scheduleScriptData');
+        setHasSavedProgress(false);
+      }
+    } else {
+      setHasSavedProgress(false);
+    }
+  }, []); // Only run once on mount
 
   // Run OCR when a new screenshot is set
   useEffect(() => {
@@ -248,14 +371,14 @@ const ScheduleScript = ({ onNavigate }) => {
       type: 'scheduling'
     },
     {
-      id: 'confirmation',
-      title: 'Appointment Confirmation',
-      type: 'confirmation'
-    },
-    {
       id: 'buttonUp',
       title: 'Button Up & Final Steps',
       type: 'final'
+    },
+    {
+      id: 'confirmation',
+      title: 'Appointment Confirmation',
+      type: 'confirmation'
     }
   ];
 
@@ -742,12 +865,12 @@ const ScheduleScript = ({ onNavigate }) => {
 
   // Gather session summary
   const sessionSummary = {
-    address: customerInfo.address || propertySearch.address || (parsedPropertyInfo['Owner Address'] || ''),
-    owner: `${customerInfo.firstName} ${customerInfo.lastName}`.trim() || parsedPropertyInfo['Owner Name'] || '',
-    county: parsedPropertyInfo['County Name'] || '',
-    countyFips: parsedPropertyInfo['County FIPS'] || '',
-    acres: parsedPropertyInfo['Acres'] || '',
-    apn: parsedPropertyInfo['APN'] || '',
+            address: customerInfo.address || propertySearch.address || (parsedPropertyInfo?.['Owner Address'] || ''),
+        owner: `${customerInfo.firstName} ${customerInfo.lastName}`.trim() || parsedPropertyInfo?.['Owner Name'] || '',
+        county: parsedPropertyInfo?.['County Name'] || '',
+        countyFips: parsedPropertyInfo?.['County FIPS'] || '',
+        acres: parsedPropertyInfo?.['Acres'] || '',
+        apn: parsedPropertyInfo?.['APN'] || '',
     projectType: projectType || '',
     callType: callType || '',
     userName: userName || '',
@@ -789,6 +912,55 @@ Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
 
   // Customer Recap Text
   const customerRecapText = `Thank you for scheduling your appointment with Long Home Products!\n\nHere's what to expect:\n• A design consultant will visit your home at ${sessionSummary.address || 'your address'}.\n• Appointment: ${sessionSummary.appointment.date && sessionSummary.appointment.time ? formatDateTime(sessionSummary.appointment.date, sessionSummary.appointment.time) : 'date and time to be confirmed'}.\n• We'll review your ${sessionSummary.projectType === 'bath' ? 'bathroom remodel' : sessionSummary.projectType === 'roof' ? 'roof replacement' : sessionSummary.projectType || 'project'} needs and provide a free estimate.\n• Please ensure all decision-makers are present.\n\nWe look forward to meeting you!`;
+
+  // Function to resume saved progress
+  const resumeProgress = useCallback(() => {
+    const savedData = localStorage.getItem('scheduleScriptData');
+    if (savedData) {
+      try {
+        const parsedData = JSON.parse(savedData);
+        
+        // Check if the saved data is recent (within last 24 hours)
+        const savedTime = new Date(parsedData.timestamp);
+        const now = new Date();
+        const hoursDiff = (now - savedTime) / (1000 * 60 * 60);
+        
+        if (hoursDiff < 24) {
+          console.log('🔄 Resuming saved progress');
+          
+          // Restore all saved state
+          if (parsedData.currentStep !== undefined) setCurrentStep(parsedData.currentStep);
+          if (parsedData.callType) setCallType(parsedData.callType);
+          if (parsedData.projectType) setProjectType(parsedData.projectType);
+          if (parsedData.userName) setUserName(parsedData.userName);
+          if (parsedData.customerInfo) setCustomerInfo(parsedData.customerInfo);
+          if (parsedData.projectDetails) setProjectDetails(parsedData.projectDetails);
+          if (parsedData.appointment) setAppointment(parsedData.appointment);
+          if (parsedData.appointmentConfirmed !== undefined) setAppointmentConfirmed(parsedData.appointmentConfirmed);
+          if (parsedData.checklistItems) setChecklistItems(parsedData.checklistItems);
+          if (parsedData.propertySearch) setPropertySearch(parsedData.propertySearch);
+          if (parsedData.propertySearchCollapsed !== undefined) setPropertySearchCollapsed(parsedData.propertySearchCollapsed);
+          if (parsedData.basemapVisited !== undefined) setBasemapVisited(parsedData.basemapVisited);
+          if (parsedData.basemapVerified !== undefined) setBasemapVerified(parsedData.basemapVerified);
+          if (parsedData.basemapScreenshot) setBasemapScreenshot(parsedData.basemapScreenshot);
+          if (parsedData.parsedPropertyInfo) setParsedPropertyInfo(parsedData.parsedPropertyInfo);
+          
+          // Show notification
+          setProgressMessage(`Resumed from step ${parsedData.currentStep + 1}`);
+          setShowProgressNotification(true);
+          setTimeout(() => setShowProgressNotification(false), 2000);
+        } else {
+          console.log('⏰ Saved data is too old');
+          localStorage.removeItem('scheduleScriptData');
+          setHasSavedProgress(false);
+        }
+      } catch (error) {
+        console.error('❌ Error resuming progress:', error);
+        localStorage.removeItem('scheduleScriptData');
+        setHasSavedProgress(false);
+      }
+    }
+  }, []);
 
   // Function to clear all data when starting a new appointment
   const clearAllData = useCallback(() => {
@@ -871,15 +1043,18 @@ Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
     // Clear localStorage
     localStorage.removeItem('scheduleScriptData');
     
-    // Show success notification
+    // Clear any existing messages
     setRecapMessage({
       type: 'success',
-      title: '✅ Fresh Start!',
-      message: 'All data has been cleared for a new appointment',
-      details: 'You can now begin a new scheduling session'
+      title: '',
+      message: '',
+      details: ''
     });
     
-    console.log('All data cleared for new appointment');
+    // Reset saved progress flag
+    setHasSavedProgress(false);
+    
+    console.log('🗑️ All data cleared for new appointment');
   }, []);
 
   // Copy to clipboard handlers
@@ -1013,7 +1188,7 @@ Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
       }
       
       // Auto-fill from parsed property info
-      if (parsedPropertyInfo['Owner Name'] && !customerInfo.firstName && !customerInfo.lastName) {
+      if (parsedPropertyInfo?.['Owner Name'] && !customerInfo.firstName && !customerInfo.lastName) {
         const ownerName = parsedPropertyInfo['Owner Name'];
         const nameParts = ownerName.split(' ');
         if (nameParts.length >= 2) {
@@ -1025,17 +1200,17 @@ Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
       }
       
       // Auto-fill city from property info
-      if (parsedPropertyInfo['Owner City'] && !customerInfo.city) {
+      if (parsedPropertyInfo?.['Owner City'] && !customerInfo.city) {
         updates.city = parsedPropertyInfo['Owner City'];
       }
       
       // Auto-fill state from property info
-      if (parsedPropertyInfo['Owner State'] && !customerInfo.state) {
+      if (parsedPropertyInfo?.['Owner State'] && !customerInfo.state) {
         updates.state = parsedPropertyInfo['Owner State'];
       }
       
       // Auto-fill zip from property info
-      if (parsedPropertyInfo['Owner Zip Code'] && !customerInfo.zipCode) {
+      if (parsedPropertyInfo?.['Owner Zip Code'] && !customerInfo.zipCode) {
         updates.zipCode = parsedPropertyInfo['Owner Zip Code'].replace(':', '').trim();
       }
       
@@ -1070,23 +1245,23 @@ Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
         </h3>
         
         {/* Auto-fill button */}
-        {(propertySearch.address || Object.keys(parsedPropertyInfo).length > 0) && (
+                        {(propertySearch.address || (parsedPropertyInfo && Object.keys(parsedPropertyInfo).length > 0)) && (
           <div style={{ background: '#1e293b', borderRadius: 8, padding: '1rem', marginBottom: '1rem', border: '1px solid #334155' }}>
             <div style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: '#94a3b8' }}>
               📋 Available property data:
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
-              {parsedPropertyInfo['Owner Name'] && (
+              {parsedPropertyInfo?.['Owner Name'] && (
                 <span style={{ background: '#374151', padding: '0.25rem 0.5rem', borderRadius: 4, fontSize: '0.8rem' }}>
                   👤 {parsedPropertyInfo['Owner Name']}
                 </span>
               )}
-              {parsedPropertyInfo['Owner City'] && (
+              {parsedPropertyInfo?.['Owner City'] && (
                 <span style={{ background: '#374151', padding: '0.25rem 0.5rem', borderRadius: 4, fontSize: '0.8rem' }}>
                   🏙️ {parsedPropertyInfo['Owner City']}
                 </span>
               )}
-              {parsedPropertyInfo['Owner State'] && (
+              {parsedPropertyInfo?.['Owner State'] && (
                 <span style={{ background: '#374151', padding: '0.25rem 0.5rem', borderRadius: 4, fontSize: '0.8rem' }}>
                   🗺️ {parsedPropertyInfo['Owner State']}
                 </span>
@@ -1668,23 +1843,71 @@ Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
   useEffect(() => {
     if (detectedRegion) {
       loadAvailabilityForRegion(detectedRegion);
+      
+      // Set up real-time listener for availability updates
+      const unsubscribe = listenAvailability(detectedRegion, (availability) => {
+        console.log('🔄 Real-time availability update for region:', detectedRegion, availability);
+        setDateAvailability(availability || {});
+        
+        // Update available dates
+        const availableDatesList = availability ? Object.keys(availability).filter(date => {
+          const dayAvailability = availability[date];
+          if (!dayAvailability) return false;
+          
+          let hasAvailableSlots = false;
+          Object.values(dayAvailability).forEach(slotData => {
+            if (typeof slotData === 'object' && slotData.available) {
+              if (slotData.available > 0) hasAvailableSlots = true;
+            } else if (typeof slotData === 'number') {
+              if (slotData > 0) hasAvailableSlots = true;
+            }
+          });
+          
+          return hasAvailableSlots;
+        }) : [];
+        
+        setAvailableDates(availableDatesList);
+      });
+      
+      return () => unsubscribe();
     }
   }, [detectedRegion]);
 
   const loadAvailabilityForRegion = async (region) => {
     setLoadingAvailability(true);
     try {
+      console.log('🔄 Loading availability for region:', region);
       const availability = await getAvailability(region);
+      console.log('📅 Raw availability data:', availability);
+      
       setDateAvailability(availability);
       
-      // Extract available dates
-      const availableDatesList = Object.keys(availability).filter(date => {
+      // Extract available dates with better filtering
+      const availableDatesList = availability ? Object.keys(availability).filter(date => {
         const dayAvailability = availability[date];
-        return Object.values(dayAvailability).some(slots => slots > 0);
-      });
+        console.log('📊 Checking availability for date:', date, dayAvailability);
+        
+        if (!dayAvailability) return false;
+        
+        // Check if any slots are available
+        let hasAvailableSlots = false;
+        if (typeof dayAvailability === 'object' && dayAvailability !== null) {
+          Object.values(dayAvailability).forEach(slotData => {
+            if (typeof slotData === 'object' && slotData.available) {
+              if (slotData.available > 0) hasAvailableSlots = true;
+            } else if (typeof slotData === 'number') {
+              if (slotData > 0) hasAvailableSlots = true;
+            }
+          });
+        }
+        
+        return hasAvailableSlots;
+      }) : [];
+      
+      console.log('✅ Available dates:', availableDatesList);
       setAvailableDates(availableDatesList);
     } catch (error) {
-      console.error('Error loading availability:', error);
+      console.error('❌ Error loading availability:', error);
     } finally {
       setLoadingAvailability(false);
     }
@@ -1704,7 +1927,7 @@ Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
     
     // Calculate total slots - handle different data structures
     let totalSlots = 0;
-    if (typeof dayAvailability === 'object') {
+    if (typeof dayAvailability === 'object' && dayAvailability !== null) {
       Object.values(dayAvailability).forEach(slotData => {
         if (typeof slotData === 'object' && slotData.available) {
           totalSlots += slotData.available;
@@ -1736,7 +1959,7 @@ Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
     
     // Calculate total slots - handle different data structures
     let totalSlots = 0;
-    if (typeof dayAvailability === 'object') {
+    if (typeof dayAvailability === 'object' && dayAvailability !== null) {
       Object.values(dayAvailability).forEach(slotData => {
         if (typeof slotData === 'object' && slotData.available) {
           totalSlots += slotData.available;
@@ -1762,11 +1985,23 @@ Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
   const getAvailableTimeBlocksForDate = (date, region) => {
     if (!date || !region) return [];
     
+    // Defensive: treat null as empty object
+    const safeDateAvailability = dateAvailability || {};
+
+    // Block same-day bookings
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selected = new Date(date);
+    selected.setHours(0, 0, 0, 0);
+    if (selected.getTime() === today.getTime()) {
+      return [];
+    }
+
     const dateStr = date.toISOString().split('T')[0];
-    const dayAvailability = dateAvailability[dateStr];
-    
+    const dayAvailability = safeDateAvailability[dateStr];
+
     if (!dayAvailability) return [];
-    
+
     return Object.entries(dayAvailability)
       .filter(([time, slotData]) => {
         // Handle different data structures
@@ -1782,7 +2017,7 @@ Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
         let availableSlots = 0;
         let timeLabel = timeId;
         let timeDisplay = timeId;
-        
+
         if (typeof slotData === 'object' && slotData.available) {
           availableSlots = slotData.available;
           timeDisplay = slotData.time || timeId;
@@ -1793,7 +2028,7 @@ Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
           timeDisplay = timeId;
           timeLabel = timeId;
         }
-        
+
         return {
           time: timeDisplay,
           timeId: timeId,
@@ -1860,9 +2095,42 @@ Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
                       value={selectedDate}
                       tileContent={tileContent}
                       tileClassName={tileClassName}
-                      minDate={new Date()}
+                      minDate={new Date(new Date().setHours(0, 0, 0, 0))} // Start of today
                       maxDate={new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)} // 30 days from now
                       className="modern-calendar"
+                      tileDisabled={({ date }) => {
+                        // Disable past dates and dates without availability
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const dateToCheck = new Date(date);
+                        dateToCheck.setHours(0, 0, 0, 0);
+                        
+                        // Disable if it's before today
+                        if (dateToCheck < today) {
+                          return true;
+                        }
+                        
+                        // Disable if no availability data for this date
+                        const dateStr = date.toISOString().split('T')[0];
+                        const dayAvailability = dateAvailability?.[dateStr];
+                        if (!dayAvailability) {
+                          return true;
+                        }
+                        
+                        // Check if there are any available slots
+                        let hasAvailableSlots = false;
+                        if (typeof dayAvailability === 'object' && dayAvailability !== null) {
+                          Object.values(dayAvailability).forEach(slotData => {
+                            if (typeof slotData === 'object' && slotData.available) {
+                              if (slotData.available > 0) hasAvailableSlots = true;
+                            } else if (typeof slotData === 'number') {
+                              if (slotData > 0) hasAvailableSlots = true;
+                            }
+                          });
+                        }
+                        
+                        return !hasAvailableSlots;
+                      }}
                     />
                     <div className="calendar-legend">
                       <div className="legend-item">
@@ -1951,147 +2219,156 @@ Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '80vh',
+        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+        borderRadius: 24,
+        boxShadow: '0 8px 32px rgba(16,185,129,0.15)',
+        padding: '2.5rem 1.5rem',
+        maxWidth: 520,
+        margin: '0 auto',
+      }}
     >
-      <h3 className="step-title-dark">Appointment Confirmation</h3>
-      
-      <div className="confirmation-container-dark">
-        <div className="confirmation-card-dark">
-          <div className="confirmation-header">
-            <div className="confirmation-icon">
-              <CheckCircle size={48} />
-            </div>
-            <h4 className="confirmation-title">Appointment Confirmed!</h4>
-            <p className="confirmation-subtitle">Your appointment has been successfully scheduled</p>
-          </div>
-          
-          <div className="appointment-details">
-            <h5 className="details-title">Appointment Details</h5>
-            
-            <div className="details-grid">
-              <div className="detail-item">
-                <div className="detail-icon">
-                  <Calendar size={20} />
-                </div>
-                <div className="detail-content">
-                  <span className="detail-label">Date</span>
-                  <span className="detail-value">{formatDateTime(appointment.date, '')}</span>
-                </div>
-              </div>
-              
-              <div className="detail-item">
-                <div className="detail-icon">
-                  <Clock size={20} />
-                </div>
-                <div className="detail-content">
-                  <span className="detail-label">Time</span>
-                  <span className="detail-value">{appointment.time}</span>
-                </div>
-              </div>
-              
-              <div className="detail-item">
-                <div className="detail-icon">
-                  <Home size={20} />
-                </div>
-                <div className="detail-content">
-                  <span className="detail-label">Project Type</span>
-                  <span className="detail-value">
-                    {projectType === 'bath' ? 'Bathroom Remodel' : 
-                     projectType === 'roof' ? 'Roof Replacement' : 
-                     projectType}
-                  </span>
-                </div>
-              </div>
-              
-              <div className="detail-item">
-                <div className="detail-icon">
-                  <User size={20} />
-                </div>
-                <div className="detail-content">
-                  <span className="detail-label">Customer</span>
-                  <span className="detail-value">
-                    {customerInfo.firstName && customerInfo.lastName ? 
-                     `${customerInfo.firstName} ${customerInfo.lastName}` : 
-                     'Not provided'}
-                  </span>
-                </div>
-              </div>
-              
-              <div className="detail-item">
-                <div className="detail-icon">
-                  <Phone size={20} />
-                </div>
-                <div className="detail-content">
-                  <span className="detail-label">Phone</span>
-                  <span className="detail-value">
-                    {customerInfo.phone || 'Not provided'}
-                  </span>
-                </div>
-              </div>
-              
-              <div className="detail-item">
-                <div className="detail-icon">
-                  <Mail size={20} />
-                </div>
-                <div className="detail-content">
-                  <span className="detail-label">Email</span>
-                  <span className="detail-value">
-                    {customerInfo.email || 'Not provided'}
-                  </span>
-                </div>
-              </div>
+      <div style={{
+        background: 'white',
+        borderRadius: 20,
+        boxShadow: '0 8px 32px rgba(16,185,129,0.10)',
+        padding: '2.5rem 2rem 2rem 2rem',
+        width: '100%',
+        maxWidth: 480,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+      }}>
+        <div style={{
+          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+          borderRadius: '50%',
+          width: 80,
+          height: 80,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: 24,
+          boxShadow: '0 4px 16px rgba(16,185,129,0.15)'
+        }}>
+          <CheckCircle size={48} color="white" />
+        </div>
+        <h2 style={{
+          color: '#059669',
+          fontWeight: 800,
+          fontSize: '2rem',
+          marginBottom: 8,
+          textAlign: 'center',
+        }}>Appointment Confirmed!</h2>
+        <p style={{
+          color: '#334155',
+          fontSize: '1.1rem',
+          marginBottom: 28,
+          textAlign: 'center',
+        }}>
+          Your appointment has been successfully scheduled
+        </p>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: '1.2rem 1.5rem',
+          width: '100%',
+          marginBottom: 24,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <CalendarIcon size={22} color="#6366f1" />
+            <div>
+              <div style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>DATE</div>
+              <div style={{ fontWeight: 700, color: '#0f172a' }}>{formatDateTime(appointment.date, '')}</div>
             </div>
           </div>
-          
-          <div className="confirmation-status">
-            <div className="status-badge">
-              <CheckCircle size={20} />
-              <span>Appointment Fully Confirmed</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Clock size={22} color="#6366f1" />
+            <div>
+              <div style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>TIME</div>
+              <div style={{ fontWeight: 700, color: '#0f172a' }}>{appointment.time}</div>
             </div>
-            <p className="status-description">
-              Customer has confirmed the appointment and no follow-up is needed. 
-              This will update the Salesforce status to "Set".
-            </p>
           </div>
-          
-          <div className="confirmation-actions">
-            <button 
-              className="action-button secondary"
-              onClick={() => {
-                // Handle customer confirmation
-                setAppointmentConfirmed(true);
-              }}
-            >
-              <Check size={16} />
-              Confirm with Customer
-            </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Home size={22} color="#6366f1" />
+            <div>
+              <div style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>PROJECT</div>
+              <div style={{ fontWeight: 700, color: '#0f172a' }}>{projectType === 'bath' ? 'Bathroom Remodel' : projectType === 'roof' ? 'Roof Replacement' : projectType}</div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <User size={22} color="#6366f1" />
+            <div>
+              <div style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>CUSTOMER</div>
+              <div style={{ fontWeight: 700, color: '#0f172a' }}>{customerInfo.firstName && customerInfo.lastName ? `${customerInfo.firstName} ${customerInfo.lastName}` : 'Not provided'}</div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Phone size={22} color="#6366f1" />
+            <div>
+              <div style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>PHONE</div>
+              <div style={{ fontWeight: 700, color: '#0f172a' }}>{customerInfo.phone || 'Not provided'}</div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Mail size={22} color="#6366f1" />
+            <div>
+              <div style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>EMAIL</div>
+              <div style={{ fontWeight: 700, color: '#0f172a' }}>{customerInfo.email || 'Not provided'}</div>
+            </div>
           </div>
         </div>
-      </div>
-      
-      <div className="step-navigation-dark">
-        <motion.button
-          className="nav-button-dark back-button-dark"
-          onClick={handleBack}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+        <div style={{
+          background: 'linear-gradient(90deg, #10b981 0%, #059669 100%)',
+          color: 'white',
+          borderRadius: 16,
+          padding: '0.75rem 1.5rem',
+          fontWeight: 700,
+          fontSize: '1.1rem',
+          marginBottom: 18,
+          boxShadow: '0 2px 8px rgba(16,185,129,0.10)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+        }}>
+          <CheckCircle size={20} color="white" />
+          Appointment Fully Confirmed
+        </div>
+        <p style={{
+          color: '#334155',
+          fontSize: '1rem',
+          marginBottom: 28,
+          textAlign: 'center',
+        }}>
+          Customer has confirmed the appointment and no follow-up is needed. This will update the Salesforce status to <b>"Set"</b>.
+        </p>
+        <button 
+          className="action-button"
+          style={{
+            background: 'linear-gradient(90deg, #6366f1 0%, #3b82f6 100%)',
+            color: 'white',
+            border: 'none',
+            borderRadius: 12,
+            padding: '1rem 2.5rem',
+            fontWeight: 700,
+            fontSize: '1.1rem',
+            boxShadow: '0 2px 8px rgba(59,130,246,0.10)',
+            marginTop: 8,
+            marginBottom: 0,
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+          }}
+          onClick={() => {
+            setAppointmentConfirmed(true);
+          }}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          Back
-        </motion.button>
-        
-        <motion.button
-          className="nav-button-dark next-button-dark"
-          onClick={handleNext}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          Next
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M5 12H19M12 5L19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </motion.button>
+          <Check size={20} style={{ marginRight: 10, verticalAlign: 'middle' }} />
+          Confirm with Customer
+        </button>
       </div>
     </motion.div>
   );
@@ -2138,84 +2415,7 @@ Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
       
       <motion.button 
         className="complete-button-dark"
-        onClick={async () => {
-          // Send data to Salesforce backend and write booking to Firestore
-          try {
-            console.log('Attempting to send data to Salesforce...');
-            const response = await fetch('http://localhost:3001/api/sendToSalesforce', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                appointment,
-                propertyInfo: parsedPropertyInfo,
-                customerInfo,
-                projectType,
-                callType,
-                userName,
-                appointmentConfirmed,
-                status: appointmentConfirmed ? 'Set' : 'Not Set'
-              })
-            });
-            
-            if (!response.ok) {
-              const errorData = await response.json();
-              console.error('Salesforce API error:', errorData);
-              setShowRecap(true);
-              setRecapMessage({
-                type: 'error',
-                title: '❌ Salesforce Upload Failed',
-                message: errorData.error || 'Unknown error occurred',
-                details: 'Please check your connection and try again.'
-              });
-              return;
-            }
-            
-            const result = await response.json();
-            console.log('Salesforce API success:', result);
-
-            // Write booking to Firestore
-            try {
-              const booking = {
-                date: appointment.date,
-                time: appointment.time,
-                customerInfo,
-                projectType,
-                callType,
-                userName,
-                appointmentConfirmed,
-                propertyInfo: parsedPropertyInfo,
-                salesforceId: result.id || null,
-                createdAt: new Date().toISOString()
-              };
-              
-              await addBooking(booking);
-              console.log('Booking added to Firestore successfully');
-            } catch (firestoreError) {
-              console.error('Error adding booking to Firestore:', firestoreError);
-              // Don't fail the whole process if Firestore fails
-            }
-
-            setShowRecap(true);
-            setRecapMessage({
-              type: 'success',
-              title: '✅ Successfully Sent to Salesforce!',
-              message: 'Your lead has been created in Salesforce',
-              details: `Lead ID: ${result.id || 'N/A'}`
-            });
-          } catch (err) {
-            console.error('Salesforce API error:', err);
-            setShowRecap(true);
-            setRecapMessage({
-              type: 'error',
-              title: '❌ Connection Error',
-              message: err.message,
-              details: 'Make sure the backend server is running on localhost:3001'
-            });
-          }
-          setShowRecap(true);
-          // Clear all data after completion
-          clearAllData();
-        }}
+        onClick={() => handleSendToSalesforce()}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
       >
@@ -2409,7 +2609,7 @@ Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
                   {ocrLoading ? (
                     <span style={{ color: '#3b82f6', fontWeight: 500 }}>Extracting text from screenshot...</span>
                   ) : (
-                    Object.keys(parsedPropertyInfo).length > 0 ? (
+                    parsedPropertyInfo && Object.keys(parsedPropertyInfo).length > 0 ? (
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem 1.5rem' }}>
                         {Object.entries(parsedPropertyInfo).map(([label, value]) => (
                           <React.Fragment key={label}>
@@ -2607,6 +2807,10 @@ Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
     }
   };
 
+  // Add state for duplicate modal
+  const [duplicateModal, setDuplicateModal] = useState({ open: false, duplicates: [], allowSave: false });
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
   return (
     <div className="schedule-script-container-dark">
       <motion.div 
@@ -2760,8 +2964,12 @@ Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
           </div>
         </div>
 
-        <div className="script-main-content-dark">
-          {renderCurrentStep()}
+        {/* Use grid layout for sidebar + main content, match Home page, and make sidebar collapsible */}
+        <div style={{ display: 'grid', gridTemplateColumns: `${sidebarCollapsed ? '56px' : '300px'} 1fr`, gap: '2rem', alignItems: 'flex-start' }}>
+          <RebuttalSidebar collapsed={sidebarCollapsed} onCollapseChange={setSidebarCollapsed} />
+          <div className="script-main-content-dark">
+            {renderCurrentStep()}
+          </div>
         </div>
       </motion.div>
 
@@ -3020,7 +3228,10 @@ Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
               onClick={() => {
                 setRecapMessage({ type: 'success', title: '', message: '', details: '' });
                 if (recapMessage.type === 'success') {
-                  setShowRecap(true);
+                  // Only show recap if we have actual appointment data
+                  if (appointment.date && appointment.time && (customerInfo.firstName || customerInfo.lastName)) {
+                    setShowRecap(true);
+                  }
                 }
               }}
               style={{
@@ -3047,6 +3258,63 @@ Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
               {recapMessage.type === 'success' ? 'Continue' : 'Close'}
             </button>
           </motion.div>
+        </div>
+      )}
+
+      {/* Progress Notification */}
+      {showProgressNotification && (
+        <motion.div
+          style={{
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+            color: 'white',
+            padding: '1rem 1.5rem',
+            borderRadius: '12px',
+            boxShadow: '0 8px 32px rgba(16,185,129,0.3)',
+            zIndex: 10000,
+            maxWidth: '300px',
+            fontSize: '0.9rem',
+            fontWeight: 500
+          }}
+          initial={{ opacity: 0, x: 100, scale: 0.8 }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
+          exit={{ opacity: 0, x: 100, scale: 0.8 }}
+          transition={{ duration: 0.3, type: 'spring' }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>💾</span>
+            {progressMessage}
+          </div>
+        </motion.div>
+      )}
+
+      {duplicateModal.open && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.7)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <div style={{ background: 'white', borderRadius: 16, padding: 32, minWidth: 340, maxWidth: 480, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
+            <h2 style={{ color: '#dc2626', marginBottom: 12 }}>Possible Duplicate Detected</h2>
+            <p style={{ color: '#334155', marginBottom: 18 }}>A similar lead already exists in Salesforce:</p>
+            {duplicateModal.duplicates.map(dup => (
+              <div key={dup.id} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 12, marginBottom: 10, background: '#f9fafb' }}>
+                <div><b>Name:</b> {dup.name}</div>
+                <div><b>Phone:</b> {dup.phone}</div>
+                <div><b>Email:</b> {dup.email}</div>
+                <div><b>Last Activity:</b> {dup.lastActivity || 'N/A'}</div>
+                <a href={dup.salesforceUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#6366f1', textDecoration: 'underline' }}>View in Salesforce</a>
+              </div>
+            ))}
+            <div style={{ display: 'flex', gap: 12, marginTop: 18, justifyContent: 'flex-end' }}>
+              <button onClick={() => { window.open(duplicateModal.duplicates[0]?.salesforceUrl, '_blank'); }} style={{ background: '#6366f1', color: 'white', border: 'none', borderRadius: 8, padding: '0.5rem 1.2rem', fontWeight: 600, cursor: 'pointer' }}>View Existing</button>
+              {duplicateModal.allowSave && (
+                <button onClick={() => { setDuplicateModal({ ...duplicateModal, open: false }); handleSendToSalesforce(true); }} style={{ background: '#10b981', color: 'white', border: 'none', borderRadius: 8, padding: '0.5rem 1.2rem', fontWeight: 600, cursor: 'pointer' }}>Create New Anyway</button>
+              )}
+              <button onClick={() => setDuplicateModal({ open: false, duplicates: [], allowSave: false })} style={{ background: '#e5e7eb', color: '#334155', border: 'none', borderRadius: 8, padding: '0.5rem 1.2rem', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+            </div>
+          </div>
         </div>
       )}
     </div>

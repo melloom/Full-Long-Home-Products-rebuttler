@@ -66,7 +66,7 @@ export const getAvailability = async (region = null) => {
     const availability = {};
     snapshot.docs.forEach(doc => {
       const data = doc.data();
-      if (data.regions && data.regions[region]) {
+      if (data && data.regions && data.regions[region]) {
         availability[doc.id] = data.regions[region];
       }
     });
@@ -77,7 +77,10 @@ export const getAvailability = async (region = null) => {
     const snapshot = await getDocs(collection(db, AVAILABILITY_COLLECTION));
     const availability = {};
     snapshot.docs.forEach(doc => {
-      availability[doc.id] = doc.data();
+      const data = doc.data();
+      if (data) {
+        availability[doc.id] = data;
+      }
     });
     return availability;
   }

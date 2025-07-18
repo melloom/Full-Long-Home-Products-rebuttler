@@ -1699,6 +1699,19 @@
   opacity: 0.5 !important;
 }
 
+/* Disabled calendar tiles */
+.modern-calendar .react-calendar__tile:disabled {
+  background: #333 !important;
+  color: #666 !important;
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+.modern-calendar .react-calendar__tile:disabled:hover {
+  background: #333 !important;
+  transform: none !important;
+}
+
 /* Slot Count Badge */
 .calendar-slot-count {
   position: absolute !important;

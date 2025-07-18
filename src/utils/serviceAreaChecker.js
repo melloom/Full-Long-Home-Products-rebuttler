@@ -51,7 +51,7 @@ const serviceAreas = {
   ]
 };
 
-// Helper function to extract county and state from address
+// Enhance the logic to handle more variations in address formats
 function extractCountyState(address) {
   if (!address) return null;
   
@@ -68,7 +68,7 @@ function extractCountyState(address) {
   // Find state in address - use regex to match whole words only
   for (const state of states) {
     // Use regex to match state as a whole word (not part of another word)
-    const stateRegex = new RegExp(`\\b${state}\\b`);
+    const stateRegex = new RegExp(`\b${state}\b`);
     if (stateRegex.test(upperAddress)) {
       foundState = state;
       console.log('📍 Found state:', foundState);

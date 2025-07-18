@@ -11,6 +11,11 @@
   to = "/index.html"
   status = 200
 
+[[redirects]]
+  from = "/api/sendToSalesforce"
+  to = "/.netlify/functions/sendToSalesforce"
+  status = 200
+
 [functions]
   node_bundler = "esbuild"
   external_node_modules = ["firebase-admin"]
