@@ -57,6 +57,7 @@ export const deleteRegion = async (id) => {
 // Updated structure: { [date]: { [regionId]: { [timeBlockId]: { available: number, capacity: number } } } }
 export const getAvailability = async (region = null) => {
   const db = getDb();
+  console.log('🔍 Fetching availability for region:', region);
   
   if (region) {
     // Get availability for specific region
@@ -66,11 +67,13 @@ export const getAvailability = async (region = null) => {
     const availability = {};
     snapshot.docs.forEach(doc => {
       const data = doc.data();
+      console.log('📅 Availability data for date:', doc.id, data);
       if (data && data.regions && data.regions[region]) {
         availability[doc.id] = data.regions[region];
       }
     });
     
+    console.log('✅ Final availability for region:', region, availability);
     return availability;
   } else {
     // Get all availability
@@ -78,10 +81,12 @@ export const getAvailability = async (region = null) => {
     const availability = {};
     snapshot.docs.forEach(doc => {
       const data = doc.data();
+      console.log('📅 Availability data for date:', doc.id, data);
       if (data) {
         availability[doc.id] = data;
       }
     });
+    console.log('✅ Final availability for all regions:', availability);
     return availability;
   }
 };
@@ -93,6 +98,27 @@ export const getAvailabilityForRegion = async (region) => {
 export const listenAvailability = (date, cb) => {
   const db = getDb();
   return onSnapshot(doc(db, AVAILABILITY_COLLECTION, date), snap => cb(snap.exists() ? snap.data() : null));
+};
+
+export const listenAvailabilityForRegion = (region, cb) => {
+  const db = getDb();
+  console.log('🔄 Setting up real-time listener for region:', region);
+  
+  return onSnapshot(collection(db, AVAILABILITY_COLLECTION), (snapshot) => {
+    const availability = {};
+    
+    snapshot.docs.forEach(doc => {
+      const data = doc.data();
+      console.log('📅 Real-time availability data for date:', doc.id, data);
+      
+      if (data && data.regions && data.regions[region]) {
+        availability[doc.id] = data.regions[region];
+      }
+    });
+    
+    console.log('✅ Real-time availability for region:', region, availability);
+    cb(availability);
+  });
 };
 
 export const setAvailability = async (date, data) => {

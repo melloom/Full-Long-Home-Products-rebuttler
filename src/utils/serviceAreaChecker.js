@@ -51,7 +51,7 @@ const serviceAreas = {
   ]
 };
 
-// Enhance the logic to handle more variations in address formats
+// Enhance the county extraction logic to better handle addresses
 function extractCountyState(address) {
   if (!address) return null;
   
@@ -68,7 +68,7 @@ function extractCountyState(address) {
   // Find state in address - use regex to match whole words only
   for (const state of states) {
     // Use regex to match state as a whole word (not part of another word)
-    const stateRegex = new RegExp(`\b${state}\b`);
+    const stateRegex = new RegExp(`\\b${state}\\b`); // Corrected escaping
     if (stateRegex.test(upperAddress)) {
       foundState = state;
       console.log('📍 Found state:', foundState);
@@ -115,6 +115,9 @@ function extractCountyState(address) {
     } else if (upperAddress.includes('ROCKVILLE') || upperAddress.includes('BETHESDA') || upperAddress.includes('SILVER SPRING')) {
       foundCounty = 'Montgomery';
       console.log('📍 Determined Montgomery County from city');
+    } else if (upperAddress.includes('LAUREL') || upperAddress.includes('20708')) {
+      foundCounty = 'Prince George\'s';
+      console.log('📍 Determined Prince George\'s County from city/zip');
     }
   }
   

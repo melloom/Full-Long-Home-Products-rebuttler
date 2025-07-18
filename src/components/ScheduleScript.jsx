@@ -3,7 +3,7 @@ import Tesseract from 'tesseract.js';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar as CalendarIcon, Clock, FileText, CheckCircle, ChevronRight, Phone, User, Mail, Users, CheckSquare, Square, Check, Home } from 'lucide-react';
 import { safePostMessage } from '../utils/iframeErrorHandler';
-import { getTimeBlocks, listenTimeBlocks, getAvailability, listenAvailability, addBooking } from '../services/firebase/scheduling';
+import { getTimeBlocks, listenTimeBlocks, getAvailability, listenAvailability, listenAvailabilityForRegion, addBooking } from '../services/firebase/scheduling';
 import { checkServiceArea } from '../utils/serviceAreaChecker';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
@@ -1845,7 +1845,7 @@ Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
       loadAvailabilityForRegion(detectedRegion);
       
       // Set up real-time listener for availability updates
-      const unsubscribe = listenAvailability(detectedRegion, (availability) => {
+      const unsubscribe = listenAvailabilityForRegion(detectedRegion, (availability) => {
         console.log('🔄 Real-time availability update for region:', detectedRegion, availability);
         setDateAvailability(availability || {});
         
@@ -2811,6 +2811,74 @@ Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
   const [duplicateModal, setDuplicateModal] = useState({ open: false, duplicates: [], allowSave: false });
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+  // Define the handleSendToSalesforce function
+  const handleSendToSalesforce = async (forceCreate = false) => {
+    try {
+      console.log('Sending data to Salesforce...');
+      // Collect necessary data
+      const data = {
+        appointment,
+        propertyInfo: parsedPropertyInfo,
+        customerInfo,
+        projectType,
+        callType,
+        userName,
+        appointmentConfirmed,
+        allowSave: forceCreate
+      };
+
+      console.log('Data being sent:', data);
+
+      // Make API call to Salesforce
+      // Use the correct endpoint based on environment
+      const apiUrl = '/.netlify/functions/sendToSalesforce';
+      
+      console.log('Using API URL:', apiUrl);
+      
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+
+      // Check if response is not empty
+      const text = await response.text();
+      console.log('Raw response text:', text);
+      
+      const result = text ? JSON.parse(text) : {};
+      console.log('Parsed result:', result);
+
+      if (response.ok) {
+        console.log('Data sent successfully:', result);
+        setRecapMessage({ type: 'success', title: 'Success', message: 'Data sent to Salesforce successfully.' });
+      } else if (response.status === 409 && result.error === 'DUPLICATE') {
+        // Handle duplicate case
+        console.log('Duplicate detected:', result);
+        console.log('Setting duplicate modal with:', {
+          open: true,
+          duplicates: result.duplicates || [],
+          allowSave: result.allowSave || false
+        });
+        setDuplicateModal({
+          open: true,
+          duplicates: result.duplicates || [],
+          allowSave: result.allowSave || false
+        });
+      } else {
+        console.error('Error sending data:', result);
+        setRecapMessage({ type: 'error', title: 'Error', message: 'Failed to send data to Salesforce.', details: result.error || 'No error details provided.' });
+      }
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      setRecapMessage({ type: 'error', title: 'Error', message: 'An unexpected error occurred.', details: error.message });
+    }
+  };
+
   return (
     <div className="schedule-script-container-dark">
       <motion.div 
@@ -3292,29 +3360,458 @@ Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
 
       {duplicateModal.open && (
         <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.7)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center'
+          position: 'fixed', 
+          top: 0, 
+          left: 0, 
+          right: 0, 
+          bottom: 0,
+          background: 'rgba(0,0,0,0.8)', 
+          zIndex: 9999, 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          backdropFilter: 'blur(8px)'
         }}>
-          <div style={{ background: 'white', borderRadius: 16, padding: 32, minWidth: 340, maxWidth: 480, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
-            <h2 style={{ color: '#dc2626', marginBottom: 12 }}>Possible Duplicate Detected</h2>
-            <p style={{ color: '#334155', marginBottom: 18 }}>A similar lead already exists in Salesforce:</p>
-            {duplicateModal.duplicates.map(dup => (
-              <div key={dup.id} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 12, marginBottom: 10, background: '#f9fafb' }}>
-                <div><b>Name:</b> {dup.name}</div>
-                <div><b>Phone:</b> {dup.phone}</div>
-                <div><b>Email:</b> {dup.email}</div>
-                <div><b>Last Activity:</b> {dup.lastActivity || 'N/A'}</div>
-                <a href={dup.salesforceUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#6366f1', textDecoration: 'underline' }}>View in Salesforce</a>
+          <motion.div 
+            style={{
+              background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+              borderRadius: 24,
+              padding: '2rem',
+              minWidth: 480,
+              maxWidth: 600,
+              boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+            initial={{ opacity: 0, scale: 0.8, y: 50 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.4, type: 'spring' }}
+          >
+            {/* Decorative background elements */}
+            <div style={{
+              position: 'absolute',
+              top: -20,
+              right: -20,
+              width: 100,
+              height: 100,
+              background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+              borderRadius: '50%',
+              opacity: 0.3
+            }} />
+            <div style={{
+              position: 'absolute',
+              bottom: -30,
+              left: -30,
+              width: 80,
+              height: 80,
+              background: 'linear-gradient(135deg, #dbeafe 0%, #93c5fd 100%)',
+              borderRadius: '50%',
+              opacity: 0.3
+            }} />
+
+            {/* Header */}
+            <div style={{ textAlign: 'center', marginBottom: '2rem', position: 'relative', zIndex: 1 }}>
+              <div style={{ 
+                fontSize: '3rem', 
+                marginBottom: '1rem',
+                filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.1))'
+              }}>
+                ⚠️
               </div>
-            ))}
-            <div style={{ display: 'flex', gap: 12, marginTop: 18, justifyContent: 'flex-end' }}>
-              <button onClick={() => { window.open(duplicateModal.duplicates[0]?.salesforceUrl, '_blank'); }} style={{ background: '#6366f1', color: 'white', border: 'none', borderRadius: 8, padding: '0.5rem 1.2rem', fontWeight: 600, cursor: 'pointer' }}>View Existing</button>
-              {duplicateModal.allowSave && (
-                <button onClick={() => { setDuplicateModal({ ...duplicateModal, open: false }); handleSendToSalesforce(true); }} style={{ background: '#10b981', color: 'white', border: 'none', borderRadius: 8, padding: '0.5rem 1.2rem', fontWeight: 600, cursor: 'pointer' }}>Create New Anyway</button>
-              )}
-              <button onClick={() => setDuplicateModal({ open: false, duplicates: [], allowSave: false })} style={{ background: '#e5e7eb', color: '#334155', border: 'none', borderRadius: 8, padding: '0.5rem 1.2rem', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <h2 style={{ 
+                color: '#dc2626', 
+                marginBottom: '0.5rem',
+                fontSize: '1.8rem',
+                fontWeight: 700,
+                background: 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent'
+              }}>
+                Duplicate Lead Detected
+              </h2>
+              <p style={{ 
+                color: '#64748b', 
+                fontSize: '1.1rem',
+                fontWeight: 500
+              }}>
+                A similar lead already exists in Salesforce
+              </p>
             </div>
-          </div>
+
+            {/* Duplicate Details */}
+            {duplicateModal.duplicates.map((dup, index) => (
+              <motion.div 
+                key={dup.id}
+                style={{
+                  background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+                  border: '2px solid #e2e8f0',
+                  borderRadius: 16,
+                  padding: '1.5rem',
+                  marginBottom: '1rem',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                {/* Decorative accent */}
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 4,
+                  background: 'linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%)'
+                }} />
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  {/* Basic Info */}
+                  <div>
+                    <div style={{ 
+                      color: '#374151', 
+                      fontSize: '0.875rem', 
+                      fontWeight: 600, 
+                      marginBottom: '0.25rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em'
+                    }}>
+                      Name
+                    </div>
+                    <div style={{ 
+                      color: '#1f2937', 
+                      fontSize: '1rem',
+                      fontWeight: 600
+                    }}>
+                      {dup.name}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div style={{ 
+                      color: '#374151', 
+                      fontSize: '0.875rem', 
+                      fontWeight: 600, 
+                      marginBottom: '0.25rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em'
+                    }}>
+                      Phone
+                    </div>
+                    <div style={{ 
+                      color: '#1f2937', 
+                      fontSize: '1rem',
+                      fontWeight: 500
+                    }}>
+                      {dup.phone}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div style={{ 
+                      color: '#374151', 
+                      fontSize: '0.875rem', 
+                      fontWeight: 600, 
+                      marginBottom: '0.25rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em'
+                    }}>
+                      Email
+                    </div>
+                    <div style={{ 
+                      color: '#1f2937', 
+                      fontSize: '1rem',
+                      fontWeight: 500
+                    }}>
+                      {dup.email}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div style={{ 
+                      color: '#374151', 
+                      fontSize: '0.875rem', 
+                      fontWeight: 600, 
+                      marginBottom: '0.25rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em'
+                    }}>
+                      Company
+                    </div>
+                    <div style={{ 
+                      color: '#1f2937', 
+                      fontSize: '1rem',
+                      fontWeight: 500
+                    }}>
+                      {dup.company}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div style={{ 
+                      color: '#374151', 
+                      fontSize: '0.875rem', 
+                      fontWeight: 600, 
+                      marginBottom: '0.25rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em'
+                    }}>
+                      Status
+                    </div>
+                    <div style={{ 
+                      color: '#1f2937', 
+                      fontSize: '1rem',
+                      fontWeight: 500
+                    }}>
+                      {dup.status}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div style={{ 
+                      color: '#374151', 
+                      fontSize: '0.875rem', 
+                      fontWeight: 600, 
+                      marginBottom: '0.25rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em'
+                    }}>
+                      Lead Source
+                    </div>
+                    <div style={{ 
+                      color: '#1f2937', 
+                      fontSize: '1rem',
+                      fontWeight: 500
+                    }}>
+                      {dup.leadSource}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Address Information */}
+                <div style={{ 
+                  marginTop: '1rem', 
+                  padding: '1rem', 
+                  background: 'rgba(59, 130, 246, 0.05)', 
+                  borderRadius: 8,
+                  border: '1px solid rgba(59, 130, 246, 0.1)'
+                }}>
+                  <div style={{ 
+                    color: '#374151', 
+                    fontSize: '0.875rem', 
+                    fontWeight: 600, 
+                    marginBottom: '0.5rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em'
+                  }}>
+                    📍 Address Information
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                    <div>
+                      <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>Address:</span>
+                      <div style={{ color: '#1f2937', fontWeight: 500 }}>{dup.address}</div>
+                    </div>
+                    <div>
+                      <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>City:</span>
+                      <div style={{ color: '#1f2937', fontWeight: 500 }}>{dup.city}</div>
+                    </div>
+                    <div>
+                      <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>State:</span>
+                      <div style={{ color: '#1f2937', fontWeight: 500 }}>{dup.state}</div>
+                    </div>
+                    <div>
+                      <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>ZIP:</span>
+                      <div style={{ color: '#1f2937', fontWeight: 500 }}>{dup.zipCode}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Activity Information */}
+                <div style={{ 
+                  marginTop: '1rem', 
+                  padding: '1rem', 
+                  background: 'rgba(16, 185, 129, 0.05)', 
+                  borderRadius: 8,
+                  border: '1px solid rgba(16, 185, 129, 0.1)'
+                }}>
+                  <div style={{ 
+                    color: '#374151', 
+                    fontSize: '0.875rem', 
+                    fontWeight: 600, 
+                    marginBottom: '0.5rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em'
+                  }}>
+                    📅 Activity Information
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                    <div>
+                      <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>Last Activity:</span>
+                      <div style={{ color: '#1f2937', fontWeight: 500 }}>{dup.lastActivity}</div>
+                    </div>
+                    <div>
+                      <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>Created:</span>
+                      <div style={{ color: '#1f2937', fontWeight: 500 }}>{dup.createdDate}</div>
+                    </div>
+                    <div>
+                      <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>Last Modified:</span>
+                      <div style={{ color: '#1f2937', fontWeight: 500 }}>{dup.lastModifiedDate}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Description */}
+                {dup.description && dup.description !== 'N/A' && (
+                  <div style={{ 
+                    marginTop: '1rem', 
+                    padding: '1rem', 
+                    background: 'rgba(245, 158, 11, 0.05)', 
+                    borderRadius: 8,
+                    border: '1px solid rgba(245, 158, 11, 0.1)'
+                  }}>
+                    <div style={{ 
+                      color: '#374151', 
+                      fontSize: '0.875rem', 
+                      fontWeight: 600, 
+                      marginBottom: '0.5rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em'
+                    }}>
+                      📝 Description
+                    </div>
+                    <div style={{ 
+                      color: '#1f2937', 
+                      fontSize: '0.9rem',
+                      lineHeight: '1.5',
+                      whiteSpace: 'pre-wrap'
+                    }}>
+                      {dup.description}
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+                  <a 
+                    href={dup.salesforceUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    style={{ 
+                      color: '#3b82f6', 
+                      textDecoration: 'none',
+                      fontWeight: 600,
+                      fontSize: '0.9rem',
+                      padding: '0.5rem 1rem',
+                      borderRadius: 8,
+                      background: 'rgba(59, 130, 246, 0.1)',
+                      transition: 'all 0.2s ease',
+                      display: 'inline-block'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = 'rgba(59, 130, 246, 0.2)';
+                      e.target.style.transform = 'scale(1.05)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = 'rgba(59, 130, 246, 0.1)';
+                      e.target.style.transform = 'scale(1)';
+                    }}
+                  >
+                    🔗 View in Salesforce
+                  </a>
+                </div>
+              </motion.div>
+            ))}
+
+            {/* Action Buttons */}
+            <div style={{ 
+              display: 'flex', 
+              gap: '1rem', 
+              marginTop: '2rem', 
+              justifyContent: 'center',
+              flexWrap: 'wrap'
+            }}>
+              <motion.button 
+                onClick={() => { window.open(duplicateModal.duplicates[0]?.salesforceUrl, '_blank'); }}
+                style={{ 
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                  color: 'white', 
+                  border: 'none', 
+                  borderRadius: 12, 
+                  padding: '0.75rem 1.5rem', 
+                  fontWeight: 600, 
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+                  transition: 'all 0.2s ease'
+                }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onMouseEnter={(e) => {
+                  e.target.style.boxShadow = '0 6px 20px rgba(59, 130, 246, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)';
+                }}
+              >
+                👁️ View Existing Lead
+              </motion.button>
+              
+              {duplicateModal.allowSave && (
+                <motion.button 
+                  onClick={() => { setDuplicateModal({ ...duplicateModal, open: false }); handleSendToSalesforce(true); }}
+                  style={{ 
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    color: 'white', 
+                    border: 'none', 
+                    borderRadius: 12, 
+                    padding: '0.75rem 1.5rem', 
+                    fontWeight: 600, 
+                    cursor: 'pointer',
+                    fontSize: '1rem',
+                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+                    transition: 'all 0.2s ease'
+                  }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onMouseEnter={(e) => {
+                    e.target.style.boxShadow = '0 6px 20px rgba(16, 185, 129, 0.4)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.3)';
+                  }}
+                >
+                  ➕ Create New Anyway
+                </motion.button>
+              )}
+              
+              <motion.button 
+                onClick={() => setDuplicateModal({ open: false, duplicates: [], allowSave: false })}
+                style={{ 
+                  background: 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)',
+                  color: '#374151', 
+                  border: 'none', 
+                  borderRadius: 12, 
+                  padding: '0.75rem 1.5rem', 
+                  fontWeight: 600, 
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  transition: 'all 0.2s ease'
+                }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = 'linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)';
+                }}
+              >
+                ❌ Cancel
+              </motion.button>
+            </div>
+          </motion.div>
         </div>
       )}
     </div>

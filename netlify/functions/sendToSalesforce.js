@@ -1,3 +1,4 @@
+// Add detailed error logging and ensure correct setup
 const jsforce = require('jsforce');
 
 exports.handler = async (event, context) => {
@@ -28,7 +29,37 @@ exports.handler = async (event, context) => {
 
   try {
     console.log('Received Salesforce API request:', event.body);
-    const { appointment, propertyInfo, customerInfo, projectType, callType, userName, appointmentConfirmed } = JSON.parse(event.body);
+    
+    // Parse the request body
+    let requestData;
+    try {
+      requestData = JSON.parse(event.body);
+    } catch (parseError) {
+      console.error('Failed to parse request body:', parseError);
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Invalid JSON in request body' })
+      };
+    }
+
+    const { appointment, propertyInfo, customerInfo, projectType, callType, userName, appointmentConfirmed, allowSave } = requestData;
+
+    // Validate required environment variables
+    const requiredEnvVars = ['SALESFORCE_USERNAME', 'SALESFORCE_PASSWORD', 'SALESFORCE_SECURITY_TOKEN'];
+    const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+    
+    if (missingVars.length > 0) {
+      console.error('Missing required environment variables:', missingVars);
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ 
+          error: 'Missing required environment variables',
+          missing: missingVars
+        })
+      };
+    }
 
     const conn = new jsforce.Connection();
     
@@ -44,6 +75,7 @@ exports.handler = async (event, context) => {
         process.env.SALESFORCE_PASSWORD + process.env.SALESFORCE_SECURITY_TOKEN
       );
       console.log('Login with token succeeded');
+      console.log('Instance URL:', conn.instanceUrl);
     } catch (err) {
       console.log('Login with token failed, trying without token...');
       try {
@@ -54,7 +86,15 @@ exports.handler = async (event, context) => {
         console.log('Login without token succeeded');
       } catch (err2) {
         console.log('Login without token also failed.');
-        throw err2;
+        console.error('Salesforce login error:', err2);
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({ 
+            error: 'Salesforce authentication failed',
+            details: err2.message
+          })
+        };
       }
     }
 
@@ -94,8 +134,8 @@ exports.handler = async (event, context) => {
     // Create detailed recap for Lead notes
     const repRecapText = `
 Appointment Details:
-${formatDateTime(appointment.date, appointment.time)}
-Call Type: ${callType}
+${formatDateTime(appointment?.date, appointment?.time)}
+Call Type: ${callType || 'N/A'}
 Confirmation Status: ${appointmentConfirmed ? 'Set' : 'Not Set'}
 Market Segment: ${getMarketSegment(customerInfo?.state)}`;
 
@@ -120,13 +160,6 @@ Market Segment: ${getMarketSegment(customerInfo?.state)}`;
     console.log('Original state:', customerInfo?.state);
     console.log('Converted state:', getFullStateName(customerInfo?.state));
     
-    // Support allowSave param from frontend for duplicate override
-    let allowSave = false;
-    try {
-      const body = JSON.parse(event.body);
-      allowSave = !!body.allowSave;
-    } catch (e) {}
-
     try {
       const result = await conn.sobject("Lead").create(leadData, allowSave ? { allowSave: true } : {});
       console.log('Lead created successfully:', result);
@@ -143,17 +176,71 @@ Market Segment: ${getMarketSegment(customerInfo?.state)}`;
           leadData,
           duplicateResult: error.data.duplicateResult
         });
-        // Extract duplicate info for frontend
-        const duplicates = (error.data.duplicateResult.matchResults || []).flatMap(match =>
-          (match.matchRecords || []).map(record => ({
-            id: record.Id,
-            name: record.Name,
-            phone: record.Phone,
-            email: record.Email,
-            lastActivity: record.LastActivityDate,
-            salesforceUrl: `https://login.salesforce.com/${record.Id}`
-          }))
+        // Extract duplicate info for frontend with comprehensive account information
+        console.log('Connection instance URL:', conn.instanceUrl);
+        console.log('Connection access token:', conn.accessToken);
+        
+        // Get full record details for each duplicate
+        const duplicateRecords = (error.data.duplicateResult.matchResults || []).flatMap(match =>
+          (match.matchRecords || []).map(record => record.Id)
         );
+        
+        console.log('Duplicate record IDs:', duplicateRecords);
+        
+        // Fetch full details for each duplicate record
+        const duplicates = await Promise.all(duplicateRecords.map(async (recordId) => {
+          try {
+            const fullRecord = await conn.sobject("Lead").retrieve(recordId);
+            console.log('Full record details for', recordId, ':', fullRecord);
+            
+            return {
+              id: fullRecord.Id,
+              name: fullRecord.Name || `${fullRecord.FirstName || ''} ${fullRecord.LastName || ''}`.trim() || 'Unknown',
+              phone: fullRecord.Phone || 'N/A',
+              email: fullRecord.Email || 'N/A',
+              lastActivity: fullRecord.LastActivityDate || 'N/A',
+              company: fullRecord.Company || 'N/A',
+              address: fullRecord.Street || 'N/A',
+              city: fullRecord.City || 'N/A',
+              state: fullRecord.State || 'N/A',
+              zipCode: fullRecord.PostalCode || 'N/A',
+              status: fullRecord.Status || 'N/A',
+              leadSource: fullRecord.LeadSource || 'N/A',
+              description: fullRecord.Description || 'N/A',
+              createdDate: fullRecord.CreatedDate || 'N/A',
+              lastModifiedDate: fullRecord.LastModifiedDate || 'N/A',
+              salesforceUrl: (() => {
+                // Extract org ID from the record ID (first 3 characters)
+                const orgId = fullRecord.Id.substring(0, 3);
+                return `https://${orgId}.salesforce.com/lightning/r/Lead/${fullRecord.Id}/view`;
+              })()
+            };
+          } catch (fetchError) {
+            console.error('Error fetching full record details for', recordId, ':', fetchError);
+            // Fallback to basic record info
+            return {
+              id: recordId,
+              name: 'Unknown',
+              phone: 'N/A',
+              email: 'N/A',
+              lastActivity: 'N/A',
+              company: 'N/A',
+              address: 'N/A',
+              city: 'N/A',
+              state: 'N/A',
+              zipCode: 'N/A',
+              status: 'N/A',
+              leadSource: 'N/A',
+              description: 'N/A',
+              createdDate: 'N/A',
+              lastModifiedDate: 'N/A',
+              salesforceUrl: (() => {
+                const orgId = recordId.substring(0, 3);
+                return `https://${orgId}.salesforce.com/lightning/r/Lead/${recordId}/view`;
+              })()
+            };
+          }
+        }));
         return {
           statusCode: 409,
           headers,
@@ -171,7 +258,11 @@ Market Segment: ${getMarketSegment(customerInfo?.state)}`;
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ success: false, error: error.message })
+      body: JSON.stringify({ 
+        success: false, 
+        error: error.message,
+        stack: error.stack
+      })
     };
   }
 }; 

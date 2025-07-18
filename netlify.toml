@@ -11,11 +11,6 @@
   to = "/index.html"
   status = 200
 
-[[redirects]]
-  from = "/api/sendToSalesforce"
-  to = "/.netlify/functions/sendToSalesforce"
-  status = 200
-
 [functions]
   node_bundler = "esbuild"
   external_node_modules = ["firebase-admin"]
@@ -58,6 +53,7 @@
     Cache-Control = "public, max-age=31536000"
 
 [dev]
-  command = "npm start"
-  port = 3001
-  publish = "build"
+  command = "npm run client"
+  port = 8889
+  targetPort = 5173
+  publish = "dist"
