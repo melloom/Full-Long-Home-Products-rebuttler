@@ -132,7 +132,7 @@ export const initializeSchedulingData = async () => {
         slots: {}
       };
       
-      // Add slots for each time block
+      // Add slots for each time block using the correct IDs
       const blocksForDay = defaultTimeBlocks.filter(block => block.dayType === dayType);
       for (const block of blocksForDay) {
         availability.slots[block.id] = {};

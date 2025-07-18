@@ -7,6 +7,7 @@ import {
   getAvailability, listenAvailability, setAvailability
 } from '../../services/firebase/scheduling';
 import { initializeSchedulingData } from '../../scripts/initializeScheduling';
+import { fixAvailabilityData } from '../../scripts/fixAvailabilityData';
 import './TimeBlockManagement.css';
 
 const TimeBlockManagement = () => {
@@ -23,7 +24,7 @@ const TimeBlockManagement = () => {
   const [editingRegion, setEditingRegion] = useState(null);
   const [showAddBlock, setShowAddBlock] = useState(false);
   const [showAddRegion, setShowAddRegion] = useState(false);
-  const [syncingAvailability, setSyncingAvailability] = useState(false);
+  const [isFixingData, setIsFixingData] = useState(false);
 
   // Generate next 3 weeks of dates
   const generateDates = () => {
@@ -173,6 +174,19 @@ const TimeBlockManagement = () => {
     }
   };
 
+  const handleFixAvailabilityData = async () => {
+    try {
+      setIsFixingData(true);
+      await fixAvailabilityData();
+      alert('Availability data has been fixed to match current time blocks!');
+    } catch (error) {
+      console.error('Error fixing availability data:', error);
+      alert('Error fixing availability data. Check console for details.');
+    } finally {
+      setIsFixingData(false);
+    }
+  };
+
   const handleAvailabilityChange = async (date, timeBlock, regionId, available) => {
     try {
       const dateStr = date.toISOString().split('T')[0];
@@ -196,53 +210,6 @@ const TimeBlockManagement = () => {
       await setAvailability(dateStr, updatedAvailability);
     } catch (error) {
       console.error('Error updating availability:', error);
-    }
-  };
-
-  const handleSyncAvailability = async () => {
-    try {
-      setSyncingAvailability(true);
-      console.log('🔄 Syncing availability with current time blocks...');
-      
-      // Get all availability data
-      const allAvailability = await getAvailability();
-      
-      // For each date in availability, update the slots
-      for (const [dateStr, dateAvailability] of Object.entries(allAvailability)) {
-        if (!dateAvailability || !dateAvailability.slots) continue;
-        
-        const date = new Date(dateStr);
-        const isWeekendDate = isWeekend(date);
-        const validTimeBlocks = isWeekendDate ? timeBlocks.weekends : timeBlocks.weekdays;
-        
-        // Create updated slots object
-        const updatedSlots = {};
-        
-        // Add slots for valid time blocks
-        for (const timeBlock of validTimeBlocks) {
-          const existingSlot = dateAvailability.slots[timeBlock.id];
-          updatedSlots[timeBlock.id] = existingSlot || {
-            available: true,
-            booked: 0,
-            capacity: 3
-          };
-        }
-        
-        // Update the availability for this date
-        const updatedAvailability = {
-          ...dateAvailability,
-          slots: updatedSlots
-        };
-        
-        await setAvailability(dateStr, updatedAvailability);
-        console.log('✅ Updated availability for date:', dateStr, updatedSlots);
-      }
-      
-      console.log('✅ Availability sync completed!');
-    } catch (error) {
-      console.error('❌ Error syncing availability:', error);
-    } finally {
-      setSyncingAvailability(false);
     }
   };
 
@@ -298,53 +265,6 @@ const TimeBlockManagement = () => {
       >
         <h1>⏰ Time Block Management</h1>
         <p>Configure appointment time blocks, regional assignments, and availability</p>
-        
-        {/* Sync Availability Button */}
-        <motion.button
-          onClick={handleSyncAvailability}
-          disabled={syncingAvailability}
-          className="sync-availability-btn"
-          style={{
-            background: syncingAvailability ? '#6b7280' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '0.75rem 1.5rem',
-            fontWeight: 600,
-            cursor: syncingAvailability ? 'not-allowed' : 'pointer',
-            fontSize: '0.9rem',
-            marginTop: '1rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem'
-          }}
-          whileHover={syncingAvailability ? {} : { scale: 1.05 }}
-          whileTap={syncingAvailability ? {} : { scale: 0.95 }}
-        >
-          {syncingAvailability ? (
-            <>
-              <div style={{
-                width: '16px',
-                height: '16px',
-                border: '2px solid #ffffff',
-                borderTop: '2px solid transparent',
-                borderRadius: '50%',
-                animation: 'spin 1s linear infinite'
-              }}></div>
-              Syncing...
-            </>
-          ) : (
-            <>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M21 2V9H14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M3 22V15H10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M21 16C21 16.5304 20.7893 17.0391 20.4142 17.4142C20.0391 17.7893 19.5304 18 19 18H15L18 21L21 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M3 8C3 7.46957 3.21071 6.96086 3.58579 6.58579C3.96086 6.21071 4.46957 6 5 6H9L6 3L3 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              Sync Availability with Time Blocks
-            </>
-          )}
-        </motion.button>
       </motion.div>
 
       <div className="tbm-content">
@@ -358,6 +278,22 @@ const TimeBlockManagement = () => {
           <div className="section-header">
             <Clock className="section-icon" />
             <h2>Time Blocks Configuration</h2>
+            <button 
+              onClick={handleFixAvailabilityData}
+              disabled={isFixingData}
+              style={{
+                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: 8,
+                padding: '0.5rem 1rem',
+                fontSize: '0.875rem',
+                cursor: isFixingData ? 'not-allowed' : 'pointer',
+                opacity: isFixingData ? 0.6 : 1
+              }}
+            >
+              {isFixingData ? 'Fixing...' : '🔧 Fix Availability Data'}
+            </button>
           </div>
 
           <div className="time-blocks-grid">
