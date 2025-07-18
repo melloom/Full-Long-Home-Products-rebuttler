@@ -2870,19 +2870,26 @@ Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
             // If we're already forcing and still getting duplicates, just proceed
             console.log('Already forcing creation, proceeding anyway');
             setRecapMessage({ type: 'success', title: 'Success', message: 'Data sent to Salesforce successfully.' });
+            return; // Exit early to prevent modal from showing
           }
         }
         
-        console.log('Setting duplicate modal with:', {
-          open: true,
-          duplicates: result.duplicates || [],
-          allowSave: result.allowSave || false
-        });
-        setDuplicateModal({
-          open: true,
-          duplicates: result.duplicates || [],
-          allowSave: result.allowSave || false
-        });
+        // Only show modal if we have actual duplicates
+        if (result.duplicates && result.duplicates.length > 0) {
+          console.log('Setting duplicate modal with:', {
+            open: true,
+            duplicates: result.duplicates || [],
+            allowSave: result.allowSave || false
+          });
+          setDuplicateModal({
+            open: true,
+            duplicates: result.duplicates || [],
+            allowSave: result.allowSave || false
+          });
+        } else {
+          console.log('No duplicates to show, proceeding with success message');
+          setRecapMessage({ type: 'success', title: 'Success', message: 'Data sent to Salesforce successfully.' });
+        }
       } else {
         console.error('Error sending data:', result);
         setRecapMessage({ type: 'error', title: 'Error', message: 'Failed to send data to Salesforce.', details: result.error || 'No error details provided.' });
