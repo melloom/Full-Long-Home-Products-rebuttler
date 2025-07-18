@@ -2874,7 +2874,17 @@ Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
           }
         }
         
+        // If we reach here and forceCreate is true, just proceed with success
+        if (forceCreate) {
+          console.log('Force create is true, proceeding with success');
+          setRecapMessage({ type: 'success', title: 'Success', message: 'Data sent to Salesforce successfully.' });
+          return;
+        }
+        
         // Only show modal if we have actual duplicates
+        console.log('Checking duplicates array:', result.duplicates);
+        console.log('Duplicates length:', result.duplicates ? result.duplicates.length : 'undefined');
+        
         if (result.duplicates && result.duplicates.length > 0) {
           console.log('Setting duplicate modal with:', {
             open: true,
