@@ -182,10 +182,24 @@ Market Segment: ${getMarketSegment(customerInfo?.state)}`;
         
         // Get full record details for each duplicate
         const duplicateRecords = (error.data.duplicateResult.matchResults || []).flatMap(match =>
-          (match.matchRecords || []).map(record => record.Id)
+          (match.matchRecords || []).map(record => record.Id).filter(id => id) // Filter out undefined IDs
         );
         
         console.log('Duplicate record IDs:', duplicateRecords);
+        
+        // Check if we have any duplicate records
+        if (!duplicateRecords || duplicateRecords.length === 0) {
+          console.log('No duplicate records found, returning basic error');
+          return {
+            statusCode: 409,
+            headers,
+            body: JSON.stringify({
+              error: 'DUPLICATE',
+              allowSave: error.data.duplicateResult.allowSave,
+              duplicates: []
+            })
+          };
+        }
         
         // Fetch full details for each duplicate record
         const duplicates = await Promise.all(duplicateRecords.map(async (recordId) => {
@@ -211,6 +225,10 @@ Market Segment: ${getMarketSegment(customerInfo?.state)}`;
               lastModifiedDate: fullRecord.LastModifiedDate || 'N/A',
               salesforceUrl: (() => {
                 // Extract org ID from the record ID (first 3 characters)
+                if (!fullRecord.Id) {
+                  console.error('fullRecord.Id is undefined');
+                  return 'https://login.salesforce.com';
+                }
                 const orgId = fullRecord.Id.substring(0, 3);
                 return `https://${orgId}.salesforce.com/lightning/r/Lead/${fullRecord.Id}/view`;
               })()
@@ -235,6 +253,10 @@ Market Segment: ${getMarketSegment(customerInfo?.state)}`;
               createdDate: 'N/A',
               lastModifiedDate: 'N/A',
               salesforceUrl: (() => {
+                if (!recordId) {
+                  console.error('recordId is undefined');
+                  return 'https://login.salesforce.com';
+                }
                 const orgId = recordId.substring(0, 3);
                 return `https://${orgId}.salesforce.com/lightning/r/Lead/${recordId}/view`;
               })()
