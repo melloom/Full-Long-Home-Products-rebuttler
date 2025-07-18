@@ -152,7 +152,7 @@ const TimeBlockManagement = () => {
     try {
       const newRegion = {
         id: Date.now().toString(),
-        name: '',
+        name: 'New Region',
         reps: [],
         color: '#3b82f6'
       };
@@ -401,7 +401,7 @@ const TimeBlockManagement = () => {
           </div>
 
           <div className="regions-grid">
-            {regions.map(region => (
+            {(regions || []).filter(region => region).map(region => (
               <div key={region.id} className="region-card">
                 {editingRegion === region.id ? (
                   <div className="edit-region-form">
@@ -416,8 +416,8 @@ const TimeBlockManagement = () => {
                       <input
                         type="text"
                         placeholder="Rep names (comma separated)"
-                        value={region.reps.join(', ')}
-                        onChange={(e) => handleRegionChange(region.id, 'reps', e.target.value.split(',').map(r => r.trim()))}
+                        value={(region.reps || []).join(', ')}
+                        onChange={(e) => handleRegionChange(region.id, 'reps', e.target.value.split(',').map(r => r.trim()).filter(r => r.length > 0))}
                         className="reps-input-field"
                       />
                     </div>
@@ -453,10 +453,10 @@ const TimeBlockManagement = () => {
                     </div>
                     <div className="region-reps">
                       <Users size={16} />
-                      <span>{region.reps.length} Reps</span>
+                      <span>{(region.reps || []).length} Reps</span>
                     </div>
                     <div className="reps-list">
-                      {region.reps.map((rep, index) => (
+                      {(region.reps || []).map((rep, index) => (
                         <span key={index} className="rep-name">{rep}</span>
                       ))}
                     </div>
