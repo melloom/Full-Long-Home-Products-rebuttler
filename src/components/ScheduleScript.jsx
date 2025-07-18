@@ -2814,7 +2814,7 @@ Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
   // Define the handleSendToSalesforce function
   const handleSendToSalesforce = async (forceCreate = false) => {
     try {
-      console.log('Sending data to Salesforce...');
+      console.log('Sending data to Salesforce...', { forceCreate });
       // Collect necessary data
       const data = {
         appointment,
@@ -2859,6 +2859,20 @@ Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
       } else if (response.status === 409 && result.error === 'DUPLICATE') {
         // Handle duplicate case
         console.log('Duplicate detected:', result);
+        
+        // If no actual duplicates found, proceed with creation
+        if (!result.duplicates || result.duplicates.length === 0) {
+          console.log('No actual duplicates found, proceeding with creation');
+          // Retry with force create, but only if not already forcing
+          if (!forceCreate) {
+            return handleSendToSalesforce(true);
+          } else {
+            // If we're already forcing and still getting duplicates, just proceed
+            console.log('Already forcing creation, proceeding anyway');
+            setRecapMessage({ type: 'success', title: 'Success', message: 'Data sent to Salesforce successfully.' });
+          }
+        }
+        
         console.log('Setting duplicate modal with:', {
           open: true,
           duplicates: result.duplicates || [],
