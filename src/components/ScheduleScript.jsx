@@ -2009,52 +2009,64 @@ Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
     const isWeekendDate = isWeekend(date);
     const currentTimeBlocks = isWeekendDate ? timeBlocks.weekends : timeBlocks.weekdays;
     
-    // Create a map of valid time block IDs for this date
-    const validTimeBlockIds = new Set(currentTimeBlocks.map(block => block.id));
-    
     // Debug logging
     console.log('📅 Date:', dateStr, 'Weekend:', isWeekendDate);
     console.log('🕐 Current time blocks:', currentTimeBlocks);
-    console.log('✅ Valid time block IDs:', Array.from(validTimeBlockIds));
-    console.log('📊 Day availability keys:', Object.keys(dayAvailability));
+    console.log('📊 Day availability:', dayAvailability);
 
-    return Object.entries(dayAvailability)
-      .filter(([timeId, slotData]) => {
-        // Only include slots that exist in current time blocks
-        if (!validTimeBlockIds.has(timeId)) {
-          return false;
+    // Handle both old and new availability data formats
+    let availableSlots = [];
+    
+    if (dayAvailability.slots) {
+      // New format: dayAvailability.slots[timeBlockId][regionId]
+      for (const [timeBlockId, regionData] of Object.entries(dayAvailability.slots)) {
+        if (regionData[region] && regionData[region].available > 0) {
+          const timeBlock = currentTimeBlocks.find(block => block.id === timeBlockId);
+          if (timeBlock) {
+            availableSlots.push({
+              time: timeBlock.time,
+              timeId: timeBlockId,
+              availableSlots: regionData[region].available,
+              label: `${timeBlock.time} (${regionData[region].available} slot${regionData[region].available > 1 ? 's' : ''} available)`
+            });
+          }
         }
-        
-        // Handle different data structures
-        if (typeof slotData === 'object' && slotData.available) {
-          return slotData.available > 0;
-        } else if (typeof slotData === 'number') {
-          return slotData > 0;
-        }
-        return false;
-      })
-      .map(([timeId, slotData]) => {
-        // Find the corresponding time block to get proper time and label
-        const timeBlock = currentTimeBlocks.find(block => block.id === timeId);
-        
-        // Extract slot count and time information
-        let availableSlots = 0;
-        let timeDisplay = timeBlock ? timeBlock.time : timeId;
-        let timeLabel = timeBlock ? timeBlock.label : timeId;
-
-        if (typeof slotData === 'object' && slotData.available) {
-          availableSlots = slotData.available;
-        } else if (typeof slotData === 'number') {
-          availableSlots = slotData;
-        }
-
-        return {
-          time: timeDisplay,
-          timeId: timeId,
-          availableSlots,
-          label: `${timeDisplay} (${availableSlots} slot${availableSlots > 1 ? 's' : ''} available)`
+      }
+    } else {
+      // Old format: dayAvailability[timeId] = { available, capacity, etc }
+      for (const [timeId, slotData] of Object.entries(dayAvailability)) {
+        // Map old time IDs to new format
+        const timeBlockMapping = {
+          'morning': 'weekday-morning',
+          'late-morning': 'weekday-morning',
+          'early-afternoon': 'weekday-afternoon', 
+          'late-afternoon': 'weekday-afternoon',
+          'evening': 'weekday-evening'
         };
-      });
+        
+        if (isWeekendDate) {
+          timeBlockMapping['morning'] = 'weekend-morning';
+          timeBlockMapping['late-morning'] = 'weekend-morning';
+          timeBlockMapping['early-afternoon'] = 'weekend-afternoon';
+          timeBlockMapping['late-afternoon'] = 'weekend-afternoon';
+        }
+        
+        const mappedTimeId = timeBlockMapping[timeId];
+        const timeBlock = currentTimeBlocks.find(block => block.id === mappedTimeId);
+        
+        if (timeBlock && slotData.available > 0) {
+          availableSlots.push({
+            time: timeBlock.time,
+            timeId: mappedTimeId,
+            availableSlots: slotData.available,
+            label: `${timeBlock.time} (${slotData.available} slot${slotData.available > 1 ? 's' : ''} available)`
+          });
+        }
+      }
+    }
+
+    console.log('✅ Available slots:', availableSlots);
+    return availableSlots;
   };
 
   const renderCommitmentStep = () => (
