@@ -100,6 +100,7 @@ temp/
 firebase-debug.log
 firestore-debug.log
 ui-debug.log
+long-home-c034d-firebase-adminsdk-*.json
 
 # Netlify
 .netlify/
