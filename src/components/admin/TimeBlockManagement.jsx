@@ -25,7 +25,7 @@ const TimeBlockManagement = () => {
   const [showAddBlock, setShowAddBlock] = useState(false);
   const [showAddRegion, setShowAddRegion] = useState(false);
   const [isFixingData, setIsFixingData] = useState(false);
-  const [isDevMode, setIsDevMode] = useState(false);
+  const [isDevMode, setIsDevMode] = useState(false); // Default to false for production
 
   // Generate next 3 weeks of dates
   const generateDates = () => {
