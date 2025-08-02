@@ -66,7 +66,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #fff !important;
+  color: #ffffff !important;
 }
 
 .category-count {
@@ -929,6 +929,7 @@
   
   .category-name {
     font-size: 13px;
+    color: #ffffff !important;
   }
 }
 
