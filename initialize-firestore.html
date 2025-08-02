@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Initialize Firestore</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 20px;
+            margin-top: 20px;
+            min-height: 200px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            overflow-y: auto;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #007bff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 Firestore Initialization</h1>
+        <p>This will create the necessary collections and data in Firestore for the scheduling system.</p>
+        
+        <button id="initBtn" onclick="initializeFirestore()">Initialize Firestore</button>
+        <button onclick="clearOutput()">Clear Output</button>
+        
+        <div id="output">Ready to initialize Firestore...</div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: 'AIzaSyBRv9bUTYlueDw3AqQQC8zE5yVvGbkEdec',
+            authDomain: 'long-home-c034d.firebaseapp.com',
+            projectId: 'long-home-c034d',
+            storageBucket: 'long-home-c034d.firebasestorage.app',
+            messagingSenderId: '1008881201767',
+            appId: '1:1008881201767:web:27034cec932f31526f9ac2',
+            measurementId: 'G-6DKNSCXY5V'
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Default time blocks
+        const timeBlocks = [
+            {
+                id: 'weekday-morning',
+                time: '10:00 AM',
+                label: 'Morning',
+                available: true,
+                dayType: 'weekday'
+            },
+            {
+                id: 'weekday-afternoon',
+                time: '2:00 PM',
+                label: 'Afternoon',
+                available: true,
+                dayType: 'weekday'
+            },
+            {
+                id: 'weekday-evening',
+                time: '6:00 PM',
+                label: 'Evening',
+                available: true,
+                dayType: 'weekday'
+            },
+            {
+                id: 'weekend-morning',
+                time: '10:00 AM',
+                label: 'Morning',
+                available: true,
+                dayType: 'weekend'
+            },
+            {
+                id: 'weekend-afternoon',
+                time: '2:00 PM',
+                label: 'Afternoon',
+                available: true,
+                dayType: 'weekend'
+            }
+        ];
+
+        // Default regions
+        const regions = [
+            {
+                id: 'mida',
+                name: 'MIDA',
+                reps: ['John Smith', 'Sarah Johnson'],
+                color: '#3b82f6'
+            },
+            {
+                id: 'esde',
+                name: 'ESDE',
+                reps: ['Mike Davis', 'Lisa Wilson'],
+                color: '#10b981'
+            },
+            {
+                id: 'nova',
+                name: 'NOVA',
+                reps: ['David Brown', 'Emma Taylor'],
+                color: '#f59e0b'
+            },
+            {
+                id: 'neng',
+                name: 'NENG',
+                reps: ['Alex Rodriguez', 'Maria Garcia'],
+                color: '#ef4444'
+            },
+            {
+                id: 'nhme',
+                name: 'NHME',
+                reps: ['Jennifer Lee', 'Robert Wilson'],
+                color: '#8b5cf6'
+            },
+            {
+                id: 'ctwm',
+                name: 'CTWM',
+                reps: ['Michael Chen', 'Amanda Johnson'],
+                color: '#06b6d4'
+            },
+            {
+                id: 'sopa',
+                name: 'SOPA',
+                reps: ['Christopher Davis', 'Rachel Green'],
+                color: '#f97316'
+            },
+            {
+                id: 'wcfl',
+                name: 'WCFL',
+                reps: ['Daniel Martinez', 'Jessica Taylor'],
+                color: '#ec4899'
+            }
+        ];
+
+        function log(message, type = 'info') {
+            const output = document.getElementById('output');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'success' ? 'success' : type === 'error' ? 'error' : 'info';
+            output.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        // Initialize time blocks
+        async function initializeTimeBlocks() {
+            log('🚀 Initializing time blocks...');
+            
+            try {
+                for (const block of timeBlocks) {
+                    await setDoc(doc(db, 'timeBlocks', block.id), block);
+                    log(`✅ Added time block: ${block.time} (${block.dayType})`, 'success');
+                }
+                log('✅ All time blocks initialized successfully!', 'success');
+            } catch (error) {
+                log(`❌ Error initializing time blocks: ${error.message}`, 'error');
+            }
+        }
+
+        // Initialize regions
+        async function initializeRegions() {
+            log('🚀 Initializing regions...');
+            
+            try {
+                for (const region of regions) {
+                    await setDoc(doc(db, 'regions', region.id), region);
+                    log(`✅ Added region: ${region.name}`, 'success');
+                }
+                log('✅ All regions initialized successfully!', 'success');
+            } catch (error) {
+                log(`❌ Error initializing regions: ${error.message}`, 'error');
+            }
+        }
+
+        // Initialize availability for next 3 weeks
+        async function initializeAvailability() {
+            log('🚀 Initializing availability for next 3 weeks...');
+            
+            try {
+                const today = new Date();
+                
+                for (let i = 0; i < 21; i++) {
+                    const date = new Date(today);
+                    date.setDate(today.getDate() + i);
+                    const dateStr = date.toISOString().split('T')[0];
+                    
+                    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                    const dayType = isWeekend ? 'weekend' : 'weekday';
+                    
+                    const availability = {
+                        date: dateStr,
+                        dayType,
+                        slots: {}
+                    };
+                    
+                    // Add slots for each time block
+                    const blocksForDay = timeBlocks.filter(block => block.dayType === dayType);
+                    for (const block of blocksForDay) {
+                        availability.slots[block.id] = {};
+                        
+                        // Add availability for each region
+                        for (const region of regions) {
+                            availability.slots[block.id][region.id] = {
+                                available: true,
+                                booked: 0,
+                                capacity: 3
+                            };
+                        }
+                    }
+                    
+                    await setDoc(doc(db, 'availability', dateStr), availability);
+                    log(`✅ Added availability for: ${dateStr} (${dayType})`, 'success');
+                }
+                
+                log('✅ All availability initialized successfully!', 'success');
+            } catch (error) {
+                log(`❌ Error initializing availability: ${error.message}`, 'error');
+            }
+        }
+
+        // Main initialization function
+        window.initializeFirestore = async function() {
+            const btn = document.getElementById('initBtn');
+            btn.disabled = true;
+            btn.textContent = 'Initializing...';
+            
+            log('🔥 Starting Firestore initialization...');
+            
+            try {
+                await initializeTimeBlocks();
+                await initializeRegions();
+                await initializeAvailability();
+                
+                log('🎉 Firestore initialization complete!', 'success');
+                log('📊 Summary:', 'info');
+                log(`   • ${timeBlocks.length} time blocks created`, 'success');
+                log(`   • ${regions.length} regions created`, 'success');
+                log(`   • 21 days of availability created`, 'success');
+                
+            } catch (error) {
+                log(`❌ Firestore initialization failed: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Initialize Firestore';
+            }
+        };
+
+        window.clearOutput = function() {
+            document.getElementById('output').innerHTML = 'Ready to initialize Firestore...\n';
+        };
+    </script>
+</body>
+</html> 
