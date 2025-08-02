@@ -3,11 +3,13 @@ import { useState, useEffect } from 'react';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { getDb } from '../services/firebase/config';
 import RebuttalCard from '../components/RebuttalCard';
+import RebuttalSidebar from '../components/RebuttalSidebar';
 
 export default function Rebuttals() {
   const [rebuttals, setRebuttals] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [loading, setLoading] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     // Set up real-time listener for rebuttals
@@ -50,26 +52,29 @@ export default function Rebuttals() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto p-6">
-        <div className="mb-8">
-          <button 
-            onClick={() => window.history.back()} 
-            className="text-blue-600 hover:text-blue-800 mb-4"
-          >
-            ← Back to Home
-          </button>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Rebuttal Library</h1>
-          <p className="text-gray-600">Browse evidence-based responses by category</p>
-        </div>
+      <div style={{ display: 'grid', gridTemplateColumns: `${sidebarCollapsed ? '56px' : '300px'} 1fr`, gap: '2rem', alignItems: 'flex-start' }}>
+        <RebuttalSidebar collapsed={sidebarCollapsed} onCollapseChange={setSidebarCollapsed} />
+        <div className="container mx-auto p-6">
+          <div className="mb-8">
+            <button 
+              onClick={() => window.history.back()} 
+              className="text-blue-600 hover:text-blue-800 mb-4"
+            >
+              ← Back to Home
+            </button>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Rebuttal Library</h1>
+            <p className="text-gray-600">Browse evidence-based responses by category</p>
+          </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {selectedGroup && selectedGroup.rebuttals?.map((rebuttal, index) => (
-            <RebuttalCard
-              key={rebuttal.id || index}
-              title={rebuttal.title}
-              response={rebuttal.content?.pt1 || rebuttal.content}
-            />
-          ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {selectedGroup && selectedGroup.rebuttals?.map((rebuttal, index) => (
+              <RebuttalCard
+                key={rebuttal.id || index}
+                title={rebuttal.title}
+                response={rebuttal.content?.pt1 || rebuttal.content}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </div>

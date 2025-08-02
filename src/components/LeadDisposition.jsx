@@ -5,6 +5,7 @@ import leadDispositionService from '../services/leadDispositionService';
 import '../styles/LeadDisposition.css';
 import Header from './Header';
 import SearchBar from './SearchBar';
+import RebuttalSidebar from './RebuttalSidebar';
 
 const DispositionModal = ({ disposition, onClose }) => {
   if (!disposition) return null;
@@ -137,6 +138,7 @@ const LeadDisposition = ({ onNavigate, searchQuery }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [dispositionCategories, setDispositionCategories] = useState([]);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Get category icon
   const getCategoryIcon = (category) => {
@@ -357,8 +359,10 @@ const LeadDisposition = ({ onNavigate, searchQuery }) => {
         title="Lead Disposition"
         subtitle="Track and manage your lead dispositions"
       />
-      <div className="disposition-container">
-        <div className="disposition-content">
+      <div style={{ display: 'grid', gridTemplateColumns: `${sidebarCollapsed ? '56px' : '300px'} 1fr`, gap: '2rem', alignItems: 'flex-start' }}>
+        <RebuttalSidebar collapsed={sidebarCollapsed} onCollapseChange={setSidebarCollapsed} />
+        <div className="disposition-container">
+          <div className="disposition-content">
           <div className="disposition-header">
             <h1 className="disposition-title">Lead Disposition Library</h1>
             <div className="header-actions">
@@ -523,6 +527,7 @@ const LeadDisposition = ({ onNavigate, searchQuery }) => {
           )}
         </div>
       </div>
+    </div>
 
       {showModal && selectedDisposition && (
         <DispositionModal 
