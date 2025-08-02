@@ -52,9 +52,9 @@ export default function Rebuttals() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="rebuttals-layout">
+      <div style={{ display: 'grid', gridTemplateColumns: `${sidebarCollapsed ? '56px' : '300px'} 1fr`, gap: '2rem', alignItems: 'flex-start' }}>
         <RebuttalSidebar collapsed={sidebarCollapsed} onCollapseChange={setSidebarCollapsed} />
-        <div className="rebuttals-content">
+        <div className="container mx-auto p-6">
           <div className="mb-8">
             <button 
               onClick={() => window.history.back()} 
