@@ -67,7 +67,7 @@ const PWAInstall = ({ onInstall, isCollapsed = false }) => {
       try {
         const permission = await Notification.requestPermission();
         if (permission === 'granted') {
-          showNotification('CloseLoop Installed!', {
+          showNotification('StayOnScript Installed!', {
             body: 'You can now receive notifications for updates and new features.',
             icon: '/icons/icon-192x192.png'
           });
@@ -146,12 +146,12 @@ const PWAInstall = ({ onInstall, isCollapsed = false }) => {
   const showInstallSuccess = () => {
     // Show a success notification
     if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('CloseLoop Installed!', {
+              new Notification('StayOnScript Installed!', {
         body: 'The app has been successfully installed on your device.',
         icon: '/icons/icon-192x192.png'
       });
     } else {
-      alert('✅ CloseLoop has been successfully installed on your device!\n\nYou can now:\n• Use the app offline\n• Access it from your Start Menu/Home Screen\n• Enjoy faster loading times');
+              alert('✅ StayOnScript has been successfully installed on your device!\n\nYou can now:\n• Use the app offline\n• Access it from your Start Menu/Home Screen\n• Enjoy faster loading times');
     }
   };
 
@@ -164,7 +164,7 @@ const PWAInstall = ({ onInstall, isCollapsed = false }) => {
     const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-    let instructions = '📱 Install CloseLoop App\n\n';
+          let instructions = '📱 Install StayOnScript App\n\n';
     
     if (isMobile) {
       if (isIOS) {
@@ -260,7 +260,7 @@ The app will install and appear in your Start Menu!`;
     <button 
       className="pwa-install-button"
       onClick={handleInstallClick}
-      title="Install CloseLoop App"
+              title="Install StayOnScript App"
     >
       <span className="pwa-icon">⬇️</span>
       {!isCollapsed && <span className="pwa-text">Install App</span>}
