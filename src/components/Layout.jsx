@@ -53,7 +53,7 @@ const Layout = ({ children }) => {
       {!isNavHidden && (
         <nav className={`side-nav ${isNavCollapsed ? 'collapsed' : ''}`}>
           <div className="nav-header">
-            <h2>CloseLoop</h2>
+            <h2>StayOnScript</h2>
             <div className="nav-buttons">
               <button className="nav-toggle" onClick={toggleNav} aria-label={isNavCollapsed ? 'Expand navigation' : 'Collapse navigation'}>
                 {isNavCollapsed ? '→' : '←'}
