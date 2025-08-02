@@ -2404,57 +2404,382 @@ Confirmation Status: ${appointmentConfirmed ? 'Confirmed' : 'Pending'}
     </motion.div>
   );
 
-  const renderButtonUpStep = () => (
-    <motion.div 
-      className="script-step-dark"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      <h3 className="step-title-dark">Button Up & Confirmation</h3>
+  const renderButtonUpStep = () => {
+    // Function to generate formatted data for download
+    const generateFormattedData = () => {
+      const data = {
+        appointment: {
+          date: appointment.date,
+          time: appointment.time,
+          confirmed: appointmentConfirmed
+        },
+        customerInfo: {
+          name: `${customerInfo.firstName} ${customerInfo.lastName}`,
+          phone: customerInfo.phone,
+          email: customerInfo.email,
+          address: `${customerInfo.address}, ${customerInfo.city}, ${customerInfo.state} ${customerInfo.zipCode}`,
+          secondaryContact: customerInfo.showSecondary ? `${customerInfo.secondaryName} (${customerInfo.relationshipToPrimary}) - ${customerInfo.secondaryPhone}` : 'N/A'
+        },
+        projectDetails: {
+          type: projectType,
+          issues: projectDetails.issues,
+          currentSetup: projectDetails.currentSetup,
+          replacementType: projectDetails.replacementType,
+          plumbingSetup: projectDetails.plumbingSetup,
+          materialsPurchased: projectDetails.materialsPurchased,
+          roofType: projectDetails.roofType,
+          activeLeaks: projectDetails.activeLeaks,
+          roofReplaced: projectDetails.roofReplaced
+        },
+        propertyInfo: parsedPropertyInfo,
+        callType: callType,
+        userName: userName,
+        timestamp: new Date().toLocaleString()
+      };
+
+      return JSON.stringify(data, null, 2);
+    };
+
+    // Function to download data as JSON file
+    const downloadData = () => {
+      const data = generateFormattedData();
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `appointment_${customerInfo.firstName}_${customerInfo.lastName}_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    };
+
+    // Function to download data as formatted text
+    const downloadFormattedText = () => {
+      const data = generateFormattedData();
+      const parsed = JSON.parse(data);
       
-      <div className="confirmation-container-dark">
-        <div className="confirmation-card-dark">
-          <h4 className="confirmation-title-dark">Final Confirmation Checklist:</h4>
-          <div className="checklist-items-dark">
-            {commitmentChecklistItems.map((item, index) => (
-              <motion.div 
-                key={index}
-                className={`checklist-item-dark ${checklistItems.commitmentChecklist.includes(index) ? 'completed-dark' : ''}`}
-                onClick={() => handleChecklistToggle('commitmentChecklist', index)}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                {checklistItems.commitmentChecklist.includes(index) ? (
-                  <CheckSquare className="check-icon" />
-                ) : (
-                  <Square className="check-icon" />
-                )}
-                <span>{item}</span>
-              </motion.div>
-            ))}
-          </div>
-          
-          <div className="closing-script-dark">
-            <h5>Closing Script:</h5>
-            <p>
-              "Before I finalize everything, could you do a few things for me? Please mention the appointment to any other parties involved, and mark your calendar to avoid rescheduling. Also, do not make any decisions until Long gets a chance to show you our product and how we can offer you peace of mind at a great price. Does that make sense? OK FANTASTIC…. The next point of contact will be the rep at your home on {appointment.date} at {appointment.time} to do the estimate for you on a total replacement of your {projectType}. Thank you and have a wonderful day!"
-            </p>
+      let text = `APPOINTMENT SUMMARY
+===================
+
+CUSTOMER INFORMATION:
+Name: ${parsed.customerInfo.name}
+Phone: ${parsed.customerInfo.phone}
+Email: ${parsed.customerInfo.email}
+Address: ${parsed.customerInfo.address}
+Secondary Contact: ${parsed.customerInfo.secondaryContact}
+
+APPOINTMENT DETAILS:
+Date: ${parsed.appointment.date}
+Time: ${parsed.appointment.time}
+Confirmed: ${parsed.appointment.confirmed ? 'Yes' : 'No'}
+
+PROJECT INFORMATION:
+Type: ${parsed.projectDetails.type}
+Issues: ${parsed.projectDetails.issues}
+Current Setup: ${parsed.projectDetails.currentSetup}
+Replacement Type: ${parsed.projectDetails.replacementType}
+Plumbing Setup: ${parsed.projectDetails.plumbingSetup}
+Materials Purchased: ${parsed.projectDetails.materialsPurchased}
+Roof Type: ${parsed.projectDetails.roofType}
+Active Leaks: ${parsed.projectDetails.activeLeaks}
+Roof Replaced: ${parsed.projectDetails.roofReplaced}
+
+PROPERTY INFORMATION:
+${Object.entries(parsed.propertyInfo).map(([key, value]) => `${key}: ${value}`).join('\n')}
+
+CALL DETAILS:
+Call Type: ${parsed.callType}
+Rep: ${parsed.userName}
+Timestamp: ${parsed.timestamp}
+
+NOTES FOR SALESFORCE ENTRY:
+- Lead Source: Phone Call
+- Status: Appointment Scheduled
+- Priority: High
+- Description: ${parsed.projectDetails.type} appointment scheduled for ${parsed.appointment.date} at ${parsed.appointment.time}
+- Next Steps: Follow up with customer before appointment`;
+
+      const blob = new Blob([text], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `appointment_summary_${customerInfo.firstName}_${customerInfo.lastName}_${new Date().toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    };
+
+    return (
+      <motion.div 
+        className="script-step-dark"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <h3 className="step-title-dark">Button Up & Confirmation</h3>
+        
+        <div className="confirmation-container-dark">
+          <div className="confirmation-card-dark">
+            <h4 className="confirmation-title-dark">Final Confirmation Checklist:</h4>
+            <div className="checklist-items-dark">
+              {commitmentChecklistItems.map((item, index) => (
+                <motion.div 
+                  key={index}
+                  className={`checklist-item-dark ${checklistItems.commitmentChecklist.includes(index) ? 'completed-dark' : ''}`}
+                  onClick={() => handleChecklistToggle('commitmentChecklist', index)}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  {checklistItems.commitmentChecklist.includes(index) ? (
+                    <CheckSquare className="check-icon" />
+                  ) : (
+                    <Square className="check-icon" />
+                  )}
+                  <span>{item}</span>
+                </motion.div>
+              ))}
+            </div>
+            
+            <div className="closing-script-dark">
+              <h5>Closing Script:</h5>
+              <p>
+                "Before I finalize everything, could you do a few things for me? Please mention the appointment to any other parties involved, and mark your calendar to avoid rescheduling. Also, do not make any decisions until Long gets a chance to show you our product and how we can offer you peace of mind at a great price. Does that make sense? OK FANTASTIC…. The next point of contact will be the rep at your home on {appointment.date} at {appointment.time} to do the estimate for you on a total replacement of your {projectType}. Thank you and have a wonderful day!"
+              </p>
+            </div>
           </div>
         </div>
-      </div>
-      
-      <motion.button 
-        className="complete-button-dark"
-        onClick={() => handleSendToSalesforce()}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        Complete Script
-        <CheckCircle className="button-icon" />
-      </motion.button>
-    </motion.div>
-  );
+
+        {/* Salesforce Integration Section */}
+        <motion.div 
+          className="salesforce-section-dark"
+          style={{
+            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%)',
+            border: '1px solid rgba(59, 130, 246, 0.2)',
+            borderRadius: '16px',
+            padding: '2rem',
+            marginTop: '2rem',
+            textAlign: 'center'
+          }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          <div style={{ marginBottom: '1.5rem' }}>
+            <div style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: '8px', 
+              background: 'rgba(59, 130, 246, 0.1)', 
+              color: '#3b82f6', 
+              padding: '0.5rem 1rem', 
+              borderRadius: '20px', 
+              fontSize: '0.875rem', 
+              fontWeight: 600,
+              marginBottom: '1rem'
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Salesforce Integration
+            </div>
+            <h4 style={{ color: '#1f2937', fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+              Coming Soon! 🚀
+            </h4>
+            <p style={{ color: '#6b7280', fontSize: '1rem', lineHeight: '1.6', marginBottom: '1.5rem' }}>
+              Direct Salesforce integration is currently under development. In the meantime, you can download the appointment data in a formatted format to manually enter into Salesforce.
+            </p>
+          </div>
+
+          {/* Download Options */}
+          <div style={{ 
+            display: 'flex', 
+            gap: '1rem', 
+            justifyContent: 'center', 
+            flexWrap: 'wrap',
+            marginBottom: '1.5rem'
+          }}>
+            <motion.button 
+              onClick={downloadFormattedText}
+              style={{ 
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                color: 'white', 
+                border: 'none', 
+                borderRadius: '12px', 
+                padding: '0.75rem 1.5rem', 
+                fontWeight: 600, 
+                cursor: 'pointer',
+                fontSize: '1rem',
+                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M7 10L12 15L17 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 15V3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Download Formatted Summary
+            </motion.button>
+
+            <motion.button 
+              onClick={downloadData}
+              style={{ 
+                background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                color: 'white', 
+                border: 'none', 
+                borderRadius: '12px', 
+                padding: '0.75rem 1.5rem', 
+                fontWeight: 600, 
+                cursor: 'pointer',
+                fontSize: '1rem',
+                boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M16 13H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M16 17H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M10 9H9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Download JSON Data
+            </motion.button>
+          </div>
+
+          <p style={{ 
+            color: '#6b7280', 
+            fontSize: '0.875rem', 
+            fontStyle: 'italic',
+            marginBottom: '1.5rem'
+          }}>
+            💡 Tip: Use the "Formatted Summary" for easy copy-paste into Salesforce, or "JSON Data" for technical integration.
+          </p>
+        </motion.div>
+        
+        {/* Action Buttons */}
+        <div style={{ 
+          display: 'flex', 
+          gap: '1rem', 
+          justifyContent: 'center', 
+          flexWrap: 'wrap',
+          marginTop: '2rem'
+        }}>
+          <motion.button 
+            className="complete-button-dark"
+            onClick={() => {
+              // Reset the script to start over
+              setCurrentStep(0);
+              setCallType('');
+              setProjectType('');
+              setUserName('');
+              setProjectDetails({
+                issues: '',
+                currentSetup: '',
+                replacementType: '',
+                plumbingSetup: '',
+                materialsPurchased: '',
+                roofType: '',
+                activeLeaks: '',
+                roofReplaced: ''
+              });
+              setAppointment({
+                date: '',
+                time: '',
+                confirmed: false
+              });
+              setAppointmentConfirmed(false);
+              setCustomerInfo({
+                firstName: '',
+                lastName: '',
+                email: '',
+                phone: '',
+                address: '',
+                city: '',
+                state: '',
+                zipCode: '',
+                country: 'United States',
+                secondaryName: '',
+                secondaryPhone: '',
+                secondaryEmail: '',
+                relationshipToPrimary: '',
+                showSecondary: false
+              });
+              setChecklistItems({
+                projectChecklist: [],
+                bathChecklist: [],
+                roofChecklist: [],
+                commitmentChecklist: []
+              });
+            }}
+            style={{
+              background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '12px',
+              padding: '0.75rem 1.5rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontSize: '1rem',
+              boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 12L5 10L9 14L21 2L23 4L9 18L3 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Finish & Restart Script
+          </motion.button>
+
+          <motion.button 
+            onClick={() => handleSendToSalesforce()}
+            style={{
+              background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '12px',
+              padding: '0.75rem 1.5rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontSize: '1rem',
+              boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M22 2H2V22H22V2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M7 10L12 15L17 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Try Salesforce Integration
+          </motion.button>
+        </div>
+      </motion.div>
+    );
+  };
 
   const renderPropertySearchStep = () => (
     <motion.div 
