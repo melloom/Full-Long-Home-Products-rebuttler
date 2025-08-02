@@ -103,6 +103,7 @@
 .category-name {
   font-size: 14px;
   font-weight: 600;
+  color: #ffffff !important;
 }
 
 /* Color variants for categories */

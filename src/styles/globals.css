@@ -75,6 +75,11 @@ img {
   height: auto;
 }
 
+/* Global category name styling - ensure white text */
+.category-name {
+  color: #ffffff !important;
+}
+
 /* Layout Classes */
 .container, .admin-dashboard, .user-management, .category-management {
   max-width: 100vw;

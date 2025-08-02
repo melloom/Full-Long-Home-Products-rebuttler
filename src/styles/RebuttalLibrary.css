@@ -410,8 +410,16 @@
 .category-name {
   font-weight: 600;
   font-size: 14px;
-  color: #ffffff;
+  color: #ffffff !important;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Ensure category names are always white */
+.library-category-button .category-name,
+.category-button .category-name,
+button .category-name,
+span.category-name {
+  color: #ffffff !important;
 }
 
 /* Color variants for categories - Dark Mode */
