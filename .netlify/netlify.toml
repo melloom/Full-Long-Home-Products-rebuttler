@@ -1,0 +1,63 @@
+functionsDirectory = "/Users/melvinperalta/Desktop/Full-Long-Home-Products-rebuttler-master/netlify/functions"
+functionsDirectoryOrigin = "config-v1"
+headersOrigin = "config"
+redirectsOrigin = "config"
+plugins = []
+
+[dev]
+command = "npm start"
+port = 3001.0
+publish = "build"
+
+[functions]
+
+[functions."*"]
+external_node_modules = ["firebase-admin"]
+node_bundler = "esbuild"
+
+[build]
+publish = "/Users/melvinperalta/Desktop/Full-Long-Home-Products-rebuttler-master/dist"
+publishOrigin = "config"
+commandOrigin = "config"
+command = "npm run build"
+functions = "/Users/melvinperalta/Desktop/Full-Long-Home-Products-rebuttler-master/netlify/functions"
+
+[build.environment]
+NODE_VERSION = "18"
+
+[build.processing]
+
+[build.processing.css]
+
+[build.processing.html]
+
+[build.processing.images]
+
+[build.processing.js]
+
+[build.services]
+
+[[headers]]
+for = "/*"
+
+[headers.values]
+Access-Control-Allow-Origin = "*"
+Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+Access-Control-Allow-Headers = "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+Access-Control-Allow-Credentials = "true"
+X-Frame-Options = "DENY"
+X-Content-Type-Options = "nosniff"
+Referrer-Policy = "strict-origin-when-cross-origin"
+Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]
