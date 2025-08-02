@@ -16,6 +16,9 @@ const Layout = ({ children }) => {
   // Use custom hook for scroll to top
   useScrollToTop();
 
+  // Check if we're on the home page (where the left sidebar exists)
+  const isHomePage = location.pathname === '/';
+
   const navItems = [
     { path: '/', label: 'Home', icon: '🏠' },
     { path: '/rebuttals', label: 'Rebuttals', icon: '💬' },
@@ -47,7 +50,7 @@ const Layout = ({ children }) => {
 
   return (
     <div className="layout">
-      <main className={`main-content ${isNavCollapsed ? 'expanded' : ''}`}>
+      <main className={`main-content ${isNavCollapsed ? 'expanded' : ''} ${isHomePage ? 'with-left-sidebar' : 'without-left-sidebar'}`}>
         {children}
       </main>
       {!isNavHidden && (

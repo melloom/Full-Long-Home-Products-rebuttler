@@ -1893,3 +1893,46 @@ body.modal-open {
   color: #f1f5f9 !important;
   border-top-color: #3f3f46 !important;
 }
+
+/* Responsive layout for pages with sidebars */
+.rebuttals-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 2rem;
+  align-items: flex-start;
+  min-height: 100vh;
+}
+
+.rebuttals-content {
+  padding: 1.5rem;
+  max-width: 100%;
+}
+
+/* Responsive breakpoints */
+@media (max-width: 1200px) {
+  .rebuttals-layout {
+    grid-template-columns: 250px 1fr;
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .rebuttals-layout {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .rebuttals-content {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .rebuttals-layout {
+    gap: 0.5rem;
+  }
+  
+  .rebuttals-content {
+    padding: 0.5rem;
+  }
+}

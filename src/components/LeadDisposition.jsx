@@ -359,9 +359,10 @@ const LeadDisposition = ({ onNavigate, searchQuery }) => {
         title="Lead Disposition"
         subtitle="Track and manage your lead dispositions"
       />
-      <div style={{ display: 'grid', gridTemplateColumns: `${sidebarCollapsed ? '56px' : '300px'} 1fr`, gap: '2rem', alignItems: 'flex-start' }}>
+      <div className="rebuttals-layout">
         <RebuttalSidebar collapsed={sidebarCollapsed} onCollapseChange={setSidebarCollapsed} />
-        <div className="disposition-container">
+        <div className="rebuttals-content">
+          <div className="disposition-container">
           <div className="disposition-content">
           <div className="disposition-header">
             <h1 className="disposition-title">Lead Disposition Library</h1>

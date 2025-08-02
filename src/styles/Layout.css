@@ -151,18 +151,37 @@
 
 .main-content {
   flex: 1;
-  margin-left: 180px; /* Added to account for left sidebar */
   margin-right: 250px;
   padding: 2rem;
-  width: calc(100% - 430px); /* 180px (left) + 250px (right) */
+  width: calc(100% - 250px);
   min-height: 100vh;
   position: relative;
   z-index: 1;
   transition: all 0.3s ease;
 }
 
+/* When left sidebar is present (home page) */
+.main-content.with-left-sidebar {
+  margin-left: 180px;
+  width: calc(100% - 430px); /* 180px (left) + 250px (right) */
+}
+
+/* When left sidebar is not present (other pages) */
+.main-content.without-left-sidebar {
+  margin-left: 0;
+  width: calc(100% - 250px);
+}
+
 .main-content.expanded {
   margin-right: 60px;
+  width: calc(100% - 60px);
+}
+
+.main-content.expanded.with-left-sidebar {
+  width: calc(100% - 240px); /* 180px (left) + 60px (right) */
+}
+
+.main-content.expanded.without-left-sidebar {
   width: calc(100% - 60px);
 }
 
@@ -335,7 +354,7 @@
 
 /* Responsive Design */
 @media (max-width: 1400px) {
-  .main-content {
+  .main-content.with-left-sidebar {
     margin-left: 180px;
     width: calc(100% - 430px);
   }
@@ -346,7 +365,7 @@
     width: 160px;
   }
   
-  .main-content {
+  .main-content.with-left-sidebar {
     margin-left: 160px;
     width: calc(100% - 410px);
   }
@@ -417,6 +436,12 @@
   }
 
   .main-content.expanded {
+    margin: 0;
+    width: 100%;
+  }
+
+  .main-content.with-left-sidebar,
+  .main-content.without-left-sidebar {
     margin: 0;
     width: 100%;
   }
