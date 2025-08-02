@@ -4,17 +4,6 @@ headersOrigin = "config"
 redirectsOrigin = "config"
 plugins = []
 
-[dev]
-command = "npm start"
-port = 3001.0
-publish = "build"
-
-[functions]
-
-[functions."*"]
-external_node_modules = ["firebase-admin"]
-node_bundler = "esbuild"
-
 [build]
 publish = "/Users/melvinperalta/Desktop/Full-Long-Home-Products-rebuttler-master/dist"
 publishOrigin = "config"
@@ -37,6 +26,18 @@ NODE_VERSION = "18"
 
 [build.services]
 
+[dev]
+command = "npm run client"
+port = 8889.0
+targetPort = 5173.0
+publish = "dist"
+
+[functions]
+
+[functions."*"]
+external_node_modules = ["firebase-admin"]
+node_bundler = "esbuild"
+
 [[headers]]
 for = "/*"
 
@@ -49,6 +50,35 @@ X-Frame-Options = "DENY"
 X-Content-Type-Options = "nosniff"
 Referrer-Policy = "strict-origin-when-cross-origin"
 Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+[[headers]]
+for = "/sw.js"
+
+[headers.values]
+Cache-Control = "no-cache, no-store, must-revalidate, max-age=0"
+Content-Type = "application/javascript"
+Service-Worker-Allowed = "/"
+X-Content-Type-Options = "nosniff"
+
+[[headers]]
+for = "/manifest.json"
+
+[headers.values]
+Cache-Control = "no-cache, no-store, must-revalidate, max-age=0"
+Content-Type = "application/manifest+json"
+X-Content-Type-Options = "nosniff"
+
+[[headers]]
+for = "*.png"
+
+[headers.values]
+Cache-Control = "public, max-age=31536000"
+
+[[headers]]
+for = "*.ico"
+
+[headers.values]
+Cache-Control = "public, max-age=31536000"
 
 [[redirects]]
 from = "/*"

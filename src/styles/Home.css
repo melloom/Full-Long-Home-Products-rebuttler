@@ -943,7 +943,7 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: 1rem;
+  padding: 0;
   animation: modalFadeIn 0.3s ease-out;
 }
 
@@ -954,7 +954,7 @@
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
   max-width: 90vw;
   max-height: 90vh;
-  width: 600px;
+  width: 500px;
   overflow: hidden;
   position: relative;
   animation: modalSlideIn 0.3s ease-out;
@@ -962,7 +962,7 @@
 
 .modal-content.expanded {
   width: 90vw;
-  max-width: 1200px;
+  max-width: 1000px;
   height: 90vh;
 }
 
@@ -1279,9 +1279,9 @@
 /* Responsive Modal Dark Theme */
 @media (max-width: 768px) {
   .modal-content {
-    width: 95vw;
+    width: 85vw;
     max-width: none;
-    margin: 0.5rem;
+    margin: 0;
   }
   
   .modal-body {
@@ -1300,8 +1300,8 @@
 
 @media (max-width: 480px) {
   .modal-content {
-    width: 98vw;
-    margin: 0.25rem;
+    width: 90vw;
+    margin: 0;
   }
   
   .modal-body {
