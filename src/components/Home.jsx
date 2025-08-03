@@ -782,10 +782,66 @@ const Home = () => {
   };
   const handleCommonObjections = () => {
     setShowCommonObjectionsModal(true);
+    
+    // Scroll modal to top when opening common objections
+    setTimeout(() => {
+      const modalBody = document.querySelector('.modal-body');
+      const modalContent = document.querySelector('.modal-content');
+      if (modalBody) {
+        modalBody.scrollTop = 0;
+        modalBody.scrollLeft = 0;
+      }
+      if (modalContent) {
+        modalContent.scrollTop = 0;
+        modalContent.scrollLeft = 0;
+      }
+    }, 150);
+    
+    // Additional scroll to top after modal is fully rendered
+    setTimeout(() => {
+      const modalBody = document.querySelector('.modal-body');
+      const modalContent = document.querySelector('.modal-content');
+      if (modalBody) {
+        modalBody.scrollTop = 0;
+        modalBody.scrollLeft = 0;
+      }
+      if (modalContent) {
+        modalContent.scrollTop = 0;
+        modalContent.scrollLeft = 0;
+      }
+    }, 300);
   };
 
   const handleSmartTips = () => {
     setShowSmartTipsModal(true);
+    
+    // Scroll modal to top when opening smart tips
+    setTimeout(() => {
+      const modalBody = document.querySelector('.modal-body');
+      const modalContent = document.querySelector('.modal-content');
+      if (modalBody) {
+        modalBody.scrollTop = 0;
+        modalBody.scrollLeft = 0;
+      }
+      if (modalContent) {
+        modalContent.scrollTop = 0;
+        modalContent.scrollLeft = 0;
+      }
+    }, 150);
+    
+    // Additional scroll to top after modal is fully rendered
+    setTimeout(() => {
+      const modalBody = document.querySelector('.modal-body');
+      const modalContent = document.querySelector('.modal-content');
+      if (modalBody) {
+        modalBody.scrollTop = 0;
+        modalBody.scrollLeft = 0;
+      }
+      if (modalContent) {
+        modalContent.scrollTop = 0;
+        modalContent.scrollLeft = 0;
+      }
+    }, 300);
   };
 
   const handleMoreOptions = (rebuttal) => {
@@ -813,11 +869,31 @@ const Home = () => {
     
     // Scroll modal to top when showing more options
     setTimeout(() => {
+      const modalBody = document.querySelector('.modal-body');
       const modalContent = document.querySelector('.modal-content');
+      if (modalBody) {
+        modalBody.scrollTop = 0;
+        modalBody.scrollLeft = 0;
+      }
       if (modalContent) {
         modalContent.scrollTop = 0;
+        modalContent.scrollLeft = 0;
       }
-    }, 100);
+    }, 150);
+    
+    // Additional scroll to top after modal is fully rendered
+    setTimeout(() => {
+      const modalBody = document.querySelector('.modal-body');
+      const modalContent = document.querySelector('.modal-content');
+      if (modalBody) {
+        modalBody.scrollTop = 0;
+        modalBody.scrollLeft = 0;
+      }
+      if (modalContent) {
+        modalContent.scrollTop = 0;
+        modalContent.scrollLeft = 0;
+      }
+    }, 300);
   };
 
   const closeModal = () => {
@@ -855,11 +931,31 @@ const Home = () => {
     
     // Scroll modal to top when item changes
     setTimeout(() => {
+      const modalBody = document.querySelector('.modal-body');
       const modalContent = document.querySelector('.modal-content');
+      if (modalBody) {
+        modalBody.scrollTop = 0;
+        modalBody.scrollLeft = 0;
+      }
       if (modalContent) {
         modalContent.scrollTop = 0;
+        modalContent.scrollLeft = 0;
       }
-    }, 100);
+    }, 150);
+    
+    // Additional scroll to top after modal is fully rendered
+    setTimeout(() => {
+      const modalBody = document.querySelector('.modal-body');
+      const modalContent = document.querySelector('.modal-content');
+      if (modalBody) {
+        modalBody.scrollTop = 0;
+        modalBody.scrollLeft = 0;
+      }
+      if (modalContent) {
+        modalContent.scrollTop = 0;
+        modalContent.scrollLeft = 0;
+      }
+    }, 300);
   };
 
   const handleSimpleModeItemClick = (item) => {
@@ -960,13 +1056,55 @@ const Home = () => {
     }
     setShowModal(true);
     
-    // Scroll modal to top when item changes
-    setTimeout(() => {
+    // Force scroll to top immediately and after delays
+    const scrollToTop = () => {
+      // Target all possible modal elements
+      const modalBody = document.querySelector('.modal-body');
       const modalContent = document.querySelector('.modal-content');
+      const modalOverlay = document.querySelector('.modal-overlay');
+      const modalElements = document.querySelectorAll('.modal-body, .modal-content, .modal-overlay, [class*="modal"]');
+      
+      // Scroll all modal elements
+      if (modalBody) {
+        modalBody.scrollTop = 0;
+        modalBody.scrollLeft = 0;
+      }
       if (modalContent) {
         modalContent.scrollTop = 0;
+        modalContent.scrollLeft = 0;
       }
-    }, 100);
+      if (modalOverlay) {
+        modalOverlay.scrollTop = 0;
+        modalOverlay.scrollLeft = 0;
+      }
+      
+      // Scroll all elements with modal in class name
+      modalElements.forEach(element => {
+        element.scrollTop = 0;
+        element.scrollLeft = 0;
+      });
+      
+      // Try to scroll the first element in modal-body to top
+      const firstElement = modalBody?.querySelector('*');
+      if (firstElement) {
+        firstElement.scrollIntoView({ behavior: 'instant', block: 'start' });
+      }
+      
+      // Also scroll the window as fallback
+      window.scrollTo(0, 0);
+    };
+    
+    // Scroll immediately
+    scrollToTop();
+    
+    // Scroll after short delay
+    setTimeout(scrollToTop, 50);
+    
+    // Scroll after longer delay
+    setTimeout(scrollToTop, 200);
+    
+    // Final scroll after modal is fully rendered
+    setTimeout(scrollToTop, 500);
   };
 
   const handleNextItem = () => {
@@ -976,13 +1114,55 @@ const Home = () => {
       const nextItem = selectedCategory.items[nextIndex];
       handleItemClick(nextItem);
       
-      // Scroll modal to top when navigating to next item
-      setTimeout(() => {
+      // Force scroll to top immediately and after delays
+      const scrollToTop = () => {
+        // Target all possible modal elements
+        const modalBody = document.querySelector('.modal-body');
         const modalContent = document.querySelector('.modal-content');
+        const modalOverlay = document.querySelector('.modal-overlay');
+        const modalElements = document.querySelectorAll('.modal-body, .modal-content, .modal-overlay, [class*="modal"]');
+        
+        // Scroll all modal elements
+        if (modalBody) {
+          modalBody.scrollTop = 0;
+          modalBody.scrollLeft = 0;
+        }
         if (modalContent) {
           modalContent.scrollTop = 0;
+          modalContent.scrollLeft = 0;
         }
-      }, 50);
+        if (modalOverlay) {
+          modalOverlay.scrollTop = 0;
+          modalOverlay.scrollLeft = 0;
+        }
+        
+        // Scroll all elements with modal in class name
+        modalElements.forEach(element => {
+          element.scrollTop = 0;
+          element.scrollLeft = 0;
+        });
+        
+        // Try to scroll the first element in modal-body to top
+        const firstElement = modalBody?.querySelector('*');
+        if (firstElement) {
+          firstElement.scrollIntoView({ behavior: 'instant', block: 'start' });
+        }
+        
+        // Also scroll the window as fallback
+        window.scrollTo(0, 0);
+      };
+      
+      // Scroll immediately
+      scrollToTop();
+      
+      // Scroll after short delay
+      setTimeout(scrollToTop, 50);
+      
+      // Scroll after longer delay
+      setTimeout(scrollToTop, 200);
+      
+      // Final scroll after modal is fully rendered
+      setTimeout(scrollToTop, 500);
     }
   };
 
@@ -993,13 +1173,55 @@ const Home = () => {
       const prevItem = selectedCategory.items[prevIndex];
       handleItemClick(prevItem);
       
-      // Scroll modal to top when navigating to previous item
-      setTimeout(() => {
+      // Force scroll to top immediately and after delays
+      const scrollToTop = () => {
+        // Target all possible modal elements
+        const modalBody = document.querySelector('.modal-body');
         const modalContent = document.querySelector('.modal-content');
+        const modalOverlay = document.querySelector('.modal-overlay');
+        const modalElements = document.querySelectorAll('.modal-body, .modal-content, .modal-overlay, [class*="modal"]');
+        
+        // Scroll all modal elements
+        if (modalBody) {
+          modalBody.scrollTop = 0;
+          modalBody.scrollLeft = 0;
+        }
         if (modalContent) {
           modalContent.scrollTop = 0;
+          modalContent.scrollLeft = 0;
         }
-      }, 50);
+        if (modalOverlay) {
+          modalOverlay.scrollTop = 0;
+          modalOverlay.scrollLeft = 0;
+        }
+        
+        // Scroll all elements with modal in class name
+        modalElements.forEach(element => {
+          element.scrollTop = 0;
+          element.scrollLeft = 0;
+        });
+        
+        // Try to scroll the first element in modal-body to top
+        const firstElement = modalBody?.querySelector('*');
+        if (firstElement) {
+          firstElement.scrollIntoView({ behavior: 'instant', block: 'start' });
+        }
+        
+        // Also scroll the window as fallback
+        window.scrollTo(0, 0);
+      };
+      
+      // Scroll immediately
+      scrollToTop();
+      
+      // Scroll after short delay
+      setTimeout(scrollToTop, 50);
+      
+      // Scroll after longer delay
+      setTimeout(scrollToTop, 200);
+      
+      // Final scroll after modal is fully rendered
+      setTimeout(scrollToTop, 500);
     }
   };
 
@@ -1563,13 +1785,55 @@ const Home = () => {
       setShowModal(true);
       setIsExpanded(true);
       
-      // Scroll modal to top when category changes
-      setTimeout(() => {
+      // Force scroll to top immediately and after delays
+      const scrollToTop = () => {
+        // Target all possible modal elements
+        const modalBody = document.querySelector('.modal-body');
         const modalContent = document.querySelector('.modal-content');
+        const modalOverlay = document.querySelector('.modal-overlay');
+        const modalElements = document.querySelectorAll('.modal-body, .modal-content, .modal-overlay, [class*="modal"]');
+        
+        // Scroll all modal elements
+        if (modalBody) {
+          modalBody.scrollTop = 0;
+          modalBody.scrollLeft = 0;
+        }
         if (modalContent) {
           modalContent.scrollTop = 0;
+          modalContent.scrollLeft = 0;
         }
-      }, 100);
+        if (modalOverlay) {
+          modalOverlay.scrollTop = 0;
+          modalOverlay.scrollLeft = 0;
+        }
+        
+        // Scroll all elements with modal in class name
+        modalElements.forEach(element => {
+          element.scrollTop = 0;
+          element.scrollLeft = 0;
+        });
+        
+        // Try to scroll the first element in modal-body to top
+        const firstElement = modalBody?.querySelector('*');
+        if (firstElement) {
+          firstElement.scrollIntoView({ behavior: 'instant', block: 'start' });
+        }
+        
+        // Also scroll the window as fallback
+        window.scrollTo(0, 0);
+      };
+      
+      // Scroll immediately
+      scrollToTop();
+      
+      // Scroll after short delay
+      setTimeout(scrollToTop, 50);
+      
+      // Scroll after longer delay
+      setTimeout(scrollToTop, 200);
+      
+      // Final scroll after modal is fully rendered
+      setTimeout(scrollToTop, 500);
     }
   };
 
@@ -1584,13 +1848,55 @@ const Home = () => {
     setShowModal(true);
     setIsExpanded(true);
     
-    // Scroll modal to top when item changes
-    setTimeout(() => {
+    // Force scroll to top immediately and after delays
+    const scrollToTop = () => {
+      // Target all possible modal elements
+      const modalBody = document.querySelector('.modal-body');
       const modalContent = document.querySelector('.modal-content');
+      const modalOverlay = document.querySelector('.modal-overlay');
+      const modalElements = document.querySelectorAll('.modal-body, .modal-content, .modal-overlay, [class*="modal"]');
+      
+      // Scroll all modal elements
+      if (modalBody) {
+        modalBody.scrollTop = 0;
+        modalBody.scrollLeft = 0;
+      }
       if (modalContent) {
         modalContent.scrollTop = 0;
+        modalContent.scrollLeft = 0;
       }
-    }, 100);
+      if (modalOverlay) {
+        modalOverlay.scrollTop = 0;
+        modalOverlay.scrollLeft = 0;
+      }
+      
+      // Scroll all elements with modal in class name
+      modalElements.forEach(element => {
+        element.scrollTop = 0;
+        element.scrollLeft = 0;
+      });
+      
+      // Try to scroll the first element in modal-body to top
+      const firstElement = modalBody?.querySelector('*');
+      if (firstElement) {
+        firstElement.scrollIntoView({ behavior: 'instant', block: 'start' });
+      }
+      
+      // Also scroll the window as fallback
+      window.scrollTo(0, 0);
+    };
+    
+    // Scroll immediately
+    scrollToTop();
+    
+    // Scroll after short delay
+    setTimeout(scrollToTop, 50);
+    
+    // Scroll after longer delay
+    setTimeout(scrollToTop, 200);
+    
+    // Final scroll after modal is fully rendered
+    setTimeout(scrollToTop, 500);
   };
 
   const renderCategoryContent = () => {

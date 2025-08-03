@@ -47,7 +47,7 @@ const Layout = ({ children }) => {
 
   return (
     <div className="layout">
-      <main className={`main-content ${isNavCollapsed ? 'expanded' : ''} ${location.pathname === '/' ? 'home-page' : ''}`}>
+      <main className={`main-content ${isNavCollapsed ? 'expanded' : ''}`}>
         {children}
       </main>
       {!isNavHidden && (

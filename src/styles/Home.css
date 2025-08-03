@@ -960,27 +960,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10000;
+  z-index: 999;
   padding: 0;
   animation: modalFadeIn 0.3s ease-out;
-}
-
-/* When navigation is collapsed, adjust modal overlay */
-.main-content.expanded .modal-overlay {
-  left: 60px;
-}
-
-/* Ensure modal doesn't block sidebar interactions */
-.quick-navigation {
-  pointer-events: auto !important;
-}
-
-.modal-overlay {
   pointer-events: auto;
 }
 
-/* Ensure modal content doesn't block sidebar */
-.modal-content {
+/* Ensure modal overlay doesn't block quick navigation */
+.modal-overlay {
+  pointer-events: none;
+}
+
+.modal-overlay .modal-content {
   pointer-events: auto;
 }
 
@@ -994,7 +985,6 @@
   width: 500px;
   overflow: hidden;
   position: relative;
-  z-index: 10001;
   animation: modalSlideIn 0.3s ease-out;
 }
 
@@ -1316,10 +1306,6 @@
 
 /* Responsive Modal Dark Theme */
 @media (max-width: 768px) {
-  .modal-overlay {
-    left: 0;
-  }
-  
   .modal-content {
     width: 85vw;
     max-width: none;
@@ -1988,9 +1974,45 @@
   background: linear-gradient(135deg, #1a1a2e, #16213e);
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
   padding: 0.75rem;
-  z-index: 9999;
+  z-index: 1002;
   overflow-y: auto;
   border-right: 1px solid #2d3748;
+}
+
+/* Ensure quick navigation stays above modal overlay */
+.modal-overlay ~ .quick-navigation,
+.modal-overlay + .quick-navigation,
+.quick-navigation {
+  z-index: 1002 !important;
+  pointer-events: auto !important;
+}
+
+/* Force quick navigation to always be visible and interactive */
+.quick-navigation {
+  z-index: 9999 !important;
+  pointer-events: auto !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 180px !important;
+  height: 100vh !important;
+  background: linear-gradient(135deg, #1a1a2e, #16213e) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2) !important;
+  border-right: 1px solid #2d3748 !important;
+  overflow-y: auto !important;
+  padding: 0.75rem !important;
+}
+
+.quick-nav-grid,
+.quick-nav-card {
+  z-index: 9999 !important;
+  pointer-events: auto !important;
+  position: relative !important;
+}
+
+/* Ensure modal doesn't cover the left 180px area */
+.modal-overlay {
+  clip-path: polygon(180px 0, 100% 0, 100% 100%, 180px 100%);
 }
 
 .simple-mode-container {

@@ -170,9 +170,6 @@
 .main-content.without-left-sidebar {
   margin-left: 0;
   width: calc(100% - 250px);
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
 }
 
 .main-content.expanded {
@@ -186,36 +183,11 @@
 
 .main-content.expanded.without-left-sidebar {
   width: calc(100% - 60px);
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
 }
 
 .main-content.full-width {
   margin-right: 0;
   width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-}
-
-/* Home page specific centering */
-.main-content.home-page {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  width: 100%;
-}
-
-.main-content.home-page.expanded {
-  width: calc(100% - 60px);
-  margin-right: 60px;
-}
-
-.main-content.home-page .home-container {
-  width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
 }
 
 /* Category Navigation Styles - Dark Mode */
@@ -317,25 +289,6 @@
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
   border-color: #667eea;
   background: linear-gradient(135deg, #2d3748, #2a4365);
-}
-
-/* Enhanced hover effect when modal is open */
-.modal-overlay ~ .quick-navigation .quick-nav-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
-  background: linear-gradient(135deg, #4a5568, #2d3748);
-  border-color: #60a5fa;
-}
-
-/* Ensure quick navigation is always above modal */
-.quick-navigation {
-  z-index: 9999 !important;
-}
-
-.quick-nav-card {
-  cursor: pointer;
-  position: relative;
-  z-index: 10000;
 }
 
 .quick-nav-card.active {
@@ -491,16 +444,6 @@
   .main-content.without-left-sidebar {
     margin: 0;
     width: 100%;
-  }
-  
-  .main-content.home-page {
-    width: 100%;
-    margin-right: 0;
-  }
-  
-  .main-content.home-page.expanded {
-    width: 100%;
-    margin-right: 0;
   }
 
   .quick-nav-grid {
