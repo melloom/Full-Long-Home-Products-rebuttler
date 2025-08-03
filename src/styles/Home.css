@@ -955,8 +955,7 @@
   left: 180px;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(8px);
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -968,13 +967,14 @@
 /* When navigation is collapsed, adjust modal overlay */
 .main-content.expanded .modal-overlay {
   left: 60px;
+  background: transparent;
 }
 
 .modal-content {
   background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-  border: 1px solid rgba(75, 85, 99, 0.5);
+  border: 2px solid rgba(102, 126, 234, 0.6);
   border-radius: 16px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(102, 126, 234, 0.2);
   max-width: 90vw;
   max-height: 90vh;
   width: 500px;
@@ -1303,6 +1303,7 @@
 @media (max-width: 768px) {
   .modal-overlay {
     left: 0;
+    background: transparent;
   }
   
   .modal-content {
