@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useScrollToTop, scrollToTop } from '../utils/useScrollToTop';
 import PWAInstall from './PWAInstall';
@@ -15,6 +15,21 @@ const Layout = ({ children }) => {
 
   // Use custom hook for scroll to top
   useScrollToTop();
+
+  // Keyboard shortcut for Help Me modal (Ctrl/Cmd + Shift + H)
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'h') {
+        event.preventDefault();
+        setShowComingSoon(true);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   const navItems = [
     { path: '/', label: 'Home', icon: '🏠' },
@@ -83,9 +98,9 @@ const Layout = ({ children }) => {
             <button 
               className="help-me-button"
               onClick={() => setShowComingSoon(true)}
-              title="How to access login page"
+              title="How to access login page (Ctrl/Cmd + Shift + H)"
             >
-              <span className="help-icon">❓</span>
+              <span className="help-icon">🆘</span>
               {!isNavCollapsed && <span className="help-label">Help Me</span>}
             </button>
           </div>
@@ -126,6 +141,11 @@ const Layout = ({ children }) => {
               <div className="help-step">
                 <h4>Alternative Method</h4>
                 <p>You can also bookmark the admin URL for quick access</p>
+              </div>
+              <div className="help-step">
+                <h4>Keyboard Shortcuts</h4>
+                <p><strong>Help Modal:</strong> Press <code>Ctrl + Shift + H</code> (or <code>Cmd + Shift + H</code> on Mac)</p>
+                <p><strong>Admin Login:</strong> Press <code>Ctrl + Shift + L</code> (or <code>Cmd + Shift + L</code> on Mac)</p>
               </div>
             </div>
           </div>
