@@ -359,9 +359,10 @@ const LeadDisposition = ({ onNavigate, searchQuery }) => {
         title="Lead Disposition"
         subtitle="Track and manage your lead dispositions"
       />
-      <div style={{ display: 'grid', gridTemplateColumns: `${sidebarCollapsed ? '56px' : '300px'} 1fr`, gap: '2rem', alignItems: 'flex-start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: `${sidebarCollapsed ? '56px' : '300px'} 1fr`, gap: '2rem', alignItems: 'flex-start', minHeight: '100vh' }}>
         <RebuttalSidebar collapsed={sidebarCollapsed} onCollapseChange={setSidebarCollapsed} />
-        <div className="container mx-auto p-6">
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+          <div style={{ maxWidth: '1200px', width: '100%' }}>
           <div className="disposition-header">
             <h1 className="disposition-title">Lead Disposition Library</h1>
             <div className="header-actions">
@@ -524,6 +525,7 @@ const LeadDisposition = ({ onNavigate, searchQuery }) => {
               No dispositions found matching your search criteria.
             </div>
           )}
+          </div>
         </div>
       </div>
 
