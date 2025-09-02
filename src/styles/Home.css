@@ -963,12 +963,8 @@
   z-index: 999;
   padding: 0;
   animation: modalFadeIn 0.3s ease-out;
-  pointer-events: auto;
-}
-
-/* Ensure modal overlay doesn't block quick navigation */
-.modal-overlay {
   pointer-events: none;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
 }
 
 .modal-overlay .modal-content {
@@ -2010,10 +2006,7 @@
   position: relative !important;
 }
 
-/* Ensure modal doesn't cover the left 180px area */
-.modal-overlay {
-  clip-path: polygon(180px 0, 100% 0, 100% 100%, 180px 100%);
-}
+/* Modal overlay positioning handled above */
 
 .simple-mode-container {
   display: flex;
