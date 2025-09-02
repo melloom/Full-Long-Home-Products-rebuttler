@@ -964,6 +964,8 @@
   padding: 0;
   animation: modalFadeIn 0.3s ease-out;
   pointer-events: none;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  mask: linear-gradient(to right, transparent 0px, transparent 180px, black 180px, black 100%);
 }
 
 .modal-overlay .modal-content {
@@ -1988,6 +1990,9 @@
   border-right: 1px solid #2d3748 !important;
   overflow-y: auto !important;
   padding: 0.75rem !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  display: block !important;
 }
 
 .quick-nav-grid,
@@ -1995,6 +2000,17 @@
   z-index: 999999 !important;
   pointer-events: auto !important;
   position: relative !important;
+}
+
+/* Ensure sidebar is never covered by any modal overlay */
+body:has(.modal-overlay) .quick-navigation,
+.modal-overlay ~ .quick-navigation,
+.modal-overlay + .quick-navigation {
+  z-index: 999999 !important;
+  pointer-events: auto !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  display: block !important;
 }
 
 /* Modal overlay positioning handled above */
