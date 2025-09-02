@@ -960,7 +960,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 999;
+  z-index: 1002;
   padding: 0;
   animation: modalFadeIn 0.3s ease-out;
   pointer-events: none;
@@ -1976,7 +1976,7 @@
 
 /* Force quick navigation to always be visible and interactive above everything */
 .quick-navigation {
-  z-index: 99999 !important;
+  z-index: 999999 !important;
   pointer-events: auto !important;
   position: fixed !important;
   top: 0 !important;
@@ -1992,7 +1992,7 @@
 
 .quick-nav-grid,
 .quick-nav-card {
-  z-index: 99999 !important;
+  z-index: 999999 !important;
   pointer-events: auto !important;
   position: relative !important;
 }
