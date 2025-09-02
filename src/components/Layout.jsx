@@ -77,6 +77,19 @@ const Layout = ({ children }) => {
               </li>
             ))}
           </ul>
+          
+          {/* Help Me Section */}
+          <div className="help-me-section">
+            <button 
+              className="help-me-button"
+              onClick={() => setShowComingSoon(true)}
+              title="How to access login page"
+            >
+              <span className="help-icon">❓</span>
+              {!isNavCollapsed && <span className="help-label">Help Me</span>}
+            </button>
+          </div>
+          
           <div className="nav-footer">
             <PWAInstall onInstall={handleInstallSuccess} isCollapsed={isNavCollapsed} />
             <PWAStatus isCollapsed={isNavCollapsed} />
@@ -91,6 +104,33 @@ const Layout = ({ children }) => {
 
       {/* PWA Update Notification */}
       <PWAUpdateNotification />
+      
+      {/* Help Me Modal */}
+      {showComingSoon && (
+        <div className="help-modal-overlay" onClick={() => setShowComingSoon(false)}>
+          <div className="help-modal-content" onClick={e => e.stopPropagation()}>
+            <div className="help-modal-header">
+              <h3>How to Access Login Page</h3>
+              <button className="help-modal-close" onClick={() => setShowComingSoon(false)}>×</button>
+            </div>
+            <div className="help-modal-body">
+              <div className="help-step">
+                <h4>Step 1: Navigate to Admin</h4>
+                <p>Add <code>/admin</code> to the end of your current URL</p>
+                <p><strong>Example:</strong> <code>https://stayonscript.netlify.app/admin</code></p>
+              </div>
+              <div className="help-step">
+                <h4>Step 2: Login</h4>
+                <p>Use your admin credentials to access the admin dashboard</p>
+              </div>
+              <div className="help-step">
+                <h4>Alternative Method</h4>
+                <p>You can also bookmark the admin URL for quick access</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
