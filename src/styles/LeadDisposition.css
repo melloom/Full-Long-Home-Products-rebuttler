@@ -19,16 +19,7 @@
 }
 
 /* Lead Disposition Enhanced Styles */
-.disposition-container {
-  min-height: 100vh;
-  padding: 2rem;
-  background: linear-gradient(to bottom right, #eff6ff, #e0e7ff);
-}
-
-.disposition-content {
-  max-width: 72rem;
-  margin: 0 auto;
-}
+/* Removed disposition-container and disposition-content styles - now using Tailwind classes */
 
 .disposition-layout {
   display: grid;
