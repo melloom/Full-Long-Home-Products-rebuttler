@@ -964,7 +964,6 @@
   padding: 0;
   animation: modalFadeIn 0.3s ease-out;
   pointer-events: none;
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
 }
 
 .modal-overlay .modal-content {
@@ -1975,17 +1974,9 @@
   border-right: 1px solid #2d3748;
 }
 
-/* Ensure quick navigation stays above modal overlay */
-.modal-overlay ~ .quick-navigation,
-.modal-overlay + .quick-navigation,
+/* Force quick navigation to always be visible and interactive above everything */
 .quick-navigation {
-  z-index: 1002 !important;
-  pointer-events: auto !important;
-}
-
-/* Force quick navigation to always be visible and interactive */
-.quick-navigation {
-  z-index: 9999 !important;
+  z-index: 99999 !important;
   pointer-events: auto !important;
   position: fixed !important;
   top: 0 !important;
@@ -2001,7 +1992,7 @@
 
 .quick-nav-grid,
 .quick-nav-card {
-  z-index: 9999 !important;
+  z-index: 99999 !important;
   pointer-events: auto !important;
   position: relative !important;
 }
