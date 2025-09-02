@@ -9,6 +9,7 @@ import CustomerService from './components/CustomerService';
 import FAQ from './components/FAQ';
 import ScheduleScript from './components/ScheduleScript';
 import AdminDashboard from './components/admin/AdminDashboard.jsx';
+import SaasAdminDashboard from './components/admin/SaasAdminDashboard.jsx';
 import AdminDashboardTest from './components/admin/AdminDashboardTest.jsx';
 import FirebaseTest from './components/admin/FirebaseTest.jsx';
 import ErrorBoundaryTest from './components/admin/ErrorBoundaryTest.jsx';
@@ -92,6 +93,14 @@ function App() {
           element={
             <PrivateRoute>
               <AdminDashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/saas"
+          element={
+            <PrivateRoute>
+              <SaasAdminDashboard />
             </PrivateRoute>
           }
         />

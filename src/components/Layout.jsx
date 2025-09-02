@@ -147,6 +147,11 @@ const Layout = ({ children }) => {
                 <p><strong>Help Modal:</strong> Press <code>Ctrl + Shift + H</code> (or <code>Cmd + Shift + H</code> on Mac)</p>
                 <p><strong>Admin Login:</strong> Press <code>Ctrl + Shift + L</code> (or <code>Cmd + Shift + L</code> on Mac)</p>
               </div>
+              <div className="help-step">
+                <h4>SaaS Admin Dashboard</h4>
+                <p>For managing multiple companies and platforms, visit: <code>/admin/saas</code></p>
+                <p>This allows you to create and manage training platforms for different companies.</p>
+              </div>
             </div>
           </div>
         </div>
