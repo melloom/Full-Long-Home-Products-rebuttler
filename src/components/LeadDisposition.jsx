@@ -27,47 +27,22 @@ const DispositionModal = ({ disposition, onClose }) => {
             <p className="expanded-description">{disposition.description}</p>
           </div>
 
-          <div className="modal-section situations-section">
-            <h3>When to Use This Disposition</h3>
-            <div className="situations-grid">
-              {disposition.situations ? (
-                disposition.situations.map((situation, index) => (
-                  <div key={index} className="situation-card">
-                    <div className="situation-header">
-                      <span className="situation-icon">🎯</span>
-                      <span className="situation-title">Situation {index + 1}</span>
+          {disposition.examples && disposition.examples.length > 0 && (
+            <div className="modal-section examples-section">
+              <h3>Common Examples</h3>
+              <div className="examples-grid">
+                {disposition.examples.map((example, index) => (
+                  <div key={index} className="example-card">
+                    <div className="example-header">
+                      <span className="example-icon">📋</span>
+                      <span className="example-number">Example {index + 1}</span>
                     </div>
-                    <p className="situation-text">{situation}</p>
+                    <p className="example-text">{example}</p>
                   </div>
-                ))
-              ) : (
-                <div className="situation-card">
-                  <div className="situation-header">
-                    <span className="situation-icon">🎯</span>
-                    <span className="situation-title">Common Situations</span>
-                  </div>
-                  <p className="situation-text">
-                    {disposition.name === 'Set Lead' && 'Use when a lead has been successfully scheduled for a consultation or appointment.'}
-                    {disposition.name === 'Busy' && 'Use when the lead is currently busy and requests a callback at a later time.'}
-                    {disposition.name === 'Not Set' && 'Use when unable to reach the lead or when the lead is not ready to schedule.'}
-                    {disposition.name === 'Wrong Number' && 'Use when the contact information provided is incorrect or invalid.'}
-                    {disposition.name === 'Not Interested' && 'Use when the lead explicitly states they are not interested in the service.'}
-                    {disposition.name === 'Follow Up' && 'Use when the lead needs more time to consider or requires additional information.'}
-                    {disposition.name === 'Rescheduled' && 'Use when an existing appointment has been moved to a different time.'}
-                    {disposition.name === 'Cancelled' && 'Use when the lead cancels their appointment or consultation.'}
-                    {disposition.name === 'Completed' && 'Use when the service has been successfully delivered to the lead.'}
-                    {disposition.name === 'No Answer' && 'Use when the lead does not answer the call after multiple attempts.'}
-                    {disposition.name === 'Voicemail' && 'Use when the call goes to voicemail and a message is left.'}
-                    {disposition.name === 'Callback Requested' && 'Use when the lead specifically requests a callback at a later time.'}
-                    {disposition.name === 'Qualified' && 'Use when the lead meets all the criteria for the service and is ready to proceed.'}
-                    {disposition.name === 'Not Qualified' && 'Use when the lead does not meet the necessary criteria for the service.'}
-                    {disposition.name === 'Technical Issues' && 'Use when there are technical problems preventing proper communication.'}
-                    {disposition.name === 'External Factors' && 'Use when external circumstances affect the lead\'s ability to proceed.'}
-                  </p>
-                </div>
-              )}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="modal-section next-steps-section">
             <h3>Next Steps</h3>
@@ -85,23 +60,6 @@ const DispositionModal = ({ disposition, onClose }) => {
                   </li>
                 ))}
               </ul>
-            </div>
-          )}
-
-          {disposition.examples && disposition.examples.length > 0 && (
-            <div className="modal-section examples-section">
-              <h3>Common Examples</h3>
-              <div className="examples-grid">
-                {disposition.examples.map((example, index) => (
-                  <div key={index} className="example-card">
-                    <div className="example-header">
-                      <span className="example-icon">📋</span>
-                      <span className="example-number">Example {index + 1}</span>
-                    </div>
-                    <p className="example-text">{example}</p>
-                  </div>
-                ))}
-              </div>
             </div>
           )}
 
