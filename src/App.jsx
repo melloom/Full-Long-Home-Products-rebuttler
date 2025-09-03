@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { scrollToTop } from './utils/useScrollToTop';
 import { registerServiceWorker, handleServiceWorkerUpdates } from './utils/pwa';
 import Home from './components/Home';
+import SaaSLandingPage from './components/SaaSLandingPage';
+import CompanyPlatform from './components/CompanyPlatform';
 import RebuttalLibrary from './components/RebuttalLibrary';
 import LeadDisposition from './components/LeadDisposition';
 import CustomerService from './components/CustomerService';
@@ -10,6 +12,7 @@ import FAQ from './components/FAQ';
 import ScheduleScript from './components/ScheduleScript';
 import AdminDashboard from './components/admin/AdminDashboard.jsx';
 import SaasAdminDashboard from './components/admin/SaasAdminDashboard.jsx';
+import SaasAdminLogin from './components/admin/SaasAdminLogin.jsx';
 import AdminDashboardTest from './components/admin/AdminDashboardTest.jsx';
 import FirebaseTest from './components/admin/FirebaseTest.jsx';
 import ErrorBoundaryTest from './components/admin/ErrorBoundaryTest.jsx';
@@ -19,11 +22,13 @@ import RebuttalForm from './components/admin/RebuttalForm';
 import CustomerServiceManager from './components/admin/CustomerServiceManager';
 import Layout from './components/Layout';
 import LoadingScreen from './components/LoadingScreen';
+import SecureRoute from './components/SecureRoute';
+import PersistentRoute from './components/PersistentRoute';
+import MaintenanceMode from './components/MaintenanceMode';
 import './styles/App.css';
 
+// Legacy PrivateRoute - now using SecureRoute for better protection
 const PrivateRoute = ({ children }) => {
-  // Let the AdminDashboard handle its own authentication
-  // This prevents conflicts with the AuthContext
   return children;
 };
 
@@ -31,6 +36,17 @@ const PrivateRoute = ({ children }) => {
 const NavigationWrapper = ({ Component }) => {
   const navigate = useNavigate();
   const handleNavigate = (path) => {
+    // If navigating to 'home' from within a company context, go to that company's home
+    if (path === 'home') {
+      const match = window.location.pathname.match(/^\/company\/([^/]+)/);
+      const stored = localStorage.getItem('currentCompanySlug');
+      const slug = (match && match[1]) || stored;
+      if (slug) {
+        navigate(`/company/${slug}`);
+        scrollToTop();
+        return;
+      }
+    }
     navigate(`/${path}`);
     // Scroll to top when navigating programmatically
     scrollToTop();
@@ -39,10 +55,10 @@ const NavigationWrapper = ({ Component }) => {
 };
 
 function App() {
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Force dark mode on every render
-  React.useEffect(() => {
+  useEffect(() => {
     document.body.classList.add('dark');
     return () => {
       document.body.classList.remove('dark');
@@ -50,7 +66,7 @@ function App() {
   });
 
   // Register service worker
-  React.useEffect(() => {
+  useEffect(() => {
     if (import.meta.env.PROD) {
       const initializePWA = async () => {
         try {
@@ -68,7 +84,7 @@ function App() {
     }
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     // Simulate initial app loading
     const timer = setTimeout(() => {
       setIsLoading(false);
@@ -78,85 +94,194 @@ function App() {
   }, []);
 
   if (isLoading) {
-    return <LoadingScreen />;
+    const path = typeof window !== 'undefined' ? window.location.pathname : '/';
+    // SaaS landing routes should show StayOnScript loading
+    const saasRoutes = ['/', '/admin'];
+    // Company/training routes should show Long Home loading
+    const isCompanyRoute = path.startsWith('/company') || 
+                          path.startsWith('/app') || 
+                          path.startsWith('/rebuttals') || 
+                          path.startsWith('/disposition') || 
+                          path.startsWith('/customerService') || 
+                          path.startsWith('/faq') || 
+                          path.startsWith('/scheduleScript');
+    
+    return <LoadingScreen variant={isCompanyRoute ? 'company' : 'landing'} />;
   }
 
   return (
-    <Router>
-      <Routes>
+    <>
+      <MaintenanceMode />
+      <Router future={{ 
+        v7_startTransition: true,
+        v7_relativeSplatPath: true 
+      }}>
+        <Routes>
         {/* Admin Routes */}
         <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="/admin/setup" element={<AdminSetup />} />
         <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/saas-login" element={<SaasAdminLogin />} />
         <Route
           path="/admin/dashboard"
           element={
-            <PrivateRoute>
+            <SecureRoute 
+              requiredRole="admin" 
+              allowImpersonation={true}
+              fallbackPath="/admin/login"
+            >
               <AdminDashboard />
-            </PrivateRoute>
+            </SecureRoute>
           }
         />
         <Route
           path="/admin/saas"
           element={
-            <PrivateRoute>
+            <SecureRoute 
+              requiredRole="super-admin"
+              fallbackPath="/admin/saas-login"
+            >
               <SaasAdminDashboard />
-            </PrivateRoute>
+            </SecureRoute>
           }
         />
+        <Route path="/admin/company" element={<Navigate to="/admin/dashboard" replace />} />
         <Route
           path="/admin/test"
           element={
-            <PrivateRoute>
+            <SecureRoute 
+              requiredRole="super-admin"
+              fallbackPath="/admin/saas-login"
+            >
               <AdminDashboardTest />
-            </PrivateRoute>
+            </SecureRoute>
           }
         />
         <Route
           path="/admin/firebase-test"
-          element={<FirebaseTest />}
+          element={
+            <SecureRoute 
+              requiredRole="super-admin"
+              fallbackPath="/admin/saas-login"
+            >
+              <FirebaseTest />
+            </SecureRoute>
+          }
         />
         <Route
           path="/admin/error-test"
-          element={<ErrorBoundaryTest />}
+          element={
+            <SecureRoute 
+              requiredRole="super-admin"
+              fallbackPath="/admin/saas-login"
+            >
+              <ErrorBoundaryTest />
+            </SecureRoute>
+          }
         />
         <Route
           path="/admin/rebuttals/new"
           element={
-            <PrivateRoute>
+            <SecureRoute 
+              requiredRole="admin" 
+              requiredPermissions={["manage-rebuttals"]}
+              allowImpersonation={true}
+              fallbackPath="/admin/login"
+            >
               <RebuttalForm />
-            </PrivateRoute>
+            </SecureRoute>
           }
         />
         <Route
           path="/admin/rebuttals/edit/:id"
           element={
-            <PrivateRoute>
+            <SecureRoute 
+              requiredRole="admin" 
+              requiredPermissions={["manage-rebuttals"]}
+              allowImpersonation={true}
+              fallbackPath="/admin/login"
+            >
               <RebuttalForm />
-            </PrivateRoute>
+            </SecureRoute>
           }
         />
         <Route
           path="/admin/customer-service"
           element={
-            <PrivateRoute>
+            <SecureRoute 
+              requiredRole="admin" 
+              requiredPermissions={["manage-customer-service"]}
+              allowImpersonation={true}
+              fallbackPath="/admin/login"
+            >
               <CustomerServiceManager />
-            </PrivateRoute>
+            </SecureRoute>
           }
         />
 
         {/* Public Routes */}
-        <Route path="/" element={<Layout><NavigationWrapper Component={Home} /></Layout>} />
-        <Route path="/rebuttals" element={<Layout><RebuttalLibrary /></Layout>} />
-        <Route path="/disposition" element={<Layout><LeadDisposition /></Layout>} />
-        <Route path="/customerService" element={<Layout><CustomerService /></Layout>} />
-        <Route path="/faq" element={<Layout><FAQ /></Layout>} />
-        <Route path="/scheduleScript" element={<Layout><ScheduleScript /></Layout>} />
+        <Route path="/" element={<SaaSLandingPage />} />
+        <Route path="/company/:companySlug" element={
+          <PersistentRoute>
+            <CompanyPlatform />
+          </PersistentRoute>
+        } />
+        
+        {/* Authenticated App Routes */}
+        <Route 
+          path="/app" 
+          element={
+            <SecureRoute fallbackPath="/">
+              <Layout><NavigationWrapper Component={Home} /></Layout>
+            </SecureRoute>
+          } 
+        />
+        <Route 
+          path="/rebuttals" 
+          element={
+            <SecureRoute fallbackPath="/">
+              <Layout><RebuttalLibrary /></Layout>
+            </SecureRoute>
+          } 
+        />
+        <Route 
+          path="/disposition" 
+          element={
+            <SecureRoute fallbackPath="/">
+              <Layout><LeadDisposition /></Layout>
+            </SecureRoute>
+          } 
+        />
+        <Route 
+          path="/customerService" 
+          element={
+            <SecureRoute fallbackPath="/">
+              <Layout><CustomerService /></Layout>
+            </SecureRoute>
+          } 
+        />
+        <Route 
+          path="/faq" 
+          element={
+            <SecureRoute fallbackPath="/">
+              <Layout><FAQ /></Layout>
+            </SecureRoute>
+          } 
+        />
+        <Route 
+          path="/scheduleScript" 
+          element={
+            <SecureRoute fallbackPath="/">
+              <Layout><ScheduleScript /></Layout>
+            </SecureRoute>
+          } 
+        />
         
         {/* Catch all route */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
+    </>
   );
 }
 

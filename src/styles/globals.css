@@ -5,7 +5,8 @@ html, body {
   margin: 0;
   padding: 0;
   font-family: 'Inter', Arial, sans-serif;
-  background: #f8fafc;
+  background: #0b1020;
+  color: #e5e7eb;
 }
 *, *:before, *:after {
   box-sizing: inherit;
@@ -23,6 +24,10 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Optional explicit light mode fallback if ever needed */
+body.light {
   background-color: #ffffff;
   color: #333333;
 }

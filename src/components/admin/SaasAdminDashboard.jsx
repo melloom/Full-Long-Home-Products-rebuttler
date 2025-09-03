@@ -1,360 +1,339 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { 
-  collection, 
-  doc, 
-  getDocs, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  query, 
-  orderBy,
-  where,
-  serverTimestamp 
-} from 'firebase/firestore';
-import { getDb } from '../../services/firebase/config';
+import { useSaasAdminData } from '../../hooks/useSaasAdminData';
+import { useSaasAdminUI } from '../../hooks/useSaasAdminUI';
+import { generatePlatformForm, generateAppPageContent } from '../../utils/saasAdminUtils';
+import userService from '../../services/userService';
+
+// Components
+import SaasDashboardOverview from './SaasDashboardOverview';
+import SaasCompaniesManagement from './SaasCompaniesManagement';
+import SaasPlatformsManagement from './SaasPlatformsManagement';
+import SaasUsersManagement from './SaasUsersManagement';
+import SaasDeletedCompanies from './SaasDeletedCompanies';
+
+// Modals
+import DeleteConfirmModal from './modals/DeleteConfirmModal';
+import CompanyModal from './modals/CompanyModal';
+import CreatePlatformModal from './modals/CreatePlatformModal';
+import EditAdminModal from './modals/EditAdminModal';
+
+// Platform Builder
+import PlatformBuilder from './PlatformBuilder';
+
 import './SaasAdminDashboard.css';
 
 const SaasAdminDashboard = () => {
   const { currentUser, authLoading } = useAuth();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [adminUser, setAdminUser] = useState(null);
-  const [activeTab, setActiveTab] = useState('companies');
-  const [companies, setCompanies] = useState([]);
-  const [platforms, setPlatforms] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [showCreateCompany, setShowCreateCompany] = useState(false);
-  const [showCreatePlatform, setShowCreatePlatform] = useState(false);
-  const [selectedCompany, setSelectedCompany] = useState(null);
+  
+  // Custom hooks
+  const {
+    loading,
+    error,
+    adminUser,
+    companies,
+    platforms,
+    users,
+    companyAdmins,
+    deletedCompanies,
+    createCompany,
+    createPlatform,
+    updateCompany,
+    updatePlatform,
+    deleteCompany,
+    restoreCompany,
+    loadData
+  } = useSaasAdminData();
 
-  // Form states
-  const [companyForm, setCompanyForm] = useState({
-    name: '',
-    email: '',
-    industry: '',
-    plan: 'basic',
-    status: 'active'
-  });
+  const {
+    activeTab,
+    sidebarCollapsed,
+    selectedCompany,
+    expandedCompanies,
+    showCreateCompany,
+    showCreatePlatform,
+    showEditCompany,
+    showEditPlatform,
+    showDeleteConfirm,
+    showNewModal,
+    editingCompany,
+    editingPlatform,
+    editingAdmin,
+    itemToDelete,
+    modalType,
+    activePageBuilderTab,
+    selectedPage,
+    selectedSection,
+    showLivePreview,
+    formData,
+    editCompanyForm,
+    showPassword,
+    impersonateMode,
+    impersonateCompanyId,
+    setActiveTab,
+    setSidebarCollapsed,
+    setSelectedCompany,
+    setExpandedCompanies,
+    setShowCreateCompany,
+    setShowCreatePlatform,
+    setShowEditCompany,
+    setShowEditPlatform,
+    setShowDeleteConfirm,
+    setShowNewModal,
+    setEditingCompany,
+    setEditingPlatform,
+    setEditingAdmin,
+    setItemToDelete,
+    setModalType,
+    setActivePageBuilderTab,
+    setSelectedPage,
+    setSelectedSection,
+    setShowLivePreview,
+    setFormData,
+    setEditCompanyForm,
+    setShowPassword,
+    setImpersonateMode,
+    setImpersonateCompanyId,
+    toggleCompanyExpansion,
+    openDeleteConfirm,
+    closeDeleteConfirm,
+    openCreateUser,
+    openEditAdmin,
+    closeNewModal,
+    openEditCompany,
+    closeEditCompany,
+    openEditPlatform,
+    closeEditPlatform,
+    toggleImpersonation
+  } = useSaasAdminUI();
 
-  const [platformForm, setPlatformForm] = useState({
-    name: '',
-    companyId: '',
-    domain: '',
-    theme: 'default',
-    features: {
-      rebuttals: true,
-      dispositions: true,
-      customerService: true,
-      faq: true,
-      scheduling: true
-    }
-  });
+  // Platform form state
+  const [platformForm, setPlatformForm] = useState(generatePlatformForm());
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        if (authLoading) return;
-        
-        if (!currentUser) {
-          navigate('/admin/login');
-          return;
-        }
+  // Handle delete confirmation
+  const handleDeleteConfirm = async () => {
+    if (!itemToDelete) return;
 
-        // Check if user is super admin
-        const adminUser = localStorage.getItem('adminUser');
-        if (adminUser) {
-          const parsedAdmin = JSON.parse(adminUser);
-          if (parsedAdmin.role === 'super-admin') {
-            setAdminUser(parsedAdmin);
-            await loadData();
-            setLoading(false);
-          } else {
-            setError('Access denied. Super admin privileges required.');
-            setLoading(false);
-          }
-        } else {
-          navigate('/admin/login');
-        }
-      } catch (err) {
-        console.error('Auth check error:', err);
-        setError('Authentication error');
-        setLoading(false);
-      }
-    };
-
-    checkAuth();
-  }, [currentUser, authLoading, navigate]);
-
-  const loadData = async () => {
     try {
-      const db = getDb();
+      const { item, type } = itemToDelete;
       
-      // Load companies
-      const companiesQuery = query(collection(db, 'companies'), orderBy('createdAt', 'desc'));
-      const companiesSnapshot = await getDocs(companiesQuery);
-      const companiesData = companiesSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setCompanies(companiesData);
-
-      // Load platforms
-      const platformsQuery = query(collection(db, 'platforms'), orderBy('createdAt', 'desc'));
-      const platformsSnapshot = await getDocs(platformsQuery);
-      const platformsData = platformsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setPlatforms(platformsData);
-
-      // Load users
-      const usersQuery = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
-      const usersSnapshot = await getDocs(usersQuery);
-      const usersData = usersSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setUsers(usersData);
-
+      if (type === 'company') {
+        await deleteCompany(item.id);
+      } else if (type === 'platform') {
+        // Handle platform deletion
+        console.log('Delete platform:', item.id);
+      } else if (type === 'user') {
+        await handleDeleteUser(item);
+      }
+      
+      closeDeleteConfirm();
     } catch (err) {
-      console.error('Error loading data:', err);
-      setError('Failed to load data');
+      console.error('Delete error:', err);
     }
   };
 
+  // Handle user deletion
+  const handleDeleteUser = async (user) => {
+    try {
+      console.log('🔍 SaasAdminDashboard: Attempting to delete user:', user);
+      await userService.deleteUser(user.id);
+      console.log('🔍 SaasAdminDashboard: User deleted successfully');
+      // Reload data to refresh the user list
+      await loadData();
+    } catch (error) {
+      console.error('🔍 SaasAdminDashboard: Error deleting user:', error);
+      
+      if (error.message.includes('must be logged in')) {
+        alert('You must be logged in to delete users');
+      } else if (error.message.includes('Firebase Auth session required')) {
+        alert('Your session has expired. Please log in again to continue.');
+      } else if (error.message.includes('permission-denied')) {
+        alert('You do not have permission to delete users');
+      } else if (error.message.includes('not found')) {
+        alert('User not found. They may have already been deleted.');
+      } else {
+        alert(`Failed to delete user: ${error.message}`);
+      }
+    }
+  };
+
+  // Handle user deletion with confirmation
+  const onDeleteUser = (user) => {
+    if (window.confirm(`Are you sure you want to delete user "${user.name || user.email}"?`)) {
+      openDeleteConfirm({ item: user, type: 'user' });
+    }
+  };
+
+  // Handle company creation
   const handleCreateCompany = async (e) => {
     e.preventDefault();
     try {
-      const db = getDb();
-      const companyData = {
-        ...companyForm,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      };
-      
-      await addDoc(collection(db, 'companies'), companyData);
+      await createCompany(editCompanyForm);
       setShowCreateCompany(false);
-      setCompanyForm({ name: '', email: '', industry: '', plan: 'basic', status: 'active' });
-      await loadData();
+      setEditCompanyForm({
+    name: '',
+    email: '',
+    industry: '',
+    plan: 'starter',
+    status: 'active',
+    maintenanceMode: false,
+    maintenanceMessage: 'We are currently performing scheduled maintenance. Please check back soon.'
+  });
     } catch (err) {
-      console.error('Error creating company:', err);
-      setError('Failed to create company');
+      console.error('Create company error:', err);
     }
   };
 
+  // Handle company editing
+  const handleEditCompany = async (e) => {
+    e.preventDefault();
+    try {
+      await updateCompany(editingCompany.id, editCompanyForm);
+      closeEditCompany();
+    } catch (err) {
+      console.error('Edit company error:', err);
+    }
+  };
+
+  // Handle platform creation
   const handleCreatePlatform = async (e) => {
     e.preventDefault();
     try {
-      const db = getDb();
-      const platformData = {
-        ...platformForm,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      };
-      
-      await addDoc(collection(db, 'platforms'), platformData);
+      await createPlatform(platformForm);
       setShowCreatePlatform(false);
-      setPlatformForm({
-        name: '',
-        companyId: '',
-        domain: '',
-        theme: 'default',
-        features: {
-          rebuttals: true,
-          dispositions: true,
-          customerService: true,
-          faq: true,
-          scheduling: true
-        }
-      });
-      await loadData();
+      setPlatformForm(generatePlatformForm());
     } catch (err) {
-      console.error('Error creating platform:', err);
-      setError('Failed to create platform');
+      console.error('Create platform error:', err);
     }
   };
 
+  // Handle platform editing
+  const handleEditPlatform = async (e) => {
+    e.preventDefault();
+    try {
+      await updatePlatform(editingPlatform.id, platformForm);
+      closeEditPlatform();
+    } catch (err) {
+      console.error('Edit platform error:', err);
+    }
+  };
+
+  // Handle user creation/editing
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      // Handle user creation/editing logic here
+      console.log('Form submit:', formData);
+      closeNewModal();
+    } catch (err) {
+      console.error('Form submit error:', err);
+    }
+  };
+
+  // Handle company status toggle
+  const toggleCompanyStatus = async (company) => {
+    try {
+      const newStatus = company.status === 'active' ? 'inactive' : 'active';
+      await updateCompany(company.id, { status: newStatus });
+    } catch (err) {
+      console.error('Toggle status error:', err);
+    }
+  };
+
+  // Handle logout
   const handleLogout = () => {
-    localStorage.removeItem('adminUser');
+    // Clear impersonation data
+    localStorage.removeItem('impersonation');
     navigate('/admin/login');
   };
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'companies':
-        return (
-          <div className="saas-content">
-            <div className="content-header">
-              <h2>Companies</h2>
-              <button 
-                className="create-button"
-                onClick={() => setShowCreateCompany(true)}
-              >
-                + Create Company
-              </button>
-            </div>
-            
-            <div className="companies-grid">
-              {companies.map(company => (
-                <div key={company.id} className="company-card">
-                  <div className="company-header">
-                    <h3>{company.name}</h3>
-                    <span className={`status-badge ${company.status}`}>
-                      {company.status}
-                    </span>
-                  </div>
-                  <div className="company-details">
-                    <p><strong>Email:</strong> {company.email}</p>
-                    <p><strong>Industry:</strong> {company.industry}</p>
-                    <p><strong>Plan:</strong> {company.plan}</p>
-                    <p><strong>Created:</strong> {company.createdAt?.toDate?.()?.toLocaleDateString() || 'N/A'}</p>
-                  </div>
-                  <div className="company-actions">
-                    <button 
-                      className="action-button primary"
-                      onClick={() => {
-                        setSelectedCompany(company);
-                        setActiveTab('platforms');
-                      }}
-                    >
-                      View Platforms
-                    </button>
-                    <button className="action-button secondary">Edit</button>
-                    <button className="action-button danger">Delete</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-
-      case 'platforms':
-        return (
-          <div className="saas-content">
-            <div className="content-header">
-              <h2>Training Platforms</h2>
-              <button 
-                className="create-button"
-                onClick={() => setShowCreatePlatform(true)}
-              >
-                + Create Platform
-              </button>
-            </div>
-            
-            <div className="platforms-grid">
-              {platforms.map(platform => {
-                const company = companies.find(c => c.id === platform.companyId);
-                return (
-                  <div key={platform.id} className="platform-card">
-                    <div className="platform-header">
-                      <h3>{platform.name}</h3>
-                      <span className="company-name">{company?.name || 'Unknown Company'}</span>
-                    </div>
-                    <div className="platform-details">
-                      <p><strong>Domain:</strong> {platform.domain}</p>
-                      <p><strong>Theme:</strong> {platform.theme}</p>
-                      <p><strong>Features:</strong> {Object.keys(platform.features).filter(f => platform.features[f]).join(', ')}</p>
-                    </div>
-                    <div className="platform-actions">
-                      <button className="action-button primary">View</button>
-                      <button className="action-button secondary">Edit</button>
-                      <button className="action-button danger">Delete</button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        );
-
-      case 'users':
-        return (
-          <div className="saas-content">
-            <div className="content-header">
-              <h2>All Users</h2>
-            </div>
-            
-            <div className="users-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Company</th>
-                    <th>Role</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map(user => {
-                    const company = companies.find(c => c.id === user.companyId);
-                    return (
-                      <tr key={user.id}>
-                        <td>{user.name || 'N/A'}</td>
-                        <td>{user.email}</td>
-                        <td>{company?.name || 'N/A'}</td>
-                        <td>{user.role || 'user'}</td>
-                        <td>
-                          <span className={`status-badge ${user.status || 'active'}`}>
-                            {user.status || 'active'}
-                          </span>
-                        </td>
-                        <td>
-                          <button className="action-button secondary">Edit</button>
-                          <button className="action-button danger">Delete</button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        );
-
-      case 'analytics':
-        return (
-          <div className="saas-content">
-            <div className="content-header">
-              <h2>Analytics & Reports</h2>
-            </div>
-            
-            <div className="analytics-grid">
-              <div className="stat-card">
-                <h3>Total Companies</h3>
-                <div className="stat-number">{companies.length}</div>
-              </div>
-              <div className="stat-card">
-                <h3>Total Platforms</h3>
-                <div className="stat-number">{platforms.length}</div>
-              </div>
-              <div className="stat-card">
-                <h3>Total Users</h3>
-                <div className="stat-number">{users.length}</div>
-              </div>
-              <div className="stat-card">
-                <h3>Active Platforms</h3>
-                <div className="stat-number">{platforms.filter(p => p.status === 'active').length}</div>
-              </div>
-            </div>
-          </div>
-        );
-
-      default:
-        return null;
+  // Handle impersonation navigation
+  const goToImpersonatedDashboard = () => {
+    console.log('🚀 Impersonation navigation:', { impersonateMode, impersonateCompanyId });
+    if (impersonateMode && impersonateCompanyId) {
+      const targetUrl = `/admin/dashboard?impersonate=${impersonateCompanyId}`;
+      console.log('🚀 Navigating to:', targetUrl);
+      navigate(targetUrl);
+    } else {
+      console.warn('🚀 Impersonation navigation failed:', { impersonateMode, impersonateCompanyId });
     }
   };
 
-  if (loading) {
+  // Render content based on active tab
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return (
+          <SaasDashboardOverview 
+            companies={companies}
+            platforms={platforms}
+            users={users}
+            adminUser={adminUser}
+          />
+        );
+      
+      case 'companies':
+        return (
+          <SaasCompaniesManagement
+            companies={companies}
+            companyAdmins={companyAdmins}
+            expandedCompanies={expandedCompanies}
+            onToggleExpansion={toggleCompanyExpansion}
+            onViewPlatforms={(company) => {
+              setSelectedCompany(company);
+              setActiveTab('platforms');
+            }}
+            onEditCompany={openEditCompany}
+            onToggleStatus={toggleCompanyStatus}
+            onDeleteCompany={openDeleteConfirm}
+            onCreateCompany={() => setShowCreateCompany(true)}
+          />
+        );
+      
+      case 'platforms':
+        return (
+          <SaasPlatformsManagement
+            platforms={platforms}
+            companies={companies}
+            selectedCompany={selectedCompany}
+            onCreatePlatform={() => setShowCreatePlatform(true)}
+            onEditPlatform={openEditPlatform}
+            onDeletePlatform={openDeleteConfirm}
+          />
+        );
+      
+      case 'users':
+        return (
+          <SaasUsersManagement
+            users={users}
+            companies={companies}
+            companyAdmins={companyAdmins}
+            onCreateUser={openCreateUser}
+            onEditAdmin={openEditAdmin}
+            onDeleteUser={onDeleteUser}
+          />
+        );
+      
+      case 'deleted':
+        return (
+          <SaasDeletedCompanies
+            deletedCompanies={deletedCompanies}
+            onRestoreCompany={restoreCompany}
+          />
+        );
+      
+      default:
+        return <div>Unknown tab</div>;
+    }
+  };
+
+  if (authLoading || loading) {
     return (
       <div className="loading-container">
         <div className="loading-spinner"></div>
-        <h2>Loading SaaS Admin Dashboard...</h2>
-        <p>Please wait while we initialize your super admin panel</p>
+        <p>Loading...</p>
       </div>
     );
   }
@@ -364,7 +343,7 @@ const SaasAdminDashboard = () => {
       <div className="error-container">
         <h2>Error</h2>
         <p>{error}</p>
-        <button onClick={() => window.location.reload()}>Retry</button>
+        <button onClick={() => navigate('/admin/login')}>Go to Login</button>
       </div>
     );
   }
@@ -380,194 +359,174 @@ const SaasAdminDashboard = () => {
   }
 
   return (
-    <div className="saas-admin-dashboard">
+    <div className="saas-admin-dashboard dark-mode">
       <header className="saas-admin-header">
         <div className="header-left">
           <h1>🚀 SaaS Admin Dashboard</h1>
           <span className="subtitle">Multi-Tenant Training Platform Management</span>
         </div>
         <div className="header-right">
-          <span>Welcome, {adminUser.email}</span>
-          <button className="header-button" onClick={() => navigate('/')}>Main App</button>
+          <span className="welcome-user">Welcome, {adminUser.email}</span>
+          {adminUser.role === 'super-admin' && (
+            <div className="impersonate-controls" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <input type="checkbox" checked={impersonateMode} onChange={toggleImpersonation} />
+                <span>Impersonator Mode</span>
+              </label>
+              <select
+                value={impersonateCompanyId}
+                onChange={(e) => {
+                  setImpersonateCompanyId(e.target.value);
+                  if (impersonateMode) {
+                    localStorage.setItem('impersonation', JSON.stringify({ enabled: true, companyId: e.target.value }));
+                  }
+                }}
+                disabled={!impersonateMode}
+                style={{ padding: '6px 10px', borderRadius: 6 }}
+              >
+                <option value="">Select company</option>
+                {companies.map(c => (
+                  <option key={c.id} value={c.id}>{c.name || c.id}</option>
+                ))}
+              </select>
+              <button className="header-button" onClick={goToImpersonatedDashboard} disabled={!impersonateMode || !impersonateCompanyId}>Dashboard</button>
+            </div>
+          )}
+          <button className="header-button" onClick={() => navigate('/')}>SaaS Landing</button>
           <button className="header-button" onClick={handleLogout}>Logout</button>
         </div>
       </header>
 
-      <nav className="saas-admin-nav">
-        <button 
-          className={`nav-tab ${activeTab === 'companies' ? 'active' : ''}`}
-          onClick={() => setActiveTab('companies')}
-        >
-          🏢 Companies
-        </button>
-        <button 
-          className={`nav-tab ${activeTab === 'platforms' ? 'active' : ''}`}
-          onClick={() => setActiveTab('platforms')}
-        >
-          🎯 Platforms
-        </button>
-        <button 
-          className={`nav-tab ${activeTab === 'users' ? 'active' : ''}`}
-          onClick={() => setActiveTab('users')}
-        >
-          👥 Users
-        </button>
-        <button 
-          className={`nav-tab ${activeTab === 'analytics' ? 'active' : ''}`}
-          onClick={() => setActiveTab('analytics')}
-        >
-          📊 Analytics
-        </button>
-      </nav>
-
-      <main className="saas-admin-content">
-        {renderContent()}
-      </main>
-
-      {/* Create Company Modal */}
-      {showCreateCompany && (
-        <div className="modal-overlay" onClick={() => setShowCreateCompany(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Create New Company</h3>
-              <button className="modal-close" onClick={() => setShowCreateCompany(false)}>×</button>
-            </div>
-            <form onSubmit={handleCreateCompany} className="modal-body">
-              <div className="form-group">
-                <label>Company Name</label>
-                <input
-                  type="text"
-                  value={companyForm.name}
-                  onChange={(e) => setCompanyForm({...companyForm, name: e.target.value})}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Email</label>
-                <input
-                  type="email"
-                  value={companyForm.email}
-                  onChange={(e) => setCompanyForm({...companyForm, email: e.target.value})}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Industry</label>
-                <select
-                  value={companyForm.industry}
-                  onChange={(e) => setCompanyForm({...companyForm, industry: e.target.value})}
-                  required
-                >
-                  <option value="">Select Industry</option>
-                  <option value="home-improvement">Home Improvement</option>
-                  <option value="sales">Sales</option>
-                  <option value="customer-service">Customer Service</option>
-                  <option value="healthcare">Healthcare</option>
-                  <option value="education">Education</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Plan</label>
-                <select
-                  value={companyForm.plan}
-                  onChange={(e) => setCompanyForm({...companyForm, plan: e.target.value})}
-                >
-                  <option value="basic">Basic</option>
-                  <option value="professional">Professional</option>
-                  <option value="enterprise">Enterprise</option>
-                </select>
-              </div>
-              <div className="form-actions">
-                <button type="button" onClick={() => setShowCreateCompany(false)}>Cancel</button>
-                <button type="submit">Create Company</button>
-              </div>
-            </form>
+      <div className="saas-admin-layout">
+        <aside className={`saas-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
+          <div className="sidebar-header">
+            <h3>🚀 SaaS Admin</h3>
+            <button 
+              className="sidebar-toggle"
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            >
+              {sidebarCollapsed ? '→' : '←'}
+            </button>
           </div>
-        </div>
-      )}
+          
+          <nav className="sidebar-nav">
+            <button 
+              className={`sidebar-item ${activeTab === 'dashboard' ? 'active' : ''}`}
+              onClick={() => setActiveTab('dashboard')}
+            >
+              <span className="sidebar-icon">🏠</span>
+              {!sidebarCollapsed && <span>Dashboard</span>}
+            </button>
+            
+            <button 
+              className={`sidebar-item ${activeTab === 'companies' ? 'active' : ''}`}
+              onClick={() => setActiveTab('companies')}
+            >
+              <span className="sidebar-icon">🏢</span>
+              {!sidebarCollapsed && <span>Companies</span>}
+            </button>
+            
+            <button 
+              className={`sidebar-item ${activeTab === 'platforms' ? 'active' : ''}`}
+              onClick={() => setActiveTab('platforms')}
+            >
+              <span className="sidebar-icon">🎯</span>
+              {!sidebarCollapsed && <span>Platforms</span>}
+            </button>
+            
+            <button 
+              className={`sidebar-item ${activeTab === 'users' ? 'active' : ''}`}
+              onClick={() => setActiveTab('users')}
+            >
+              <span className="sidebar-icon">👥</span>
+              {!sidebarCollapsed && <span>Users</span>}
+            </button>
+            
+            <button 
+              className={`sidebar-item ${activeTab === 'deleted' ? 'active' : ''}`}
+              onClick={() => setActiveTab('deleted')}
+            >
+              <span className="sidebar-icon">🗑️</span>
+              {!sidebarCollapsed && <span>Deleted</span>}
+            </button>
+          </nav>
+        </aside>
 
-      {/* Create Platform Modal */}
-      {showCreatePlatform && (
-        <div className="modal-overlay" onClick={() => setShowCreatePlatform(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Create New Platform</h3>
-              <button className="modal-close" onClick={() => setShowCreatePlatform(false)}>×</button>
-            </div>
-            <form onSubmit={handleCreatePlatform} className="modal-body">
-              <div className="form-group">
-                <label>Platform Name</label>
-                <input
-                  type="text"
-                  value={platformForm.name}
-                  onChange={(e) => setPlatformForm({...platformForm, name: e.target.value})}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Company</label>
-                <select
-                  value={platformForm.companyId}
-                  onChange={(e) => setPlatformForm({...platformForm, companyId: e.target.value})}
-                  required
-                >
-                  <option value="">Select Company</option>
-                  {companies.map(company => (
-                    <option key={company.id} value={company.id}>{company.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Domain</label>
-                <input
-                  type="text"
-                  value={platformForm.domain}
-                  onChange={(e) => setPlatformForm({...platformForm, domain: e.target.value})}
-                  placeholder="company-name.trainingplatform.com"
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Theme</label>
-                <select
-                  value={platformForm.theme}
-                  onChange={(e) => setPlatformForm({...platformForm, theme: e.target.value})}
-                >
-                  <option value="default">Default</option>
-                  <option value="dark">Dark</option>
-                  <option value="light">Light</option>
-                  <option value="corporate">Corporate</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Features</label>
-                <div className="checkbox-group">
-                  {Object.keys(platformForm.features).map(feature => (
-                    <label key={feature} className="checkbox-label">
-                      <input
-                        type="checkbox"
-                        checked={platformForm.features[feature]}
-                        onChange={(e) => setPlatformForm({
-                          ...platformForm,
-                          features: {
-                            ...platformForm.features,
-                            [feature]: e.target.checked
-                          }
-                        })}
-                      />
-                      {feature.charAt(0).toUpperCase() + feature.slice(1)}
-                    </label>
-                  ))}
-                </div>
-              </div>
-              <div className="form-actions">
-                <button type="button" onClick={() => setShowCreatePlatform(false)}>Cancel</button>
-                <button type="submit">Create Platform</button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <main className="saas-main">
+          {renderContent()}
+        </main>
+      </div>
+
+      {/* Modals */}
+      <DeleteConfirmModal
+        isOpen={showDeleteConfirm}
+        itemToDelete={itemToDelete}
+        onConfirm={handleDeleteConfirm}
+        onCancel={closeDeleteConfirm}
+      />
+
+      <CompanyModal
+        isOpen={showCreateCompany}
+        isEdit={false}
+        formData={editCompanyForm}
+        onFormChange={setEditCompanyForm}
+        onSubmit={handleCreateCompany}
+        onCancel={() => setShowCreateCompany(false)}
+      />
+
+      <CompanyModal
+        isOpen={showEditCompany}
+        isEdit={true}
+        company={editingCompany}
+        formData={editCompanyForm}
+        onFormChange={setEditCompanyForm}
+        onSubmit={handleEditCompany}
+        onCancel={closeEditCompany}
+      />
+
+      <CreatePlatformModal
+        isOpen={showCreatePlatform}
+        companies={companies}
+        onClose={() => setShowCreatePlatform(false)}
+        onSuccess={(newPlatform) => {
+          console.log('Platform created successfully:', newPlatform);
+          setShowCreatePlatform(false);
+          // Refresh data to show the new platform
+          loadData();
+        }}
+      />
+
+      <EditAdminModal
+        isOpen={showNewModal}
+        isEdit={modalType === 'edit-admin'}
+        companies={companies}
+        formData={formData}
+        showPassword={showPassword}
+        onFormChange={setFormData}
+        onTogglePassword={() => setShowPassword(!showPassword)}
+        onSubmit={handleFormSubmit}
+        onCancel={closeNewModal}
+      />
+
+      {/* Platform Builder Modal */}
+      {showEditPlatform && (
+        <PlatformBuilder
+          isOpen={showEditPlatform}
+          platform={editingPlatform}
+          platformForm={platformForm}
+          setPlatformForm={setPlatformForm}
+          activePageBuilderTab={activePageBuilderTab}
+          setActivePageBuilderTab={setActivePageBuilderTab}
+          selectedPage={selectedPage}
+          setSelectedPage={setSelectedPage}
+          selectedSection={selectedSection}
+          setSelectedSection={setSelectedSection}
+          showLivePreview={showLivePreview}
+          setShowLivePreview={setShowLivePreview}
+          onSave={handleEditPlatform}
+          onCancel={closeEditPlatform}
+          companies={companies}
+        />
       )}
     </div>
   );

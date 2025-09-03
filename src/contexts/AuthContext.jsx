@@ -105,6 +105,73 @@ export function AuthProvider({ children }) {
   const logout = () => {
     setCurrentUser(null);
     localStorage.removeItem('adminUser');
+    localStorage.removeItem('companyUser');
+    localStorage.removeItem('currentCompanySlug');
+  };
+
+  // Function to clear all auth data (useful for debugging)
+  const clearAllAuthData = () => {
+    console.log('🧹 Clearing all authentication data...');
+    localStorage.removeItem('adminUser');
+    localStorage.removeItem('companyUser');
+    localStorage.removeItem('currentCompanySlug');
+    setCurrentUser(null);
+    console.log('🧹 All authentication data cleared');
+  };
+
+  // Function to check if user has a persistent session
+  const hasPersistentSession = () => {
+    const adminUser = localStorage.getItem('adminUser');
+    const companyUser = localStorage.getItem('companyUser');
+    return !!(adminUser || companyUser);
+  };
+
+  // Function to get user type for routing
+  const getUserType = () => {
+    const adminUser = localStorage.getItem('adminUser');
+    const companyUser = localStorage.getItem('companyUser');
+    
+    // Prioritize admin user over company user
+    if (adminUser) {
+      try {
+        const parsed = JSON.parse(adminUser);
+        console.log('🔍 AuthContext: Found admin user:', parsed);
+        
+        // If we have an admin user, clear any conflicting company user data
+        if (companyUser) {
+          console.log('🔍 AuthContext: Clearing conflicting company user data');
+          localStorage.removeItem('companyUser');
+          localStorage.removeItem('currentCompanySlug');
+        }
+        
+        return {
+          type: 'admin',
+          role: parsed.role,
+          email: parsed.email
+        };
+      } catch (e) {
+        console.error('🔍 AuthContext: Error parsing admin user:', e);
+        return null;
+      }
+    }
+    
+    if (companyUser) {
+      try {
+        const parsed = JSON.parse(companyUser);
+        console.log('🔍 AuthContext: Found company user:', parsed);
+        return {
+          type: 'company-user',
+          companyId: parsed.companyId,
+          email: parsed.email
+        };
+      } catch (e) {
+        console.error('🔍 AuthContext: Error parsing company user:', e);
+        return null;
+      }
+    }
+    
+    console.log('🔍 AuthContext: No user found in localStorage');
+    return null;
   };
 
   // Function to attempt session restoration
@@ -129,7 +196,10 @@ export function AuthProvider({ children }) {
     loading,
     error,
     logout,
-    attemptSessionRestoration
+    clearAllAuthData,
+    attemptSessionRestoration,
+    hasPersistentSession,
+    getUserType
   };
 
   if (loading) {

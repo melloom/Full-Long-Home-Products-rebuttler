@@ -2,58 +2,9 @@
   padding: 2rem;
   max-width: 1400px;
   margin: 0 auto;
-  background: #f8fafc !important;
+  background: #f8fafc;
   min-height: 100vh;
-  color: #000000 !important;
-}
-
-/* Force all text to be black with maximum specificity */
-.customer-service-management,
-.customer-service-management *,
-.customer-service-management .topic-card,
-.customer-service-management .topic-card *,
-.customer-service-management .topic-title,
-.customer-service-management .topic-description,
-.customer-service-management .topic-meta,
-.customer-service-management .topic-stats,
-.customer-service-management .stat-item,
-.customer-service-management .stat-label,
-.customer-service-management .stat-value {
-  color: #000000 !important;
-}
-
-/* Override any dark theme that might be applied */
-.dark-theme .customer-service-management,
-.dark-theme .customer-service-management *,
-.dark-theme .customer-service-management .topic-card,
-.dark-theme .customer-service-management .topic-card *,
-.dark-theme .customer-service-management .topic-title,
-.dark-theme .customer-service-management .topic-description,
-.dark-theme .customer-service-management .topic-meta,
-.dark-theme .customer-service-management .topic-stats,
-.dark-theme .customer-service-management .stat-item,
-.dark-theme .customer-service-management .stat-label,
-.dark-theme .customer-service-management .stat-value {
-  color: #000000 !important;
-  background-color: #ffffff !important;
-}
-
-/* Override prefers-color-scheme: dark */
-@media (prefers-color-scheme: dark) {
-  .customer-service-management,
-  .customer-service-management *,
-  .customer-service-management .topic-card,
-  .customer-service-management .topic-card *,
-  .customer-service-management .topic-title,
-  .customer-service-management .topic-description,
-  .customer-service-management .topic-meta,
-  .customer-service-management .topic-stats,
-  .customer-service-management .stat-item,
-  .customer-service-management .stat-label,
-  .customer-service-management .stat-value {
-    color: #000000 !important;
-    background-color: #ffffff !important;
-  }
+  color: #0f172a;
 }
 
 /* Header Section */
@@ -308,19 +259,14 @@
 }
 
 .topic-card {
-  background: #ffffff !important;
+  background: #ffffff;
   border-radius: 16px;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
   overflow: hidden;
   position: relative;
   border: 2px solid transparent;
-  color: #000000 !important;
-}
-
-.topic-card * {
-  color: #000000 !important;
-  background: transparent !important;
+  color: inherit;
 }
 
 .topic-card:hover {
@@ -457,6 +403,7 @@
   margin: 0 0 1rem;
   display: -webkit-box;
   -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -1007,3 +954,34 @@
     flex-direction: column;
   }
 } 
+
+/* --- Dark mode overrides appended --- */
+.customer-service-management { background: #0b1324 !important; color: #e5e7eb !important; }
+.customer-service-management .management-header { background: #0f172a !important; border: 1px solid #334155 !important; box-shadow: 0 8px 24px rgba(0,0,0,0.35); }
+.customer-service-management .header-content h2 { color: #e5e7eb !important; }
+.customer-service-management .header-subtitle { color: #cbd5e1 !important; }
+.customer-service-management .reset-button, .customer-service-management .add-button { background: rgba(30,41,59,0.6) !important; color: #e5e7eb !important; border: 1px solid #334155 !important; }
+.customer-service-management .reset-button:hover, .customer-service-management .add-button:hover { background: rgba(51,65,85,0.6) !important; }
+
+.customer-service-management .management-controls { background: #0f172a !important; border: 1px solid #334155 !important; }
+.customer-service-management .search-input, .customer-service-management .category-filter, .customer-service-management .sort-select { background: #0b1324 !important; color: #e5e7eb !important; border: 1px solid #334155 !important; }
+
+.customer-service-management .stats-grid .stat-card, .customer-service-management .topics-grid .topic-card { background: #0f172a !important; border: 1px solid #334155 !important; color: #e5e7eb !important; }
+.customer-service-management .topic-icon { background: rgba(30,41,59,0.6) !important; border: 1px solid #334155 !important; color: #e5e7eb !important; }
+.customer-service-management .topic-title, .customer-service-management .topic-description { color: #e5e7eb !important; }
+.customer-service-management .category-badge { background: rgba(59,130,246,0.15) !important; color: #93c5fd !important; border: 1px solid rgba(59,130,246,0.35) !important; }
+.customer-service-management .topic-stats { border-top: 1px solid #334155 !important; }
+.customer-service-management .stat-label, .customer-service-management .stat-value { color: #e5e7eb !important; }
+
+.customer-service-management .empty-state, .customer-service-management .loading-container { background: #0f172a !important; border: 1px solid #334155 !important; color: #e5e7eb !important; }
+
+/* Modals */
+.customer-service-management .modal-overlay { background: rgba(0,0,0,0.6) !important; }
+.customer-service-management .topic-modal, .customer-service-management .delete-modal { background: #0b1324 !important; color: #e5e7eb !important; border: 1px solid #334155 !important; }
+.customer-service-management .modal-header, .customer-service-management .delete-header { border-bottom: 1px solid #334155 !important; }
+.customer-service-management .modal-header h2, .customer-service-management .close-modal { color: #e5e7eb !important; }
+.customer-service-management .topic-form, .customer-service-management .delete-content { background: #0b1324 !important; }
+.customer-service-management .form-group label { color: #cbd5e1 !important; }
+.customer-service-management .form-group input, .customer-service-management .form-group textarea, .customer-service-management .form-group select { background: #0f172a !important; color: #e5e7eb !important; border: 1px solid #334155 !important; }
+.customer-service-management .delete-actions .cancel-button { background: rgba(30,41,59,0.6) !important; color: #e5e7eb !important; border: 1px solid #334155 !important; }
+.customer-service-management .delete-actions .delete-button { background: #ef4444 !important; color: #fff !important; } 

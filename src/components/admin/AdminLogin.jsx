@@ -18,13 +18,68 @@ const AdminLogin = () => {
   useEffect(() => {
     const adminUser = localStorage.getItem('adminUser');
     if (adminUser) {
-      navigate('/admin/dashboard');
+      const parsedAdmin = JSON.parse(adminUser);
+      // Redirect based on role
+      if (parsedAdmin.role === 'super-admin') {
+        navigate('/admin/saas');
+      } else {
+        navigate('/admin/dashboard');
+      }
     }
   }, [navigate]);
 
   const verifyAdminStatus = async (user) => {
     try {
-      // Check if user exists in admins collection
+      // First check if user is a super admin
+      const superAdminRef = doc(getDb(), 'super-admins', user.uid);
+      const superAdminDoc = await getDoc(superAdminRef);
+      
+      if (superAdminDoc.exists()) {
+        const superAdminData = superAdminDoc.data();
+        console.log('🔍 AdminLogin: User is a super admin, redirecting to SaaS dashboard');
+        console.log('🔍 AdminLogin: Super admin data:', superAdminData);
+        
+        // Store super admin info in localStorage
+        const adminUser = {
+          uid: user.uid,
+          email: user.email,
+          role: 'super-admin',
+          ...superAdminData
+        };
+        console.log('🔍 AdminLogin: Storing admin user in localStorage:', adminUser);
+        localStorage.setItem('adminUser', JSON.stringify(adminUser));
+        
+        // Redirect to super admin dashboard
+        console.log('🔍 AdminLogin: Navigating to /admin/saas');
+        navigate('/admin/saas');
+        return 'super-admin';
+      }
+
+      // Check if user is a company admin
+      const companyAdminRef = doc(getDb(), 'company-admins', user.uid);
+      const companyAdminDoc = await getDoc(companyAdminRef);
+      
+      if (companyAdminDoc.exists()) {
+        const companyAdminData = companyAdminDoc.data();
+        console.log('🔍 AdminLogin: User is company admin:', companyAdminData);
+        
+        // Store company admin info in localStorage
+        const adminUser = {
+          uid: user.uid,
+          email: user.email,
+          role: 'company-admin',
+          companyId: companyAdminData.companyId,
+          ...companyAdminData
+        };
+        localStorage.setItem('adminUser', JSON.stringify(adminUser));
+        
+        // Redirect to company admin dashboard
+        console.log('🔍 AdminLogin: Navigating to /admin/company');
+        navigate('/admin/company');
+        return 'company-admin';
+      }
+
+      // Check if user exists in regular admins collection
       const adminRef = doc(getDb(), 'admins', user.uid);
       const adminDoc = await getDoc(adminRef);
 
@@ -37,7 +92,7 @@ const AdminLogin = () => {
           createdAt: new Date().toISOString(),
           lastLogin: new Date().toISOString()
         });
-        return true;
+        return 'admin';
       }
 
       const adminData = adminDoc.data();
@@ -49,7 +104,7 @@ const AdminLogin = () => {
         }, { merge: true });
       }
 
-      return true;
+      return 'admin';
     } catch (error) {
       console.error('Error verifying admin status:', error);
       throw error;
@@ -71,15 +126,20 @@ const AdminLogin = () => {
         return;
       }
 
-      await verifyAdminStatus(user);
+      const adminType = await verifyAdminStatus(user);
       
-      // Store user data with role
-      localStorage.setItem('adminUser', JSON.stringify({
-        ...user,
-        role: 'admin'
-      }));
+      // If user is not a super admin, store regular admin data and navigate to regular dashboard
+      if (adminType === 'admin') {
+        // Store user data with role
+        localStorage.setItem('adminUser', JSON.stringify({
+          ...user,
+          role: 'admin'
+        }));
+        
+        navigate('/admin/dashboard');
+      }
+      // If user is super admin, verifyAdminStatus already handled the redirect
       
-      navigate('/admin/dashboard');
     } catch (err) {
       setError(err.message || 'Failed to sign in. Please try again.');
     } finally {
@@ -97,16 +157,21 @@ const AdminLogin = () => {
     setLoading(true);
     try {
       await userService.updateDisplayName(currentUser.uid, displayName.trim());
-      await verifyAdminStatus(currentUser);
+      const adminType = await verifyAdminStatus(currentUser);
       
-      // Store user data with role
-      localStorage.setItem('adminUser', JSON.stringify({
-        ...currentUser,
-        displayName: displayName.trim(),
-        role: 'admin'
-      }));
+      // If user is not a super admin, store regular admin data and navigate to regular dashboard
+      if (adminType === 'admin') {
+        // Store user data with role
+        localStorage.setItem('adminUser', JSON.stringify({
+          ...currentUser,
+          displayName: displayName.trim(),
+          role: 'admin'
+        }));
+        
+        navigate('/admin/dashboard');
+      }
+      // If user is super admin, verifyAdminStatus already handled the redirect
       
-      navigate('/admin/dashboard');
     } catch (err) {
       setError(err.message || 'Failed to update display name. Please try again.');
     } finally {

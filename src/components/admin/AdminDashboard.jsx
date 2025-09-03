@@ -19,6 +19,8 @@ const AdminDashboard = () => {
   const [error, setError] = useState(null);
   const [adminUser, setAdminUser] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [scopedCompanyId, setScopedCompanyId] = useState('');
+  const [isImpersonating, setIsImpersonating] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -43,14 +45,57 @@ const AdminDashboard = () => {
         if (adminUser) {
           const parsedAdmin = JSON.parse(adminUser);
           console.log('🔍 AdminDashboard: Found admin user in localStorage:', parsedAdmin);
+
+          // If super admin, stay here only if impersonating, else go to SaaS
+          if (parsedAdmin.role === 'super-admin') {
+            const url = new URL(window.location.href);
+            const impersonateCompanyId = url.searchParams.get('impersonate');
+            let impersonation = null;
+            try { impersonation = JSON.parse(localStorage.getItem('impersonation') || 'null'); } catch {}
+
+            if (impersonateCompanyId || impersonation?.enabled) {
+              const targetCompanyId = impersonateCompanyId || impersonation?.companyId || '';
+              setScopedCompanyId(targetCompanyId);
+              setIsImpersonating(true);
+              // Persist for downstream usage
+              localStorage.setItem('impersonation', JSON.stringify({ enabled: true, companyId: targetCompanyId }));
+              console.log('🔍 AdminDashboard: Super admin impersonating company:', targetCompanyId);
+            } else {
+              console.log('🔍 AdminDashboard: Super admin (no impersonation), redirecting to SaaS dashboard');
+              navigate('/admin/saas');
+              return;
+            }
+          }
+
           setAdminUser(parsedAdmin);
           setLoading(false);
         } else {
           console.log('🔍 AdminDashboard: No admin user in localStorage, checking Firestore...');
-          // Check if user exists in admins collection
+
+          // First check if user is a super admin
+          const superAdminRef = doc(getFirestore(), 'super-admins', currentUser.uid);
+          const superAdminDoc = await getDoc(superAdminRef);
+
+          if (superAdminDoc.exists()) {
+            const superAdminData = superAdminDoc.data();
+            console.log('🔍 AdminDashboard: Found super admin in Firestore, redirecting to SaaS dashboard');
+
+            const adminUser = {
+              uid: currentUser.uid,
+              email: currentUser.email,
+              role: 'super-admin',
+              ...superAdminData
+            };
+            localStorage.setItem('adminUser', JSON.stringify(adminUser));
+
+            navigate('/admin/saas');
+            return;
+          }
+
+          // Check if user exists in regular admins collection
           const adminRef = doc(getFirestore(), 'admins', currentUser.uid);
           const adminDoc = await getDoc(adminRef);
-          
+
           if (adminDoc.exists()) {
             const adminData = adminDoc.data();
             console.log('🔍 AdminDashboard: Found admin in Firestore:', adminData);
@@ -77,13 +122,20 @@ const AdminDashboard = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('adminUser');
+    // do not clear impersonation here; managed from SaaS dashboard
     navigate('/admin/login');
+  };
+
+  const exitImpersonation = () => {
+    try { localStorage.removeItem('impersonation'); } catch {}
+    setIsImpersonating(false);
+    navigate('/admin/saas');
   };
 
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <DashboardView />;
+        return <DashboardView onGoTab={(tab) => setActiveTab(tab)} />;
       case 'rebuttals':
         return <RebuttalManagement />;
       case 'categories':
@@ -166,67 +218,29 @@ const AdminDashboard = () => {
       <header className="admin-header">
             <h1>Admin Dashboard</h1>
         <div className="admin-actions">
+          {adminUser?.role === 'super-admin' && isImpersonating && (
+            <button className="admin-header-button" onClick={exitImpersonation}>Back to My Dashboard</button>
+          )}
           <span>Welcome, {adminUser.email}</span>
-          <button className="admin-header-button" onClick={() => navigate('/')}>Main Page</button>
-          <button className="admin-header-button" onClick={handleLogout}>Logout</button>
-          </div>
-      </header>
-
-      <nav className="admin-nav">
-            <button 
-          className={`nav-tab${activeTab === 'dashboard' ? ' active' : ''}`} 
-              onClick={() => setActiveTab('dashboard')}
-            >
-          <span role="img" aria-label="Dashboard">🏠</span> Dashboard
-            </button>
-            <button 
-          className={`nav-tab${activeTab === 'rebuttals' ? ' active' : ''}`} 
-          onClick={() => setActiveTab('rebuttals')}
-            >
-          <span role="img" aria-label="Rebuttals">📝</span> Rebuttals
-            </button>
-            <button 
-          className={`nav-tab${activeTab === 'categories' ? ' active' : ''}`} 
-          onClick={() => setActiveTab('categories')}
-            >
-          <span role="img" aria-label="Categories">🏷️</span> Categories
-            </button>
-            <button 
-          className={`nav-tab${activeTab === 'dispositions' ? ' active' : ''}`} 
-          onClick={() => setActiveTab('dispositions')}
-            >
-          <span role="img" aria-label="Dispositions">📋</span> Dispositions
-            </button>
-            <button 
-          className={`nav-tab${activeTab === 'customer-service' ? ' active' : ''}`} 
-          onClick={() => setActiveTab('customer-service')}
-            >
-          <span role="img" aria-label="Customer Service">👥</span> Customer Service
-            </button>
-            <button 
-          className={`nav-tab${activeTab === 'faq' ? ' active' : ''}`} 
-          onClick={() => setActiveTab('faq')}
-            >
-          <span role="img" aria-label="FAQ">❓</span> FAQ
-            </button>
-            <button 
-          className={`nav-tab${activeTab === 'users' ? ' active' : ''}`} 
-          onClick={() => setActiveTab('users')}
-            >
-          <span role="img" aria-label="Users">👤</span> Users
-            </button>
-            <button 
-          className={`nav-tab${activeTab === 'time-blocks' ? ' active' : ''}`} 
-          onClick={() => setActiveTab('time-blocks')}
-            >
-          <span role="img" aria-label="Time Blocks">⏰</span> Time Blocks
-            </button>
-        </nav>
-
-      <main className="admin-content">
-          {renderContent()}
-      </main>
+          <button onClick={handleLogout}>Logout</button>
         </div>
+      </header>
+      <div className="dashboard-container">
+        <aside className="sidebar">
+          <button className={activeTab === 'dashboard' ? 'active' : ''} onClick={() => setActiveTab('dashboard')}>Dashboard</button>
+          <button className={activeTab === 'rebuttals' ? 'active' : ''} onClick={() => setActiveTab('rebuttals')}>Rebuttals</button>
+          <button className={activeTab === 'categories' ? 'active' : ''} onClick={() => setActiveTab('categories')}>Categories</button>
+          <button className={activeTab === 'dispositions' ? 'active' : ''} onClick={() => setActiveTab('dispositions')}>Lead Dispositions</button>
+          <button className={activeTab === 'customer-service' ? 'active' : ''} onClick={() => setActiveTab('customer-service')}>Customer Service</button>
+          <button className={activeTab === 'faq' ? 'active' : ''} onClick={() => setActiveTab('faq')}>FAQ</button>
+          <button className={activeTab === 'users' ? 'active' : ''} onClick={() => setActiveTab('users')}>Users</button>
+          <button className={activeTab === 'time-blocks' ? 'active' : ''} onClick={() => setActiveTab('time-blocks')}>Time Blocks</button>
+        </aside>
+        <main className="dashboard-content">
+          {renderContent()}
+        </main>
+      </div>
+    </div>
   );
 };
 

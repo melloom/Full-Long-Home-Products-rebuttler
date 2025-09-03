@@ -16,12 +16,19 @@ const Layout = ({ children }) => {
   // Use custom hook for scroll to top
   useScrollToTop();
 
-  // Keyboard shortcut for Help Me modal (Ctrl/Cmd + Shift + H)
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (event) => {
+      // Help Me modal (Ctrl/Cmd + Shift + H)
       if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'h') {
         event.preventDefault();
         setShowComingSoon(true);
+      }
+      
+      // Clear company token and return to SaaS landing page (Ctrl/Cmd + Shift + R)
+      if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'r') {
+        event.preventDefault();
+        clearCompanyToken();
       }
     };
 
@@ -31,8 +38,19 @@ const Layout = ({ children }) => {
     };
   }, []);
 
+  // Function to clear company token and return to SaaS landing page
+  const clearCompanyToken = () => {
+    console.log('🧹 Clearing company token and returning to SaaS landing page...');
+    localStorage.removeItem('companyUser');
+    localStorage.removeItem('currentCompanySlug');
+    localStorage.removeItem('adminUser'); // Also clear admin user to ensure clean state
+    window.location.href = '/';
+  };
+
+  const currentSlug = (location.pathname.startsWith('/company/') ? location.pathname.split('/')[2] : (localStorage.getItem('currentCompanySlug') || null));
+  const homePath = currentSlug ? (currentSlug === 'long-home' ? '/app' : `/company/${currentSlug}`) : '/';
   const navItems = [
-    { path: '/', label: 'Home', icon: '🏠' },
+    { path: homePath, label: 'Home', icon: '🏠' },
     { path: '/rebuttals', label: 'Rebuttals', icon: '💬' },
     { path: '/disposition', label: 'Disposition', icon: '📋' },
     { path: '/customerService', label: 'Customer Service', icon: '👥' },
@@ -146,6 +164,15 @@ const Layout = ({ children }) => {
                 <h4>Keyboard Shortcuts</h4>
                 <p><strong>Help Modal:</strong> Press <code>Ctrl + Shift + H</code> (or <code>Cmd + Shift + H</code> on Mac)</p>
                 <p><strong>Admin Login:</strong> Press <code>Ctrl + Shift + L</code> (or <code>Cmd + Shift + L</code> on Mac)</p>
+                <p><strong>Reset Company Token:</strong> Press <code>Ctrl + Shift + R</code> (or <code>Cmd + Shift + R</code> on Mac)</p>
+                <p style={{fontSize: '0.9em', color: '#666', marginTop: '8px'}}>
+                  <em>Use "Reset Company Token" to clear your company association and return to the SaaS landing page</em>
+                </p>
+              </div>
+              <div className="help-step">
+                <h4>For Company Users</h4>
+                <p><strong>Reset Company Association:</strong> If you're trained to a specific company and want to return to the main SaaS landing page, use the keyboard shortcut above.</p>
+                <p>This will clear your company token and take you back to the main landing page where you can access different company training platforms.</p>
               </div>
               <div className="help-step">
                 <h4>SaaS Admin Dashboard</h4>

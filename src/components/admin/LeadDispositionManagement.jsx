@@ -285,7 +285,7 @@ const LeadDispositionManagement = () => {
       <div className="dispositions-grid">
         {filteredDispositions.map(disposition => (
           <div key={disposition.id} className="disposition-card">
-            <div className="card-header" style={{backgroundColor: '#ffffff'}}>
+            <div className="card-header">
               <input
                 type="checkbox"
                 checked={selectedDispositions.includes(disposition.id)}
@@ -299,33 +299,33 @@ const LeadDispositionManagement = () => {
                 className="select-checkbox"
               />
               <span className="disposition-icon">{disposition.icon}</span>
-              <h3 className="disposition-name" style={{color: '#000000 !important', backgroundColor: '#ffffff', fontWeight: 'bold'}}>{disposition.name}</h3>
+              <h3 className="disposition-name">{disposition.name}</h3>
               <span className={`status-badge ${disposition.isActive === undefined || disposition.isActive ? 'active' : 'inactive'}`}>
                 {disposition.isActive === undefined || disposition.isActive ? 'Active' : 'Inactive'}
               </span>
             </div>
             
-            <div className="card-content" style={{backgroundColor: '#ffffff'}}>
-              <p className="disposition-description" style={{color: '#000000 !important', backgroundColor: '#ffffff', fontWeight: '500'}}>{disposition.description}</p>
+            <div className="card-content">
+              <p className="disposition-description">{disposition.description}</p>
               {disposition.category && (
                 <span className="disposition-category">{disposition.category}</span>
               )}
               
               {/* Next Steps */}
               {disposition.nextSteps && (
-                <div className="disposition-details" style={{backgroundColor: '#ffffff', border: '2px solid #000000', color: '#000000 !important', padding: '10px'}}>
-                  <h4 className="detail-title" style={{color: '#000000 !important', backgroundColor: '#ffffff', fontWeight: 'bold', fontSize: '16px'}}>Next Steps:</h4>
-                  <p className="detail-text" style={{color: '#000000 !important', backgroundColor: '#ffffff', fontWeight: '500'}}>{disposition.nextSteps}</p>
+                <div className="disposition-details">
+                  <h4 className="detail-title">Next Steps:</h4>
+                  <p className="detail-text">{disposition.nextSteps}</p>
                 </div>
               )}
               
               {/* Tips */}
               {disposition.tips && disposition.tips.length > 0 && (
-                <div className="disposition-details" style={{backgroundColor: '#ffffff', border: '3px solid #000000', color: '#000000 !important', padding: '15px', margin: '10px 0'}}>
-                  <h4 className="detail-title" style={{color: '#000000 !important', backgroundColor: '#ffffff', fontWeight: 'bold', fontSize: '18px', textTransform: 'uppercase', marginBottom: '10px', padding: '5px'}}>Tips & Best Practices:</h4>
-                  <ul className="detail-list" style={{backgroundColor: '#ffffff', margin: '0', padding: '0'}}>
+                <div className="disposition-details">
+                  <h4 className="detail-title">Tips & Best Practices:</h4>
+                  <ul className="detail-list">
                     {disposition.tips.map((tip, index) => (
-                      <li key={index} className="detail-item" style={{color: '#000000 !important', backgroundColor: '#ffffff', fontWeight: '600', marginBottom: '8px', fontSize: '14px', listStyle: 'disc', paddingLeft: '10px', padding: '3px'}}>{tip}</li>
+                      <li key={index} className="detail-item">{tip}</li>
                     ))}
                   </ul>
                 </div>
@@ -333,11 +333,11 @@ const LeadDispositionManagement = () => {
               
               {/* Examples */}
               {disposition.examples && disposition.examples.length > 0 && (
-                <div className="disposition-details" style={{backgroundColor: '#ffffff', border: '2px solid #000000', color: '#000000 !important', padding: '10px'}}>
-                  <h4 className="detail-title" style={{color: '#000000 !important', backgroundColor: '#ffffff', fontWeight: 'bold', fontSize: '16px'}}>Common Examples:</h4>
-                  <ul className="detail-list" style={{backgroundColor: '#ffffff'}}>
+                <div className="disposition-details">
+                  <h4 className="detail-title">Common Examples:</h4>
+                  <ul className="detail-list">
                     {disposition.examples.map((example, index) => (
-                      <li key={index} className="detail-item" style={{color: '#000000 !important', backgroundColor: '#ffffff', fontWeight: '500', marginBottom: '5px'}}>{example}</li>
+                      <li key={index} className="detail-item">{example}</li>
                     ))}
                   </ul>
                 </div>
@@ -345,11 +345,11 @@ const LeadDispositionManagement = () => {
               
               {/* Subcategories */}
               {disposition.subcategories && disposition.subcategories.length > 0 && (
-                <div className="disposition-details" style={{backgroundColor: '#ffffff', border: '2px solid #000000', color: '#000000 !important', padding: '10px'}}>
-                  <h4 className="detail-title" style={{color: '#000000 !important', backgroundColor: '#ffffff', fontWeight: 'bold', fontSize: '16px'}}>Subcategories:</h4>
-                  <div className="subcategories-container" style={{backgroundColor: '#ffffff'}}>
+                <div className="disposition-details">
+                  <h4 className="detail-title">Subcategories:</h4>
+                  <div className="subcategories-container">
                     {disposition.subcategories.map((subcategory, index) => (
-                      <span key={index} className="subcategory-tag" style={{color: '#000000 !important', backgroundColor: '#f1f5f9', border: '1px solid #000000', fontWeight: 'bold'}}>{subcategory}</span>
+                      <span key={index} className="subcategory-tag">{subcategory}</span>
                     ))}
                   </div>
                 </div>

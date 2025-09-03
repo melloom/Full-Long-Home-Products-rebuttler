@@ -33,6 +33,14 @@ const RebuttalLibrary = ({ onNavigate, searchQuery }) => {
   const [categoryMap, setCategoryMap] = useState({});
 
   useEffect(() => {
+    // Force dark theme while using rebuttal library/modal so tips use dark styles
+    document.body.classList.add('dark');
+    return () => {
+      document.body.classList.remove('dark');
+    };
+  }, []);
+
+  useEffect(() => {
     if (showModal) {
       // Simply prevent body scroll
       document.body.style.overflow = 'hidden';
@@ -44,6 +52,31 @@ const RebuttalLibrary = ({ onNavigate, searchQuery }) => {
     }
   }, [showModal]);
 
+  // Helper to normalize various content shapes into { pt1, pt2 }
+  const normalizeContent = useCallback((rebuttal) => {
+    const pick = (obj, keys) => {
+      for (const k of keys) {
+        if (obj && obj[k]) return obj[k];
+      }
+      return '';
+    };
+
+    const c = rebuttal?.content && typeof rebuttal.content === 'object' ? rebuttal.content : {};
+    const r = rebuttal?.response && typeof rebuttal.response === 'object' ? rebuttal.response : {};
+
+    const pt1 = typeof rebuttal?.content === 'string'
+      ? rebuttal.content
+      : pick(c, ['pt1','initial','part1','content1','first','opening'])
+        || pick(r, ['pt1','initial','part1','content1','first','opening'])
+        || rebuttal?.summary || rebuttal?.objection || '';
+
+    const pt2 = pick(c, ['pt2','followup','followUp','part2','content2','second','closing'])
+        || pick(r, ['pt2','followup','followUp','part2','content2','second','closing'])
+        || '';
+
+    return { ...rebuttal, content: { pt1, pt2 } };
+  }, []);
+
   useEffect(() => {
     // Set up real-time listener for rebuttals
     const rebuttalsQuery = query(
@@ -52,11 +85,11 @@ const RebuttalLibrary = ({ onNavigate, searchQuery }) => {
     );
 
     const unsubscribe = onSnapshot(rebuttalsQuery, (snapshot) => {
-      const updatedRebuttals = snapshot.docs.map(doc => ({
+      const updatedRebuttals = snapshot.docs.map(doc => normalizeContent({
         id: doc.id,
         ...doc.data()
       }));
-      console.log('Firestore rebuttals:', updatedRebuttals);
+      console.log('Firestore rebuttals (normalized):', updatedRebuttals);
       setAllRebuttals(updatedRebuttals);
       setLoading(false);
     }, (error) => {
@@ -66,7 +99,7 @@ const RebuttalLibrary = ({ onNavigate, searchQuery }) => {
 
     // Cleanup subscription on unmount
     return () => unsubscribe();
-  }, []);
+  }, [normalizeContent]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -75,7 +108,8 @@ const RebuttalLibrary = ({ onNavigate, searchQuery }) => {
         // Fetch rebuttals
         const rebuttals = await rebuttalsService.getAllRebuttals();
         console.log('Raw rebuttals data:', rebuttals);
-        setAllRebuttals(rebuttals);
+        const normalizedRebuttals = rebuttals.map(normalizeContent);
+        setAllRebuttals(normalizedRebuttals);
 
         // Fetch categories from database
         const dbCategories = await rebuttalsService.getCategories();
@@ -98,7 +132,7 @@ const RebuttalLibrary = ({ onNavigate, searchQuery }) => {
         }, {});
 
         // Update rebuttals with proper category IDs
-        const updatedRebuttals = rebuttals.map(rebuttal => {
+        const updatedRebuttals = normalizedRebuttals.map(rebuttal => {
           if (rebuttal.category) {
             // Try different ways to match the category
             let categoryId = rebuttal.category;
@@ -596,7 +630,14 @@ const RebuttalLibrary = ({ onNavigate, searchQuery }) => {
               <div className="header-navigation">
                 <div className="quick-nav">
                   <button
-                    onClick={() => onNavigate('home')}
+                    onClick={() => {
+                      const slug = localStorage.getItem('currentCompanySlug');
+                      if (slug) {
+                        window.location.href = `/company/${slug}`;
+                      } else {
+                        onNavigate('home');
+                      }
+                    }}
                     className="nav-button home-button"
                   >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -854,11 +895,13 @@ const RebuttalLibrary = ({ onNavigate, searchQuery }) => {
 // Add new styles for category insights
 const styles = `
 .category-insights {
-  background: white;
+  background: #0f172a; /* dark slate */
+  color: #e5e7eb;
   border-radius: 12px;
   padding: 20px;
   margin-bottom: 24px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+  border: 1px solid rgba(148,163,184,0.15);
 }
 
 .insights-header {
@@ -871,7 +914,7 @@ const styles = `
 .insights-header h3 {
   margin: 0;
   font-size: 1.2rem;
-  color: #333;
+  color: #e5e7eb;
 }
 
 .insights-grid {
@@ -882,10 +925,11 @@ const styles = `
 }
 
 .insight-card {
-  background: #f8f9fa;
+  background: rgba(30,41,59,0.6);
   border-radius: 8px;
   padding: 16px;
   text-align: center;
+  border: 1px solid rgba(148,163,184,0.12);
 }
 
 .insight-icon {
@@ -896,26 +940,27 @@ const styles = `
 .insight-value {
   font-size: 1.5rem;
   font-weight: bold;
-  color: #2c3e50;
+  color: #93c5fd;
   margin-bottom: 4px;
 }
 
 .insight-label {
   font-size: 0.9rem;
-  color: #666;
+  color: #a1a1aa;
 }
 
 .insights-tags, .insights-keywords {
   margin-top: 24px;
-  background: #f8f9fa;
+  background: rgba(30,41,59,0.5);
   border-radius: 12px;
   padding: 20px;
+  border: 1px solid rgba(148,163,184,0.12);
 }
 
 .insights-tags h4, .insights-keywords h4 {
   margin: 0 0 16px 0;
   font-size: 1.1rem;
-  color: #2c3e50;
+  color: #e5e7eb;
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -937,20 +982,20 @@ const styles = `
 }
 
 .tag {
-  background: #e3f2fd;
-  color: #1976d2;
+  background: rgba(59,130,246,0.15);
+  color: #93c5fd;
   padding: 6px 14px;
   border-radius: 20px;
   font-size: 0.9rem;
   font-weight: 500;
   transition: all 0.2s ease;
-  border: 1px solid #bbdefb;
+  border: 1px solid rgba(59,130,246,0.3);
 }
 
 .tag:hover {
-  background: #bbdefb;
+  background: rgba(59,130,246,0.25);
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
 }
 
 .keyword-list {
@@ -964,26 +1009,26 @@ const styles = `
   justify-content: space-between;
   align-items: center;
   padding: 10px 16px;
-  background: white;
+  background: rgba(2,6,23,0.8);
   border-radius: 8px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid rgba(148,163,184,0.15);
   transition: all 0.2s ease;
 }
 
 .keyword-item:hover {
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.35);
 }
 
 .keyword {
   font-weight: 500;
-  color: #2c3e50;
+  color: #e5e7eb;
   font-size: 0.95rem;
 }
 
 .count {
-  background: #e3f2fd;
-  color: #1976d2;
+  background: rgba(59,130,246,0.15);
+  color: #93c5fd;
   padding: 4px 10px;
   border-radius: 12px;
   font-size: 0.85rem;
@@ -998,34 +1043,36 @@ const styles = `
   gap: 8px;
   margin-bottom: 20px;
   padding: 12px;
-  background: #f8f9fa;
+  background: rgba(2,6,23,0.6);
   border-radius: 8px;
+  border: 1px solid rgba(148,163,184,0.15);
 }
 
 .modal-tag {
-  background: #e3f2fd;
-  color: #1976d2;
+  background: rgba(59,130,246,0.15);
+  color: #93c5fd;
   padding: 6px 14px;
   border-radius: 20px;
   font-size: 0.9rem;
   font-weight: 500;
-  border: 1px solid #bbdefb;
+  border: 1px solid rgba(59,130,246,0.3);
   transition: all 0.2s ease;
 }
 
 .modal-tag:hover {
-  background: #bbdefb;
+  background: rgba(59,130,246,0.25);
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
 }
 
 .modal-summary {
-  background: white;
+  background: #0b1324;
+  color: #e5e7eb;
   border-radius: 12px;
   padding: 20px;
   margin-bottom: 24px;
-  border: 1px solid #e0e0e0;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  border: 1px solid rgba(148,163,184,0.15);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.35);
 }
 
 .modal-section-header {
@@ -1044,25 +1091,26 @@ const styles = `
 .modal-section-header h3 {
   margin: 0;
   font-size: 1.2rem;
-  color: #2c3e50;
+  color: #e5e7eb;
   font-weight: 600;
 }
 
 .modal-summary-text {
   font-size: 1rem;
   line-height: 1.6;
-  color: #333;
+  color: #e5e7eb;
   margin: 0;
   padding: 0 4px;
 }
 
 .modal-rebuttal-content {
-  background: white;
+  background: #0b1324;
+  color: #e5e7eb;
   border-radius: 12px;
   padding: 20px;
   margin-bottom: 24px;
-  border: 1px solid #e0e0e0;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  border: 1px solid rgba(148,163,184,0.15);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.35);
 }
 
 .rebuttal-content-sections {
@@ -1072,14 +1120,14 @@ const styles = `
 }
 
 .rebuttal-section {
-  background: #f8f9fa;
+  background: rgba(2,6,23,0.6);
   border-radius: 8px;
   padding: 16px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid rgba(148,163,184,0.15);
 }
 
 .rebuttal-section-title {
-  color: #1976d2;
+  color: #93c5fd;
   font-size: 1.1rem;
   font-weight: 600;
   margin: 0 0 12px 0;
@@ -1096,12 +1144,13 @@ const styles = `
 }
 
 .modal-tips {
-  background: white;
+  background: #0b1324;
+  color: #e5e7eb;
   border-radius: 12px;
   padding: 20px;
   margin-bottom: 24px;
-  border: 1px solid #e0e0e0;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  border: 1px solid rgba(148,163,184,0.15);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.35);
 }
 
 .tips-grid {
@@ -1112,11 +1161,12 @@ const styles = `
 }
 
 .tip-card {
-  background: #f8f9fa;
+  background: rgba(2,6,23,0.6);
   border-radius: 8px;
   padding: 16px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid rgba(148,163,184,0.15);
   transition: all 0.2s ease;
+  color: #e5e7eb;
 }
 
 .tip-card:hover {
@@ -1129,11 +1179,14 @@ const styles = `
   align-items: center;
   gap: 12px;
   margin-bottom: 12px;
+  color: #e5e7eb;
 }
 
+.tip-icon { color: #93c5fd; }
+
 .tip-icon-wrapper {
-  background: #e3f2fd;
-  color: #1976d2;
+  background: rgba(59,130,246,0.15);
+  color: #93c5fd;
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -1141,16 +1194,17 @@ const styles = `
   align-items: center;
   justify-content: center;
   font-size: 1.2rem;
+  border: 1px solid rgba(59,130,246,0.3);
 }
 
 .tip-number {
   font-weight: 600;
-  color: #2c3e50;
+  color: #e5e7eb;
 }
 
 .tip-text {
   margin: 0;
-  color: #333;
+  color: #e5e7eb;
   line-height: 1.5;
 }
 
@@ -1159,7 +1213,7 @@ const styles = `
   justify-content: space-between;
   align-items: center;
   padding: 16px 0;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid rgba(148,163,184,0.15);
   margin-top: 24px;
 }
 
@@ -1167,13 +1221,13 @@ const styles = `
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #666;
+  color: #a1a1aa;
   font-size: 0.9rem;
 }
 
 .modal-close-footer-button {
-  background: #1976d2;
-  color: white;
+  background: #1f3b73;
+  color: #e5e7eb;
   border: none;
   padding: 8px 20px;
   border-radius: 6px;
@@ -1183,10 +1237,30 @@ const styles = `
 }
 
 .modal-close-footer-button:hover {
-  background: #1565c0;
+  background: #2450a4;
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.35);
 }
+
+/* Dark mode for situations section */
+.modal-situations {
+  background: #0b1324;
+  color: #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid rgba(148,163,184,0.15);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+}
+
+.situation-item {
+  background: rgba(2,6,23,0.6);
+  border: 1px solid rgba(148,163,184,0.15);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.situation-title { color: #93c5fd; }
+.situation-description { color: #e5e7eb; }
 `;
 
 // Add styles to the document

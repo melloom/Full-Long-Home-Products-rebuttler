@@ -123,6 +123,30 @@ window.addEventListener('error', (event) => {
   }
 });
 
+// Add global handler for unhandled promise rejections
+window.addEventListener('unhandledrejection', (event) => {
+  const reason = event.reason?.toString() || '';
+  
+  // Handle Firebase-related promise rejections
+  if (reason.includes('Firebase') ||
+      reason.includes('auth') ||
+      reason.includes('firestore') ||
+      reason.includes('messaging') ||
+      reason.includes('ServiceWorker') ||
+      reason.includes('Cache') ||
+      reason.includes('fetch') ||
+      reason.includes('getNotifications') ||
+      reason.includes('PushManager') ||
+      reason.includes('applicationServerKey')) {
+    console.log('Handled promise rejection:', reason);
+    event.preventDefault();
+    return;
+  }
+  
+  // Log unhandled rejections that we don't explicitly handle
+  console.warn('Unhandled promise rejection:', event.reason);
+});
+
 // Override console methods more aggressively for iframe content
 const originalConsole = { ...console };
 console = new Proxy(console, {

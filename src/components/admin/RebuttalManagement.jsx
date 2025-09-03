@@ -323,6 +323,7 @@ const RebuttalManagement = () => {
             onChange={e => setSearchTerm(e.target.value)}
             onClear={() => setSearchTerm('')}
             placeholder="Search rebuttals..."
+            className="admin-searchbar"
           />
 
           <div className="filter-controls">

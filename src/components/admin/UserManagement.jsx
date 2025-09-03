@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import userService from '../../services/userService';
-import { getAuth } from 'firebase/auth';
 import { useAuth } from '../../contexts/AuthContext';
 import { auth } from '../../services/firebase/config';
 import './UserManagement.css';

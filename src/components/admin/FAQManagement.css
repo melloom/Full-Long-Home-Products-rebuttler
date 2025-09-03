@@ -3,6 +3,10 @@
   padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
+  /* Dark-friendly container similar to Category Management */
+  background: linear-gradient(135deg, #0f172a 0%, #111827 100%) !important;
+  color: #e5e7eb !important;
+  min-height: 100vh;
 }
 
 .faq-management-header {
@@ -10,15 +14,25 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid #e2e8f0;
+  /* Replace bottom divider with a subtle dark-mode card header */
+  padding: 1.25rem 1.5rem;
+  border-bottom: none;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(226, 232, 240, 0.12);
+  border-radius: 16px;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.4),
+    0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(8px);
 }
 
 .faq-management-header h2 {
   font-size: 2rem;
-  color: #1e293b;
+  color: #ffffff !important;
   margin: 0;
   font-weight: 700;
+  letter-spacing: -0.025em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
 .add-faq-button {
@@ -120,11 +134,11 @@
 }
 
 .faq-item-admin {
-  background: linear-gradient(135deg, #f8fafc 80%, #e0e7ef 100%);
+  background: #0f172a;
   border-radius: 18px;
   padding: 2rem 1.5rem 1.5rem 1.5rem;
-  box-shadow: 0 6px 24px rgba(30,41,59,0.10), 0 1.5px 6px rgba(59,130,246,0.06);
-  border: 1.5px solid #e2e8f0;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.25);
+  border: 1.5px solid #334155;
   transition: all 0.22s cubic-bezier(.4,2,.6,1);
   display: flex;
   justify-content: space-between;
@@ -136,8 +150,8 @@
 
 .faq-item-admin:hover {
   transform: translateY(-3px) scale(1.012);
-  box-shadow: 0 12px 32px rgba(59,130,246,0.10), 0 2px 8px rgba(30,41,59,0.08);
-  border-color: #cbd5e1;
+  box-shadow: 0 14px 36px rgba(0,0,0,0.45), 0 2px 10px rgba(0,0,0,0.3);
+  border-color: #475569;
 }
 
 .faq-content {
@@ -163,14 +177,15 @@
 }
 
 .faq-answer-admin {
-  background: #f1f5f9;
+  background: #0b1324;
+  border: 1px solid #334155;
   border-radius: 10px;
   padding: 1.1rem 1.25rem;
-  color: #334155;
+  color: #e5e7eb;
   font-size: 1.05rem;
   line-height: 1.7;
   margin-bottom: 1.1rem;
-  box-shadow: 0 1px 4px rgba(59,130,246,0.04);
+  box-shadow: 0 1px 6px rgba(0,0,0,0.35);
   word-break: break-word;
 }
 
@@ -183,14 +198,15 @@
 
 .faq-date,
 .faq-updated {
-  background: #e0e7ef;
-  color: #2563eb;
+  background: rgba(59,130,246,0.15);
+  color: #93c5fd;
   padding: 0.22rem 0.85rem;
   border-radius: 20px;
   font-size: 0.88rem;
   font-weight: 600;
   letter-spacing: 0.01em;
-  box-shadow: 0 1px 3px rgba(59,130,246,0.04);
+  border: 1px solid rgba(59,130,246,0.35);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 
 .faq-actions-admin {
@@ -204,13 +220,14 @@
 .edit-faq-button,
 .delete-faq-button {
   padding: 0.5rem 0.7rem;
-  border: none;
+  border: 1px solid #334155;
   border-radius: 8px;
   cursor: pointer;
   font-size: 1.2rem;
   transition: all 0.2s cubic-bezier(.4,2,.6,1);
-  background: #f8fafc;
-  box-shadow: 0 1px 4px rgba(59,130,246,0.04);
+  background: #1f2937;
+  color: #e5e7eb;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.25);
 }
 
 .edit-faq-button {
@@ -218,8 +235,8 @@
 }
 
 .edit-faq-button:hover {
-  background: #e0e7ef;
-  color: #1e293b;
+  background: #111827;
+  color: #93c5fd;
   transform: scale(1.12);
 }
 
@@ -228,8 +245,8 @@
 }
 
 .delete-faq-button:hover {
-  background: #fef2f2;
-  color: #b91c1c;
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
   transform: scale(1.12);
 }
 
@@ -237,9 +254,11 @@
 .no-faqs {
   text-align: center;
   padding: 3rem 2rem;
-  background: white;
+  background: #0f172a;
+  border: 1px solid #334155;
   border-radius: 16px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  color: #e5e7eb;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
 }
 
 .no-faqs-content {
@@ -317,14 +336,16 @@
 
 .modal-content {
   position: relative;
-  background: linear-gradient(135deg, #f8fafc 60%, #e0e7ef 100%);
+  background: #0b1324;
+  border: 1px solid #334155;
   border-radius: 20px;
   padding: 2.5rem 2rem 2rem 2rem;
   max-width: 500px;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 12px 40px rgba(30, 41, 59, 0.18), 0 2px 8px rgba(59, 130, 246, 0.08);
+  color: #e5e7eb;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   animation: modalPopIn 0.25s cubic-bezier(.4,2,.6,1) 1;
 }
 
@@ -353,14 +374,14 @@
 }
 
 .modal-close:hover {
-  color: #1e293b;
-  background: #e0e7ef;
+  color: #e5e7eb;
+  background: #111827;
   transform: scale(1.1);
 }
 
 .modal-content h2 {
   font-size: 1.6rem;
-  color: #1e293b;
+  color: #e5e7eb;
   margin-bottom: 2rem;
   font-weight: 700;
   text-align: center;
@@ -374,7 +395,7 @@
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #374151;
+  color: #cbd5e1;
   font-weight: 600;
   font-size: 1rem;
 }
@@ -388,20 +409,21 @@
 .form-group textarea {
   width: 100%;
   padding: 0.9rem 1rem;
-  border: 2px solid #e2e8f0;
+  border: 1px solid #334155;
   border-radius: 10px;
   font-size: 1rem;
   transition: all 0.2s ease;
   font-family: inherit;
-  background: #f8fafc;
+  background: #0f172a;
+  color: #e5e7eb;
   box-sizing: border-box;
 }
 
 .form-group input:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
 }
 
 .form-group textarea {
@@ -412,7 +434,7 @@
 .char-count {
   text-align: right;
   font-size: 0.85rem;
-  color: #64748b;
+  color: #94a3b8;
   margin-top: 0.25rem;
 }
 

@@ -2,48 +2,60 @@
   padding: 2rem;
   max-width: 1400px;
   margin: 0 auto;
+  background: #0b1324;
+  color: #e5e7eb;
 }
 
 /* Header Styles */
 .management-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid #f0f0f0;
+  padding: 1.25rem 1.5rem;
+  background: #0f172a;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  border: 1px solid #334155;
 }
 
+/* Ensure Rebuttal Management header uses dark container even inside admin dashboard wrappers */
+.rebuttal-management .management-header {
+  background: #0f172a !important;
+  border: 1px solid #334155 !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35) !important;
+  border-radius: 12px !important;
+}
+.rebuttal-management .header-content h1 { color: #e5e7eb !important; }
+.rebuttal-management .header-content p { color: #cbd5e1 !important; }
+
 .header-content h1 {
-  margin: 0 0 0.5rem 0;
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #2c3e50;
+  margin: 0 0 0.25rem 0;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #e5e7eb;
 }
 
 .header-content p {
   margin: 0;
-  color: #7f8c8d;
-  font-size: 1.1rem;
+  color: #cbd5e1;
+  font-size: 0.95rem;
 }
 
 .add-rebuttal-btn {
-  background: linear-gradient(135deg, #3498db, #2980b9);
-  color: white;
+  background: #2563eb;
+  color: #fff;
   border: none;
-  padding: 1rem 2rem;
-  border-radius: 12px;
-  font-size: 1.1rem;
-  font-weight: 600;
+  padding: 0.9rem 1.5rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
 }
 
-.add-rebuttal-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
-}
+.add-rebuttal-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45); }
 
 /* Form Header */
 .form-header {
@@ -95,6 +107,11 @@
   margin-bottom: 2rem;
   flex-wrap: wrap;
   align-items: center;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
 }
 
 .search-box {
@@ -131,20 +148,9 @@
   gap: 1rem;
 }
 
-.filter-select {
-  padding: 0.75rem 1rem;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 1rem;
-  background: white;
-  cursor: pointer;
-  transition: border-color 0.3s ease;
-}
+.filter-select { padding: 0.75rem 1rem; border: 1px solid #334155; border-radius: 8px; font-size: 1rem; background: #0f172a; color: #e5e7eb; cursor: pointer; transition: border-color 0.2s ease; }
 
-.filter-select:focus {
-  outline: none;
-  border-color: #3498db;
-}
+.filter-select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
 
 /* Bulk Actions */
 .bulk-actions {
@@ -197,13 +203,7 @@
 }
 
 /* Table Container */
-.rebuttals-table-container {
-  background: white;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
-}
+.rebuttals-table-container { background: #0f172a; border: 1px solid #334155; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.35); margin-bottom: 2rem; }
 
 /* Loading State */
 .loading-state {
@@ -280,29 +280,13 @@
   font-size: 0.95rem;
 }
 
-.rebuttals-table th {
-  background: #f8f9fa;
-  padding: 1rem;
-  text-align: left;
-  font-weight: 600;
-  color: #495057;
-  border-bottom: 2px solid #e9ecef;
-}
+.rebuttals-table th { background: #0b1324; padding: 1rem; text-align: left; font-weight: 700; color: #e5e7eb; border-bottom: 1px solid #334155; }
 
-.rebuttals-table td {
-  padding: 1rem;
-  border-bottom: 1px solid #f1f3f4;
-  vertical-align: top;
-}
+.rebuttals-table td { padding: 1rem; border-bottom: 1px solid #1e293b; vertical-align: top; color: #cbd5e1; }
 
-.rebuttals-table tr:hover {
-  background: #f8f9fa;
-}
+.rebuttals-table tr:hover { background: rgba(51,65,85,0.25); }
 
-.rebuttals-table tr.archived {
-  opacity: 0.6;
-  background: #f8f9fa;
-}
+.rebuttals-table tr.archived { opacity: 0.7; background: rgba(148,163,184,0.08); }
 
 .rebuttals-table tr.archived:hover {
   opacity: 0.8;
@@ -317,29 +301,12 @@
 }
 
 /* Rebuttal Title */
-.rebuttal-title strong {
-  display: block;
-  margin-bottom: 0.25rem;
-  color: #2c3e50;
-  font-size: 1.1rem;
-}
+.rebuttal-title strong { display: block; margin-bottom: 0.25rem; color: #ffffff; font-size: 1.05rem; }
 
-.rebuttal-summary {
-  margin: 0;
-  color: #7f8c8d;
-  font-size: 0.9rem;
-  line-height: 1.4;
-}
+.rebuttal-summary { margin: 0; color: #94a3b8; font-size: 0.9rem; line-height: 1.4; }
 
 /* Category Badge */
-.category-badge {
-  background: #3498db;
-  color: white;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 500;
-}
+.category-badge { background: rgba(59,130,246,0.15); color: #93c5fd; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 700; border: 1px solid rgba(59,130,246,0.35); }
 
 /* Tags Container */
 .tags-container {
@@ -349,20 +316,9 @@
   align-items: center;
 }
 
-.tag-badge {
-  background: #ecf0f1;
-  color: #2c3e50;
-  padding: 0.2rem 0.5rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
+.tag-badge { background: rgba(30,41,59,0.6); color: #cbd5e1; padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 500; border: 1px solid #334155; }
 
-.more-tags {
-  color: #7f8c8d;
-  font-size: 0.8rem;
-  font-weight: 500;
-}
+.more-tags { color: #94a3b8; font-size: 0.8rem; font-weight: 500; }
 
 /* Status Badge */
 .status-badge {
@@ -373,21 +329,12 @@
   text-transform: uppercase;
 }
 
-.status-badge.active {
-  background: #27ae60;
-  color: white;
-}
+.status-badge.active { background: rgba(16,185,129,0.15); color: #a7f3d0; border: 1px solid rgba(16,185,129,0.35); }
 
-.status-badge.archived {
-  background: #95a5a6;
-  color: white;
-}
+.status-badge.archived { background: rgba(148,163,184,0.2); color: #e2e8f0; border: 1px solid rgba(148,163,184,0.35); }
 
 /* Date Info */
-.date-info {
-  color: #7f8c8d;
-  font-size: 0.9rem;
-}
+.date-info { color: #94a3b8; font-size: 0.9rem; }
 
 /* Action Buttons */
 .action-buttons {
@@ -410,10 +357,7 @@
   height: 36px;
 }
 
-.action-btn.edit {
-  background: #f39c12;
-  color: white;
-}
+.action-btn.edit { background: #f39c12; color: white; }
 
 .action-btn.edit:hover {
   background: #e67e22;
@@ -835,3 +779,54 @@
     display: none !important;
   }
 } 
+
+/* Dark mode container overrides for Rebuttal Management */
+.rebuttal-management { background: #0b1324 !important; color: #e5e7eb !important; }
+.management-header { border-bottom: 1px solid #334155 !important; }
+.header-content h1 { color: #e5e7eb !important; }
+.header-content p { color: #cbd5e1 !important; }
+
+/* Filters */
+.search-input { background: #0f172a !important; color: #e5e7eb !important; border: 1px solid #334155 !important; }
+.admin-searchbar.searchbar-container { background: #0f172a !important; border: 1px solid #334155 !important; box-shadow: 0 4px 14px rgba(0,0,0,0.35) !important; width: 100%; max-width: 520px; }
+.admin-searchbar .searchbar-input { color: #e5e7eb !important; }
+.admin-searchbar .searchbar-icon { color: #94a3b8 !important; }
+.admin-searchbar .searchbar-clear { color: #9ca3af !important; }
+
+/* Force dark searchbar inside Rebuttal Management regardless of external overrides */
+.rebuttal-management .searchbar-container { background: #0f172a !important; border: 1px solid #334155 !important; box-shadow: 0 4px 14px rgba(0,0,0,0.35) !important; }
+.rebuttal-management .searchbar-container .searchbar-input { color: #e5e7eb !important; }
+.rebuttal-management .searchbar-container .searchbar-icon { color: #94a3b8 !important; }
+.rebuttal-management .searchbar-container .searchbar-clear { color: #9ca3af !important; }
+
+/* Max specificity to defeat any upstream white cards */
+.rebuttal-management .filters-section .searchbar-container { background: #0f172a !important; border: 1px solid #334155 !important; box-shadow: 0 4px 14px rgba(0,0,0,0.35) !important; }
+.rebuttal-management .filters-section .searchbar-container .searchbar-input { background: transparent !important; color: #e5e7eb !important; }
+.rebuttal-management .filters-section .searchbar-container .searchbar-icon { color: #94a3b8 !important; }
+.rebuttal-management .filters-section .searchbar-container .searchbar-clear { color: #9ca3af !important; }
+.search-icon { color: #94a3b8 !important; }
+.filter-select { background: #0f172a !important; color: #e5e7eb !important; border: 1px solid #334155 !important; }
+
+/* Bulk actions */
+.bulk-actions { background: #0f172a !important; border: 1px solid #334155 !important; }
+.bulk-info { color: #e5e7eb !important; }
+.bulk-select { background: #0b1324 !important; color: #e5e7eb !important; border: 1px solid #334155 !important; }
+.bulk-action-btn { background: rgba(220, 38, 38, 0.85) !important; }
+
+/* Table container */
+.rebuttals-table-container { background: #0b1324 !important; border: 1px solid #334155 !important; box-shadow: 0 8px 24px rgba(0,0,0,0.35) !important; }
+.rebuttals-table th { background: #0f172a !important; color: #e5e7eb !important; border-bottom: 1px solid #223047 !important; }
+.rebuttals-table td { color: #cbd5e1 !important; border-bottom: 1px solid #223047 !important; }
+.rebuttals-table tr:hover { background: transparent !important; }
+
+/* Tag badges and status */
+.tag-badge { background: rgba(30,41,59,0.6) !important; color: #cbd5e1 !important; border: 1px solid #334155 !important; }
+.status-badge.active { background: rgba(16,185,129,0.15) !important; color: #a7f3d0 !important; border: 1px solid rgba(16,185,129,0.35) !important; }
+
+/* Modal dark */
+.modal-content { background: #0b1324 !important; color: #e5e7eb !important; border: 1px solid #334155 !important; }
+.modal-content h2 { color: #e5e7eb !important; }
+.form-group label { color: #cbd5e1 !important; }
+.form-group input, .form-group select, .form-group textarea { background: #0f172a !important; color: #e5e7eb !important; border: 1px solid #334155 !important; }
+.cancel-button { background: rgba(30,41,59,0.6) !important; color: #e5e7eb !important; border: 1px solid #334155 !important; }
+.cancel-button:hover { background: rgba(51,65,85,0.6) !important; } 

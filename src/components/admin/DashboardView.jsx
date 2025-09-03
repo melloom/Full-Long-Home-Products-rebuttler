@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
 import './DashboardView.css';
 
-const DashboardView = () => {
+const DashboardView = ({ onGoTab }) => {
   const [stats, setStats] = useState({
     totalRebuttals: 0,
     totalCategories: 0,
@@ -253,28 +253,28 @@ const DashboardView = () => {
             <span className="card-subtitle">Common admin tasks</span>
           </div>
           <div className="quick-actions">
-            <button className="action-btn primary">
+            <button className="action-btn primary" onClick={() => onGoTab && onGoTab('rebuttals')}>
               <span className="action-icon">➕</span>
               <div className="action-content">
                 <strong>Add Rebuttal</strong>
                 <span>Create new response</span>
               </div>
             </button>
-            <button className="action-btn secondary">
+            <button className="action-btn secondary" onClick={() => onGoTab && onGoTab('categories')}>
               <span className="action-icon">🏷️</span>
               <div className="action-content">
                 <strong>Manage Categories</strong>
                 <span>Organize content</span>
               </div>
             </button>
-            <button className="action-btn tertiary">
+            <button className="action-btn tertiary" onClick={() => onGoTab && onGoTab('dispositions')}>
               <span className="action-icon">📊</span>
               <div className="action-content">
                 <strong>View Analytics</strong>
                 <span>Performance data</span>
               </div>
             </button>
-            <button className="action-btn quaternary">
+            <button className="action-btn quaternary" onClick={() => onGoTab && onGoTab('time-blocks')}>
               <span className="action-icon">⚙️</span>
               <div className="action-content">
                 <strong>Settings</strong>

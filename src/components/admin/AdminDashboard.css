@@ -3245,3 +3245,495 @@
     font-size: 0.95rem;
   }
 }
+
+/* Layout for Admin Dashboard */
+.dashboard-container {
+  display: flex;
+  gap: 1.25rem;
+}
+
+.sidebar {
+  width: 240px;
+  background: #0b1324;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 1rem;
+  height: fit-content;
+  position: sticky;
+  top: 1rem;
+}
+
+.sidebar button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.75rem 0.9rem;
+  background: transparent;
+  color: #cbd5e1;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.sidebar button:hover {
+  background: rgba(51,65,85,0.35);
+  border-color: #334155;
+}
+
+.sidebar button.active {
+  background: linear-gradient(135deg, rgba(37,99,235,0.25), rgba(56,189,248,0.25));
+  color: #e5e7eb;
+  border-color: rgba(96,165,250,0.45);
+}
+
+.dashboard-content {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Dark theme base overrides */
+.admin-dashboard {
+  background: #0b1220 !important;
+  color: #e5e7eb !important;
+}
+
+.admin-header {
+  background: #0f172a !important;
+  border: 1px solid #334155 !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35) !important;
+}
+
+.admin-header h1,
+.admin-header .admin-actions span {
+  color: #e5e7eb !important;
+}
+
+.admin-header .admin-actions button,
+.logout-button,
+.nav-tab.home-button {
+  background: transparent !important;
+  color: #e5e7eb !important;
+  border: 1px solid #334155 !important;
+  border-radius: 10px !important;
+}
+
+.admin-header .admin-actions button:hover,
+.logout-button:hover,
+.nav-tab.home-button:hover {
+  background: rgba(51,65,85,0.35) !important;
+}
+
+/* Cards and sections in dark */
+.dashboard-card,
+.user-management-section,
+.category-distribution,
+.performance-metric-card,
+.rebuttals-management,
+.category-sidebar,
+.lead-disposition-item,
+.response-section,
+.settings-card,
+.performance-metrics,
+.most-used-category,
+.category-bar-item,
+.no-rebuttals,
+.system-alerts {
+  background: #0b1324 !important;
+  border: 1px solid #334155 !important;
+  color: #e5e7eb !important;
+}
+
+.dashboard-card h2,
+.section-header h2,
+.distribution-header h3,
+.performance-metric-card h4,
+.most-used-category .category-info strong,
+.category-header h2 {
+  color: #e5e7eb !important;
+}
+
+/* Inputs/selects in dark */
+.search-input,
+.category-filter,
+.form-group input,
+.form-group select,
+.form-group textarea {
+  background: #0b1324 !important;
+  color: #e5e7eb !important;
+  border: 1px solid #334155 !important;
+}
+
+/* Tags and chips */
+.rebuttal-category,
+.rebuttal-tags .tag,
+.percentage-badge,
+.category-count {
+  background: rgba(30,41,59,0.6) !important;
+  color: #cbd5e1 !important;
+  border: 1px solid #334155 !important;
+}
+
+/* Action buttons */
+.add-button,
+.submit-button,
+.edit-button,
+.archive-button,
+.delete-button,
+.fix-rebuttals-button,
+.reset-settings-button,
+.add-account-button,
+.manage-categories-button,
+.reset-rebuttals-button,
+.fix-categories-button,
+.danger-button,
+.health-action-btn,
+.view-more-button {
+  background: rgba(30,41,59,0.6) !important;
+  color: #e5e7eb !important;
+  border: 1px solid #334155 !important;
+}
+
+.add-button:hover,
+.submit-button:hover,
+.edit-button:hover,
+.archive-button:hover,
+.delete-button:hover,
+.fix-rebuttals-button:hover,
+.reset-settings-button:hover,
+.add-account-button:hover,
+.manage-categories-button:hover,
+.reset-rebuttals-button:hover,
+.fix-categories-button:hover,
+.danger-button:hover,
+.health-action-btn:hover,
+.view-more-button:hover {
+  background: rgba(51,65,85,0.6) !important;
+}
+
+/* Charts, bars, and highlights */
+.category-bar-container { background: #0f172a !important; }
+.category-bar { background: linear-gradient(90deg, #2563eb, #38bdf8) !important; }
+.bar-percentage { color: #e5e7eb !important; }
+
+/* Lists and subtle surfaces */
+.rebuttal-item,
+.item-next-steps,
+.item-tips,
+.rebuttal-responses {
+  background: #0f172a !important;
+  border: 1px solid #334155 !important;
+}
+
+.item-title,
+.rebuttal-objection,
+.response-label { color: #e5e7eb !important; }
+.rebuttal-objection-summary,
+.rebuttal-response,
+.item-description { color: #cbd5e1 !important; }
+
+/* Navigation tabs (legacy) */
+.nav-tab {
+  color: #cbd5e1 !important;
+}
+
+.nav-tab:hover {
+  background: rgba(51,65,85,0.35) !important;
+}
+
+.nav-tab.active {
+  background: linear-gradient(135deg, rgba(37,99,235,0.25), rgba(56,189,248,0.25)) !important;
+  color: #e5e7eb !important;
+}
+
+/* Dark mode for Top Categories section */
+.admin-dashboard .top-performing-categories,
+.admin-dashboard .category-list,
+.admin-dashboard .category-item {
+  background: #0b1324 !important;
+  border: 1px solid #334155 !important;
+  color: #e5e7eb !important;
+}
+
+.admin-dashboard .top-performing-categories h3,
+.admin-dashboard .category-name {
+  color: #e5e7eb !important;
+}
+
+.admin-dashboard .category-item {
+  box-shadow: 0 6px 16px rgba(0,0,0,0.35) !important;
+}
+
+.admin-dashboard .category-growth {
+  color: #34d399 !important; /* emerald */
+}
+
+/* Rank badges or labels inside the list */
+.admin-dashboard .category-item .rank,
+.admin-dashboard .category-item .count,
+.admin-dashboard .top-performing-categories .subtitle {
+  color: #cbd5e1 !important;
+}
+
+/* Quick Actions alignment and container fixes */
+.dashboard-card.quick-actions-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.dashboard-card.quick-actions-card h2 {
+  margin-bottom: 0.25rem;
+}
+
+.dashboard-card.quick-actions-card .subtitle,
+.dashboard-card .subtitle {
+  color: #94a3b8 !important;
+  margin: 0 0 0.5rem 0;
+  font-size: 0.95rem;
+}
+
+.action-buttons-enhanced {
+  width: 100%;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  align-items: stretch;
+}
+
+.action-button-enhanced {
+  width: 100%;
+  min-height: 88px;
+  border: 1px solid #334155 !important;
+  background: #0f172a !important;
+  color: #e5e7eb !important;
+}
+
+.action-button-enhanced .action-icon {
+  background: rgba(30,41,59,0.6) !important;
+  border: 1px solid #334155 !important;
+}
+
+/* Ensure the actions container stays inside card padding */
+.dashboard-card .action-buttons-enhanced {
+  margin-top: 0.25rem;
+}
+
+/* Improve hover for dark */
+.action-button-enhanced:hover {
+  background: rgba(51,65,85,0.6) !important;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.35) !important;
+}
+
+/* Rebuttal Management - Dark Mode */
+.rebuttals-management {
+  background: #0b1324 !important;
+  border: 1px solid #334155 !important;
+  color: #e5e7eb !important;
+}
+
+.rebuttals-header h2 { color: #e5e7eb !important; }
+.rebuttals-header { border-bottom: 1px solid #334155 !important; }
+
+.rebuttals-controls .search-input,
+.rebuttals-controls .category-filter,
+.rebuttals-controls select,
+.rebuttals-controls input {
+  background: #0b1324 !important;
+  color: #e5e7eb !important;
+  border: 1px solid #334155 !important;
+}
+
+/* Table styles */
+.rebuttals-table,
+.rebuttals-list {
+  background: #0b1324 !important;
+  border: 1px solid #334155 !important;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.rebuttals-table table { width: 100%; border-collapse: collapse; }
+.rebuttals-table th,
+.rebuttals-table td { padding: 12px 14px; border-bottom: 1px solid #223047; }
+
+.rebuttals-table th {
+  background: #0f172a;
+  color: #e5e7eb;
+  font-weight: 700;
+}
+
+.rebuttals-table td { color: #cbd5e1; }
+
+.rebuttals-table tr:hover td { background: rgba(51,65,85,0.25); }
+
+/* Tag chips in table */
+.rebuttals-table .rebuttal-tags .tag { background: rgba(30,41,59,0.6) !important; color: #cbd5e1 !important; border: 1px solid #334155 !important; }
+
+/* Status badge */
+.rebuttals-table .status-badge,
+.rebuttals-table .status {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #a7f3d0 !important;
+  border: 1px solid rgba(16,185,129,0.35) !important;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-weight: 600;
+}
+
+/* Action icons/buttons */
+.rebuttal-actions button {
+  background: rgba(30,41,59,0.6) !important;
+  color: #e5e7eb !important;
+  border: 1px solid #334155 !important;
+}
+.rebuttal-actions button:hover { background: rgba(51,65,85,0.6) !important; }
+
+/* Totals footer */
+.rebuttals-summary,
+.rebuttals-total,
+.rebuttals-stats {
+  color: #e5e7eb !important;
+}
+
+/* Category Management - Dark Mode */
+.category-management {
+  background: #0b1324 !important;
+  border: 1px solid #334155 !important;
+  color: #e5e7eb !important;
+  border-radius: 12px;
+}
+
+.category-header { border-bottom: 1px solid #334155 !important; }
+.category-header h2 { color: #e5e7eb !important; }
+.category-actions .fix-categories-button,
+.category-actions .refresh-button,
+.category-actions button {
+  background: rgba(30,41,59,0.6) !important;
+  color: #e5e7eb !important;
+  border: 1px solid #334155 !important;
+}
+.category-actions button:hover { background: rgba(51,65,85,0.6) !important; }
+
+.category-list .category-item,
+.category-stat-card,
+.category-distribution,
+.most-used-category {
+  background: #0f172a !important;
+  border: 1px solid #334155 !important;
+  color: #e5e7eb !important;
+}
+
+.category-name,
+.stat-header h3,
+.category-stats-mini .mini-stat-label,
+.category-highlight .category-info strong { color: #e5e7eb !important; }
+.category-stats-mini .mini-stat-value,
+.mini-stat-value { color: #93c5fd !important; }
+
+/* Lead Disposition Management - Dark Mode */
+.lead-disposition-management { background: #0b1324 !important; color: #e5e7eb !important; }
+.lead-disposition-header { border-bottom: 1px solid #334155 !important; }
+.lead-disposition-header h2 { color: #e5e7eb !important; }
+
+.lead-disposition-container { gap: 1.25rem; }
+
+.category-sidebar { background: #0f172a !important; border: 1px solid #334155 !important; }
+.category-sidebar h3 { color: #e5e7eb !important; border-bottom: 1px solid #334155 !important; }
+.category-button { color: #cbd5e1 !important; }
+.category-button:hover { background: rgba(51,65,85,0.35) !important; }
+.category-button.active { background: linear-gradient(135deg, rgba(37,99,235,0.25), rgba(56,189,248,0.25)) !important; color: #e5e7eb !important; }
+
+.lead-disposition-list .lead-disposition-item,
+.item-next-steps,
+.item-tips {
+  background: #0f172a !important;
+  border: 1px solid #334155 !important;
+  color: #e5e7eb !important;
+}
+
+.item-title { color: #e5e7eb !important; }
+.item-description { color: #cbd5e1 !important; }
+
+.item-actions button { background: rgba(30,41,59,0.6) !important; color: #e5e7eb !important; border: 1px solid #334155 !important; }
+.item-actions button:hover { background: rgba(51,65,85,0.6) !important; }
+
+/* Filters/inputs on both pages */
+.category-filter,
+.search-input,
+.lead-disposition-management select,
+.lead-disposition-management input {
+  background: #0b1324 !important;
+  color: #e5e7eb !important;
+  border: 1px solid #334155 !important;
+}
+
+/* Rebuttal titles and summaries in dark */
+.rebuttals-table .rebuttal-title strong,
+.rebuttals-table .rebuttal-summary,
+.rebuttals-table td,
+.mobile-rebuttal-cards .rebuttal-card-title,
+.mobile-rebuttal-cards .rebuttal-card-summary {
+  color: #ffffff !important;
+}
+
+.rebuttals-table .rebuttal-summary,
+.mobile-rebuttal-cards .rebuttal-card-summary { color: #cbd5e1 !important; }
+
+/* Customer Service Management - Dark Mode */
+.customer-service-management,
+.customer-service-section,
+.customer-service-container {
+  background: #0b1324 !important;
+  border: 1px solid #334155 !important;
+  color: #e5e7eb !important;
+  border-radius: 12px;
+}
+.customer-service-management .section-header,
+.customer-service-section .section-header { border-bottom: 1px solid #334155 !important; }
+.customer-service-management .section-header h2,
+.customer-service-section .section-header h2 { color: #e5e7eb !important; }
+.customer-service-management input,
+.customer-service-management select,
+.customer-service-management textarea { background: #0b1324 !important; color: #e5e7eb !important; border: 1px solid #334155 !important; }
+.customer-service-management button { background: rgba(30,41,59,0.6) !important; color: #e5e7eb !important; border: 1px solid #334155 !important; }
+.customer-service-management button:hover { background: rgba(51,65,85,0.6) !important; }
+
+/* FAQ Management - Dark Mode */
+.faq-management,
+.faq-section,
+.faq-container {
+  background: #0b1324 !important;
+  border: 1px solid #334155 !important;
+  color: #e5e7eb !important;
+  border-radius: 12px;
+}
+.faq-management .section-header { border-bottom: 1px solid #334155 !important; }
+.faq-management .section-header h2 { color: #e5e7eb !important; }
+.faq-management input,
+.faq-management select,
+.faq-management textarea { background: #0b1324 !important; color: #e5e7eb !important; border: 1px solid #334155 !important; }
+.faq-management button { background: rgba(30,41,59,0.6) !important; color: #e5e7eb !important; border: 1px solid #334155 !important; }
+.faq-management button:hover { background: rgba(51,65,85,0.6) !important; }
+
+/* Users - Dark Mode */
+.users-table { background: #0b1324 !important; border: 1px solid #334155 !important; border-radius: 12px; overflow: hidden; }
+.users-table table { width: 100%; border-collapse: collapse; }
+.users-table th { background: #0f172a !important; color: #e5e7eb !important; border-bottom: 1px solid #223047 !important; }
+.users-table td { color: #cbd5e1 !important; border-bottom: 1px solid #223047 !important; }
+.users-table tr:hover { background: rgba(51,65,85,0.25) !important; }
+
+/* Generic dark inputs/buttons across admin sections */
+.admin-dashboard input,
+.admin-dashboard select,
+.admin-dashboard textarea { background: #0b1324; color: #e5e7eb; border: 1px solid #334155; }
+.admin-dashboard button.outline,
+.admin-dashboard .btn-outline { background: transparent; color: #e5e7eb; border: 1px solid #334155; }
+.admin-dashboard .btn-outline:hover { background: rgba(51,65,85,0.35); }
+
+/* Darker hover for rebuttal rows */
+.rebuttals-table tr:hover { background: transparent !important; }
+.rebuttals-table tr:hover td { background: rgba(15,23,42,0.6) !important; border-color: #223047 !important; }
+
+/* Mobile card subtle hover */
+.mobile-rebuttal-cards .rebuttal-card:hover { background: #0f172a !important; border-color: #334155 !important; box-shadow: 0 6px 16px rgba(0,0,0,0.35) !important; }

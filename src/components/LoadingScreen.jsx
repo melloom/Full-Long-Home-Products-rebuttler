@@ -1,16 +1,32 @@
 import React from 'react';
 import '../styles/LoadingScreen.css';
 
-const LoadingScreen = () => {
+const LoadingScreen = ({ variant = 'landing' }) => {
+  const isCompany = variant === 'company';
+  const rootClass = `loading-screen ${isCompany ? 'company' : 'landing'}`;
+
   return (
-    <div className="loading-screen">
+    <div className={rootClass}>
       <div className="loading-container">
         <div className="logo-container">
           <div className="logo-circle"></div>
           <div className="logo-text">
-            <span>L</span>
-            <span>H</span>
-            <span>P</span>
+            {isCompany ? (
+              <>
+                <span>L</span>
+                <span>H</span>
+                <span>P</span>
+              </>
+            ) : (
+              <>
+                <span>S</span>
+                <span>O</span>
+                <span>S</span>
+              </>
+            )}
+          </div>
+          <div className="logo-subtext">
+            {isCompany ? "Long Home Products" : "StayOnScript"}
           </div>
         </div>
         <div className="loading-animation">

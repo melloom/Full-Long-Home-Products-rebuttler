@@ -264,13 +264,7 @@ const CustomerServiceManagement = () => {
             <div className="stat-number">{stats.total}</div>
           </div>
         </div>
-        <div className="stat-card urgent">
-          <div className="stat-icon">⚠️</div>
-          <div className="stat-content">
-            <h3>Urgent Topics</h3>
-            <div className="stat-number">{stats.urgent}</div>
-          </div>
-        </div>
+        {/* Removed 'Urgent Topics' card per request */}
         <div className="stat-card">
           <div className="stat-icon">🏷️</div>
           <div className="stat-content">
@@ -320,7 +314,6 @@ const CustomerServiceManagement = () => {
           >
             <option value="title">Sort by Title</option>
             <option value="category">Sort by Category</option>
-            <option value="urgent">Sort by Urgency</option>
           </select>
         </div>
       </div>
@@ -360,9 +353,7 @@ const CustomerServiceManagement = () => {
                   <span className="category-icon">{EMOJI_ICONS[topic.category] || '💬'}</span>
                   {topic.category}
                 </span>
-                {topic.isUrgent && (
-                  <span className="urgent-badge">Urgent</span>
-                )}
+                {/* Removed 'Urgent' badge per request */}
               </div>
 
               <div className="topic-stats">
@@ -592,18 +583,7 @@ const CustomerServiceManagement = () => {
                 </button>
               </div>
 
-              <div className="form-group">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    name="isUrgent"
-                    checked={formData.isUrgent}
-                    onChange={handleInputChange}
-                  />
-                  <span className="checkmark"></span>
-                  Mark as Urgent
-                </label>
-              </div>
+              {/* Removed 'Mark as Urgent' toggle per request */}
 
               <div className="form-actions">
                 <button

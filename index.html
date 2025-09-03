@@ -42,7 +42,23 @@
             })
             .catch(function(registrationError) {
               console.log('SW registration failed: ', registrationError);
+              // Silently handle service worker registration failures
+              // This prevents uncaught promise errors
             });
+        });
+        
+        // Add global handler for unhandled promise rejections
+        window.addEventListener('unhandledrejection', function(event) {
+          // Check if this is a service worker related error
+          if (event.reason && (
+            event.reason.toString().includes('ServiceWorker') ||
+            event.reason.toString().includes('sw.js') ||
+            event.reason.toString().includes('Cache') ||
+            event.reason.toString().includes('fetch')
+          )) {
+            console.log('Service Worker promise rejection handled:', event.reason);
+            event.preventDefault();
+          }
         });
       }
     </script>

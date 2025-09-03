@@ -121,6 +121,9 @@ export function getDb() {
   return db;
 }
 
+// Export getAuth function directly for components that need it
+export { getAuth } from 'firebase/auth';
+
 // Update export: do not export db directly
 // export { app, auth, db, messaging };
 export { app, auth, messaging };

@@ -711,3 +711,41 @@
     font-size: 0.98rem;
   }
 } 
+
+/* Dark overrides for Manage Categories */
+.category-management {
+  background: #0b1324 !important;
+  color: #e5e7eb !important;
+}
+
+.category-header {
+  background: #0f172a !important;
+  color: #e5e7eb !important;
+  border: 1px solid #334155 !important;
+}
+
+.category-header h2 { color: #e5e7eb !important; }
+
+.categories-list .category-item,
+.category-card.redesigned {
+  background: #0f172a !important;
+  border: 1px solid #334155 !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35) !important;
+}
+
+.category-card-title,
+.category-name { color: #e5e7eb !important; }
+.category-card-desc { color: #cbd5e1 !important; }
+
+.category-card-icon { background: rgba(30,41,59,0.6) !important; border: 1px solid #334155 !important; }
+.category-card-meta { border-top: 1px solid #334155 !important; }
+.category-card-actions { border-top: 1px solid #334155 !important; }
+
+.meta-info, .meta-item, .meta-label, .meta-value { color: #cbd5e1 !important; }
+
+.modal-content { background: #0b1324 !important; color: #e5e7eb !important; border: 1px solid #334155 !important; }
+.modal-content h2 { color: #e5e7eb !important; }
+.form-group label { color: #cbd5e1 !important; }
+.form-group input, .form-group select, .form-group textarea { background: #0f172a !important; color: #e5e7eb !important; border: 1px solid #334155 !important; }
+.cancel-button { background: rgba(30,41,59,0.6) !important; color: #e5e7eb !important; border: 1px solid #334155 !important; }
+.cancel-button:hover { background: rgba(51,65,85,0.6) !important; } 
