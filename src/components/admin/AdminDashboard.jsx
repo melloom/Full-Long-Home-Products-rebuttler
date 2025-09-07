@@ -11,6 +11,7 @@ import UserManagement from './UserManagement';
 import DashboardView from './DashboardView';
 import TimeBlockManagement from './TimeBlockManagement';
 import './AdminDashboard.css';
+import AdminSettings from './AdminSettings';
 
 const AdminDashboard = () => {
   const { currentUser, authLoading } = useAuth();
@@ -21,6 +22,24 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [scopedCompanyId, setScopedCompanyId] = useState('');
   const [isImpersonating, setIsImpersonating] = useState(false);
+  const [companyName, setCompanyName] = useState('');
+
+  // Function to get company name from ID
+  const getCompanyName = (companyId) => {
+    // Map known company IDs to names
+    const companyMap = {
+      'oLuxoJq8SHXXEWm9KSEU': 'Long Home',
+      'long-home': 'Long Home'
+    };
+    return companyMap[companyId] || companyId;
+  };
+
+  // Update company name when scopedCompanyId changes
+  useEffect(() => {
+    if (scopedCompanyId) {
+      setCompanyName(getCompanyName(scopedCompanyId));
+    }
+  }, [scopedCompanyId]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -29,29 +48,26 @@ const AdminDashboard = () => {
         console.log('🔍 AdminDashboard: Current user:', currentUser);
         console.log('🔍 AdminDashboard: Auth loading:', authLoading);
 
-        if (authLoading) {
-          console.log('🔍 AdminDashboard: Auth is still loading...');
-          return;
-        }
-
-        if (!currentUser) {
-          console.log('🔍 AdminDashboard: No current user, redirecting to login');
-          navigate('/admin/login');
-          return;
-        }
-
-        // Check if user is admin
+        // Check if user is admin first (from localStorage) - don't wait for authLoading
         const adminUser = localStorage.getItem('adminUser');
         if (adminUser) {
           const parsedAdmin = JSON.parse(adminUser);
           console.log('🔍 AdminDashboard: Found admin user in localStorage:', parsedAdmin);
 
-          // If super admin, stay here only if impersonating, else go to SaaS
+          // Handle different admin types
           if (parsedAdmin.role === 'super-admin') {
             const url = new URL(window.location.href);
             const impersonateCompanyId = url.searchParams.get('impersonate');
             let impersonation = null;
             try { impersonation = JSON.parse(localStorage.getItem('impersonation') || 'null'); } catch {}
+
+            console.log('🔍 AdminDashboard: Super admin check:', { 
+              impersonateCompanyId, 
+              impersonation, 
+              url: window.location.href,
+              hasImpersonateParam: !!impersonateCompanyId,
+              hasImpersonationData: !!impersonation?.enabled
+            });
 
             if (impersonateCompanyId || impersonation?.enabled) {
               const targetCompanyId = impersonateCompanyId || impersonation?.companyId || '';
@@ -60,9 +76,23 @@ const AdminDashboard = () => {
               // Persist for downstream usage
               localStorage.setItem('impersonation', JSON.stringify({ enabled: true, companyId: targetCompanyId }));
               console.log('🔍 AdminDashboard: Super admin impersonating company:', targetCompanyId);
+              console.log('🔍 AdminDashboard: Staying on admin dashboard for impersonation');
             } else {
               console.log('🔍 AdminDashboard: Super admin (no impersonation), redirecting to SaaS dashboard');
+              console.log('🔍 AdminDashboard: Redirecting to SaaS dashboard because no impersonation found');
               navigate('/admin/saas');
+              return;
+            }
+          } else if (parsedAdmin.role === 'company-admin') {
+            // Company admin should access their company's dashboard
+            const companyId = parsedAdmin.companyId;
+            if (companyId) {
+              setScopedCompanyId(companyId);
+              setIsImpersonating(false); // Not impersonating, this is their own company
+              console.log('🔍 AdminDashboard: Company admin accessing their company:', companyId);
+            } else {
+              console.error('🔍 AdminDashboard: Company admin missing companyId');
+              setError('Company admin missing company information');
               return;
             }
           }
@@ -71,6 +101,13 @@ const AdminDashboard = () => {
           setLoading(false);
         } else {
           console.log('🔍 AdminDashboard: No admin user in localStorage, checking Firestore...');
+
+          // If no currentUser from Firebase Auth, redirect to login
+          if (!currentUser) {
+            console.log('🔍 AdminDashboard: No current user from Firebase Auth, redirecting to login');
+            navigate('/admin/login');
+            return;
+          }
 
           // First check if user is a super admin
           const superAdminRef = doc(getFirestore(), 'super-admins', currentUser.uid);
@@ -135,21 +172,23 @@ const AdminDashboard = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <DashboardView onGoTab={(tab) => setActiveTab(tab)} />;
+        return <DashboardView onGoTab={(tab) => setActiveTab(tab)} companyId={scopedCompanyId} />;
       case 'rebuttals':
-        return <RebuttalManagement />;
+        return <RebuttalManagement companyId={scopedCompanyId} />;
       case 'categories':
-        return <CategoryManagement />;
+        return <CategoryManagement companyId={scopedCompanyId} />;
       case 'dispositions':
-        return <LeadDispositionManagement />;
+        return <LeadDispositionManagement companyId={scopedCompanyId} />;
       case 'customer-service':
-        return <CustomerServiceManagement />;
+        return <CustomerServiceManagement companyId={scopedCompanyId} />;
       case 'faq':
-        return <FAQManagement />;
+        return <FAQManagement companyId={scopedCompanyId} />;
       case 'users':
-        return <UserManagement />;
+        return <UserManagement companyId={scopedCompanyId} />;
       case 'time-blocks':
-        return <TimeBlockManagement />;
+        return <TimeBlockManagement companyId={scopedCompanyId} />;
+      case 'settings':
+        return <AdminSettings companyId={scopedCompanyId} companyName={companyName} />;
       default:
         return null;
   }
@@ -167,6 +206,11 @@ const AdminDashboard = () => {
       }}>
         <div style={{ fontSize: '1.2rem', fontWeight: 600 }}>Loading Admin Dashboard...</div>
         <div style={{ fontSize: '0.9rem', color: '#666' }}>Please wait while we initialize your admin panel</div>
+        <div style={{ fontSize: '0.8rem', color: '#999', marginTop: '1rem' }}>
+          <div>Current user: {currentUser ? currentUser.email : 'None'}</div>
+          <div>Auth loading: {authLoading ? 'Yes' : 'No'}</div>
+          <div>Admin user in localStorage: {localStorage.getItem('adminUser') ? 'Yes' : 'No'}</div>
+        </div>
         <div style={{ 
           width: '40px', 
           height: '40px', 
@@ -217,9 +261,24 @@ const AdminDashboard = () => {
       <div className="admin-dashboard">
       <header className="admin-header">
             <h1>Admin Dashboard</h1>
+        {(isImpersonating || (adminUser?.role === 'company-admin' && scopedCompanyId)) && (
+          <div className="impersonation-banner">
+            <span>
+              {isImpersonating ? '🔍 Impersonating Company:' : '🏢 Company Admin for:'} {companyName}
+            </span>
+          </div>
+        )}
         <div className="admin-actions">
           {adminUser?.role === 'super-admin' && isImpersonating && (
             <button className="admin-header-button" onClick={exitImpersonation}>Back to My Dashboard</button>
+          )}
+          {companyName === 'Long Home' && (
+            <button 
+              className="admin-header-button training-button" 
+              onClick={() => window.open('/app', '_blank')}
+            >
+              🎓 Visit Training
+            </button>
           )}
           <span>Welcome, {adminUser.email}</span>
           <button onClick={handleLogout}>Logout</button>
@@ -235,6 +294,7 @@ const AdminDashboard = () => {
           <button className={activeTab === 'faq' ? 'active' : ''} onClick={() => setActiveTab('faq')}>FAQ</button>
           <button className={activeTab === 'users' ? 'active' : ''} onClick={() => setActiveTab('users')}>Users</button>
           <button className={activeTab === 'time-blocks' ? 'active' : ''} onClick={() => setActiveTab('time-blocks')}>Time Blocks</button>
+          <button className={activeTab === 'settings' ? 'active' : ''} onClick={() => setActiveTab('settings')}>Settings</button>
         </aside>
         <main className="dashboard-content">
           {renderContent()}

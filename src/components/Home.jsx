@@ -1350,7 +1350,6 @@ const Home = () => {
             <div className="modal-header">
               <div className="modal-header-content">
                 <h2>{selectedSimpleModeItem.title}</h2>
-                <p className="modal-subtitle">{selectedSimpleModeItem.description}</p>
               </div>
               <div className="modal-header-buttons">
                 <button className="modal-close" onClick={closeModal}>×</button>
@@ -1369,6 +1368,9 @@ const Home = () => {
                           #{tag}
                         </span>
                       ))}
+                    </div>
+                    <div className="modal-summary">
+                      <p className="modal-summary-text">{selectedSimpleModeItem.situationOverview || selectedSimpleModeItem.summary || selectedSimpleModeItem.objection || selectedSimpleModeItem.description || 'No situation overview available.'}</p>
                     </div>
                   </div>
 
@@ -2006,6 +2008,13 @@ const Home = () => {
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('adminUser'));
     setAdminUser(user);
+    
+    // Set currentCompanySlug for Long Home if not already set
+    const currentSlug = localStorage.getItem('currentCompanySlug');
+    if (!currentSlug) {
+      localStorage.setItem('currentCompanySlug', 'long-home');
+      console.log('🚀 Set currentCompanySlug to long-home for Home component');
+    }
   }, []);
 
   const handleLogout = () => {
@@ -2015,8 +2024,39 @@ const Home = () => {
   };
 
   const handleAdminDashboard = () => {
-    navigate('/admin/dashboard');
+    // If super admin, go to SaaS admin dashboard
+    if (adminUser?.role === 'super-admin') {
+      navigate('/admin/saas');
+    } else {
+      // Regular admin goes to company dashboard
+      navigate('/admin/dashboard');
+    }
   };
+
+  const handleCompanyDashboard = () => {
+    // Get the current company slug from localStorage or URL
+    const currentCompanySlug = localStorage.getItem('currentCompanySlug') || 'long-home';
+    
+    // Convert slug to company ID - Long Home uses 'oLuxoJq8SHXXEWm9KSEU'
+    let companyId = currentCompanySlug;
+    if (currentCompanySlug === 'long-home') {
+      companyId = 'oLuxoJq8SHXXEWm9KSEU';
+    }
+    
+    console.log('🚀 Company Dashboard clicked:', { currentCompanySlug, companyId });
+    console.log('🚀 Navigating to:', `/admin/dashboard?impersonate=${companyId}`);
+    console.log('🚀 Current URL before navigation:', window.location.href);
+    
+    // Set impersonation data for the admin dashboard
+    localStorage.setItem('impersonation', JSON.stringify({ enabled: true, companyId: companyId }));
+    
+    // Use a small delay to ensure localStorage is set before navigation
+    setTimeout(() => {
+      console.log('🚀 Navigating after delay...');
+      navigate(`/admin/dashboard?impersonate=${companyId}`, { replace: true });
+    }, 100);
+  };
+
 
   // Update the navigation card click handler in the render section
   const handleCardClick = (card) => {
@@ -2064,8 +2104,18 @@ const Home = () => {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M3 13H11V3H3V13ZM3 21H11V15H3V21ZM13 21H21V11H13V21ZM13 3V9H21V3H13Z" fill="currentColor"/>
             </svg>
-            Dashboard
+            {adminUser?.role === 'super-admin' ? 'Super Admin' : 'Dashboard'}
           </button>
+          {adminUser?.role === 'super-admin' && localStorage.getItem('currentCompanySlug') && (
+            <button onClick={handleCompanyDashboard} className="admin-company-dashboard-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="currentColor"/>
+                <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Company Dashboard
+            </button>
+          )}
           <button onClick={handleLogout} className="admin-logout-btn">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M17 7L15.59 8.41L18.17 11H8V13H18.17L15.59 15.58L17 17L22 12L17 7ZM4 5H12V3H4C2.9 3 2 3.9 2 5V19C2 20.1 2.9 21 4 21H12V19H4V5Z" fill="currentColor"/>
@@ -2076,7 +2126,7 @@ const Home = () => {
       ) : null}
       {renderModal()}
       <div className="home-content">
-        {/* Hero Section */}
+        {/* Hero Section with Content */}
         <div className="hero-wrapper">
           <div className="home-hero">
             <div className="hero-content">
@@ -2091,10 +2141,10 @@ const Home = () => {
               </p>
             </div>
           </div>
+          
+          {/* Simple Mode Content - Now inside hero wrapper */}
+          {renderSimpleMode()}
         </div>
-
-        {/* Simple Mode Content */}
-        {renderSimpleMode()}
       </div>
     </div>
   );

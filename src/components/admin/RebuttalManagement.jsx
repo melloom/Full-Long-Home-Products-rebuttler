@@ -254,19 +254,39 @@ const RebuttalManagement = () => {
   return (
     <>
       {showForm && (
-        <div className="modal-overlay" onClick={handleFormClose}>
+        <div className="edit-admin-modal-overlay" onClick={handleFormClose}>
           <div
-            className="modal-content modern-modal"
+            className="edit-admin-modal-container"
             ref={modalContentRef}
             onClick={e => e.stopPropagation()}
           >
-            <div className="modal-header modern-modal-header">
-              <h2>{editingRebuttal ? 'Edit Rebuttal' : 'Add New Rebuttal'}</h2>
-              <button onClick={handleFormClose} className="modal-close-btn modern-modal-close">
-                ×
-              </button>
+            <div className="edit-admin-modal-header">
+              <div className="modal-header-content">
+                <div className="modal-icon-section">
+                  <div className="modal-main-icon">
+                    {editingRebuttal ? '✏️' : '➕'}
+                  </div>
+                  <div className="modal-title-group">
+                    <h2>{editingRebuttal ? 'Edit Rebuttal' : 'Create New Rebuttal'}</h2>
+                    <p>Manage rebuttal content and settings</p>
+                    {editingRebuttal && (
+                      <div className="company-status-badge">
+                        <span className={`status-indicator ${editingRebuttal.status || 'active'}`}></span>
+                        <span className="status-text">{editingRebuttal.status || 'active'}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <button 
+                  className="modal-close-btn"
+                  onClick={handleFormClose}
+                  aria-label="Close modal"
+                >
+                  <span>✕</span>
+                </button>
+              </div>
             </div>
-            <div className="modal-body modern-modal-body">
+            <div className="modal-body">
               <RebuttalForm rebuttal={editingRebuttal} onSave={handleFormClose} />
             </div>
           </div>

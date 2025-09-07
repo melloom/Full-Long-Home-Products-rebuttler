@@ -797,6 +797,12 @@
 }
 
 .status-badge.inactive {
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.status-badge.suspended {
   background: rgba(239, 68, 68, 0.1);
   color: #dc2626;
   border: 1px solid rgba(239, 68, 68, 0.2);
@@ -2224,6 +2230,22 @@
 }
 
 .status-badge.inactive {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.9) 0%, rgba(217, 119, 6, 0.8) 100%);
+  color: white;
+  border-color: rgba(245, 158, 11, 0.4);
+  box-shadow: 
+    0 8px 24px rgba(245, 158, 11, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.status-badge.inactive:hover {
+  transform: scale(1.05);
+  box-shadow: 
+    0 12px 32px rgba(245, 158, 11, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.status-badge.suspended {
   background: linear-gradient(135deg, rgba(239, 68, 68, 0.9) 0%, rgba(220, 38, 38, 0.8) 100%);
   color: white;
   border-color: rgba(239, 68, 68, 0.4);
@@ -2232,7 +2254,7 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
-.status-badge.inactive:hover {
+.status-badge.suspended:hover {
   transform: scale(1.05);
   box-shadow: 
     0 12px 32px rgba(239, 68, 68, 0.4),
@@ -4380,6 +4402,12 @@ input:checked + .toggle-slider:before {
 }
 
 .saas-admin-dashboard.dark-mode .status-badge.inactive {
+  background: rgba(245, 158, 11, 0.9);
+  color: white;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.saas-admin-dashboard.dark-mode .status-badge.suspended {
   background: rgba(239, 68, 68, 0.9);
   color: white;
   border-color: rgba(239, 68, 68, 0.3);
@@ -6417,34 +6445,63 @@ body.modal-open .saas-admin-header {
 
 .security-tips {
   margin-top: 1.5rem;
-  padding: 1rem;
-  background: rgba(59, 130, 246, 0.05);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  border-radius: 8px;
+  padding: 1.25rem;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
 }
 
 .tips-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #1e293b;
   margin-bottom: 0.75rem;
+  font-size: 1rem;
 }
 
 .tips-icon {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
+  filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.3));
 }
 
 .tips-list {
   margin: 0;
-  padding-left: 1.5rem;
-  color: #64748b;
+  padding: 0;
+  list-style: none;
+  color: #374151;
+  font-weight: 500;
 }
 
 .tips-list li {
-  margin-bottom: 0.25rem;
-  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 8px;
+  position: relative;
+  padding-left: 3rem;
+  transition: all 0.3s ease;
+}
+
+.tips-list li::before {
+  content: "💡";
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1rem;
+}
+
+.tips-list li:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(59, 130, 246, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 /* Permissions Section */
@@ -6823,24 +6880,47 @@ body.modal-open .saas-admin-header {
 
 /* Dark Mode for Security Tips (Password Requirements) */
 .saas-admin-dashboard.dark-mode .security-tips {
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: rgba(15, 23, 42, 0.9) !important;
+  border: 1px solid rgba(59, 130, 246, 0.4) !important;
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
 }
 
 .saas-admin-dashboard.dark-mode .tips-header {
-  color: #e2e8f0;
+  color: #ffffff !important;
+  font-weight: 700;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 .saas-admin-dashboard.dark-mode .tips-icon {
-  color: #60a5fa;
+  color: #60a5fa !important;
+  filter: drop-shadow(0 0 8px rgba(96, 165, 250, 0.5));
 }
 
 .saas-admin-dashboard.dark-mode .tips-list {
-  color: #94a3b8;
+  color: #ffffff !important;
 }
 
 .saas-admin-dashboard.dark-mode .tips-list li {
-  color: #94a3b8;
+  color: #ffffff !important;
+  font-weight: 600;
+  background: rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.saas-admin-dashboard.dark-mode .tips-list li:hover {
+  background: rgba(0, 0, 0, 0.5) !important;
+  border-color: rgba(96, 165, 250, 0.4) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+.saas-admin-dashboard.dark-mode .tips-list li::before {
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.3));
 }
 
 /* Responsive Design */

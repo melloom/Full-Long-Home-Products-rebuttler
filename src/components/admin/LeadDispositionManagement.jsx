@@ -38,12 +38,13 @@ const LeadDispositionManagement = () => {
     try {
       setLoading(true);
       const dispositionsRef = collection(db, 'dispositions');
-      const q = query(dispositionsRef, orderBy('name'));
-      const snapshot = await getDocs(q);
-      const dispositionsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const snapshot = await getDocs(dispositionsRef);
+      const dispositionsData = snapshot.docs
+        .map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }))
+        .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
       setDispositions(dispositionsData);
     } catch (err) {
       console.error('Error fetching dispositions:', err);

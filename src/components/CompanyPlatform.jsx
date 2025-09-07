@@ -5,6 +5,7 @@ import { getDb } from '../services/firebase/config';
 import CompanyLanding from './CompanyLanding';
 import CompanyTraining from './CompanyTraining';
 import CompanyLogin from './CompanyLogin';
+import CompanyStatusCheck from './CompanyStatusCheck';
 import './CompanyPlatform.css';
 
 const CompanyPlatform = () => {
@@ -128,37 +129,44 @@ const CompanyPlatform = () => {
       );
     }
 
-    switch (currentPage) {
-      case 'login':
-        return (
-          <CompanyLogin 
-            company={company}
-            onLogin={handleLogin}
-            onBack={() => setCurrentPage('landing')}
-          />
-        );
-      case 'training':
-        return (
-          <CompanyTraining 
-            company={company}
-            onLogout={handleLogout}
-          />
-        );
-      default:
-        return (
-          <CompanyLanding 
-            company={company}
-            onLogin={() => setCurrentPage('login')}
-            onStartTraining={() => {
-              if (isAuthenticated) {
-                setCurrentPage('training');
-              } else {
-                setCurrentPage('login');
-              }
-            }}
-          />
-        );
-    }
+    // Wrap all content with CompanyStatusCheck to enforce status
+    return (
+      <CompanyStatusCheck company={company}>
+        {(() => {
+          switch (currentPage) {
+            case 'login':
+              return (
+                <CompanyLogin 
+                  company={company}
+                  onLogin={handleLogin}
+                  onBack={() => setCurrentPage('landing')}
+                />
+              );
+            case 'training':
+              return (
+                <CompanyTraining 
+                  company={company}
+                  onLogout={handleLogout}
+                />
+              );
+            default:
+              return (
+                <CompanyLanding 
+                  company={company}
+                  onLogin={() => setCurrentPage('login')}
+                  onStartTraining={() => {
+                    if (isAuthenticated) {
+                      setCurrentPage('training');
+                    } else {
+                      setCurrentPage('login');
+                    }
+                  }}
+                />
+              );
+          }
+        })()}
+      </CompanyStatusCheck>
+    );
   };
 
   return (

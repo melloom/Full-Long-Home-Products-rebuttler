@@ -122,7 +122,7 @@ export const useSaasAdminData = () => {
       // Process companies data
       const companiesData = companiesSnapshot.docs.map(doc => {
         const data = doc.data();
-        return {
+        const company = {
         id: doc.id,
           ...data,
           // Ensure consistent date handling
@@ -133,6 +133,8 @@ export const useSaasAdminData = () => {
           adminCount: 0,
           status: data.status || 'active'
         };
+        console.log('🔍 Loaded company:', company.name, 'Status:', company.status, 'Original status:', data.status);
+        return company;
       });
       setCompanies(companiesData);
       console.log('✅ Loaded', companiesData.length, 'companies');
@@ -387,7 +389,10 @@ export const useSaasAdminData = () => {
 
   const updateCompany = async (companyId, updateData) => {
     try {
+      console.log('🔍 Updating company:', companyId, 'with data:', updateData);
+      console.log('🔍 Status being saved:', updateData.status);
       await updateDoc(doc(getDb(), 'companies', companyId), updateData);
+      console.log('✅ Company updated successfully');
       await loadData();
     } catch (err) {
       console.error('Error updating company:', err);

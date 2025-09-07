@@ -18,14 +18,6 @@ const SaasPlatformsManagement = ({
         <h2>
           {selectedCompany ? `${selectedCompany.name} - Platforms` : 'All Platforms'}
         </h2>
-        {selectedCompany && (
-          <button 
-            className="back-button"
-            onClick={() => window.history.back()}
-          >
-            ← Back to Companies
-          </button>
-        )}
         <button 
           className="create-button"
           onClick={() => {

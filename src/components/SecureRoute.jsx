@@ -237,6 +237,12 @@ const SecureRoute = ({
       path: location.pathname 
     });
     
+    // Special case: company-admin can access admin routes
+    if (userRole === 'company-admin' && requiredRole === 'admin') {
+      console.log('🔒 SecureRoute: Company admin accessing admin route, allowing access');
+      return children;
+    }
+    
     // Special case: super-admin can access admin/company-admin routes when impersonating
     if (userRole === 'super-admin' && (requiredRole === 'admin' || requiredRole === 'company-admin') && allowImpersonation) {
       const impersonation = JSON.parse(localStorage.getItem('impersonation') || 'null');

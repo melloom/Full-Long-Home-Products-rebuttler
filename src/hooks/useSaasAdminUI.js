@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 export const useSaasAdminUI = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -137,6 +137,8 @@ export const useSaasAdminUI = () => {
   };
 
   const openEditCompany = (company) => {
+    console.log('🔍 Opening edit company modal for:', company);
+    console.log('🔍 Company status:', company.status);
     setEditingCompany(company);
     setEditCompanyForm({
       name: company.name || '',

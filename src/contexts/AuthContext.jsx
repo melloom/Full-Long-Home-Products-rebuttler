@@ -95,7 +95,7 @@ export function AuthProvider({ children }) {
         console.log('🔍 AuthContext: Initialization timeout, continuing without Firebase');
         setLoading(false);
       }
-    }, 3000); // 3 second timeout
+    }, 10000); // 10 second timeout
 
     initialize();
 

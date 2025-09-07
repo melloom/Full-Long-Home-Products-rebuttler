@@ -229,14 +229,6 @@ const UserManagement = () => {
 
   const filteredUsers = getFilteredUsers();
 
-  // Debug section - remove this after fixing the issue
-  const debugInfo = {
-    currentUser: auth.currentUser,
-    storedAdminUser: localStorage.getItem('adminUser'),
-    usersCount: users.length,
-    filteredUsersCount: filteredUsers.length
-  };
-
   if (loading) {
     return (
       <div className="user-management-loading">
@@ -265,51 +257,6 @@ const UserManagement = () => {
 
   return (
     <div className="user-management">
-      {/* Debug section - remove after fixing */}
-      <div style={{ 
-        backgroundColor: '#f0f8ff', 
-        border: '1px solid #007acc', 
-        borderRadius: '8px', 
-        padding: '15px', 
-        marginBottom: '20px',
-        fontSize: '12px'
-      }}>
-        <h4 style={{ margin: '0 0 10px 0', color: '#007acc' }}>🔍 Debug Info</h4>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-          <div>
-            <strong>Current User:</strong> {debugInfo.currentUser ? `${debugInfo.currentUser.email} (${debugInfo.currentUser.uid})` : 'None'}
-          </div>
-          <div>
-            <strong>Stored Admin:</strong> {debugInfo.storedAdminUser ? 'Yes' : 'No'}
-          </div>
-          <div>
-            <strong>Users Count:</strong> {debugInfo.usersCount}
-          </div>
-          <div>
-            <strong>Filtered Users:</strong> {debugInfo.filteredUsersCount}
-          </div>
-        </div>
-        {!debugInfo.currentUser && debugInfo.storedAdminUser && (
-          <div style={{ marginTop: '10px', padding: '10px', backgroundColor: '#fff3cd', border: '1px solid #ffeaa7', borderRadius: '4px' }}>
-            <strong>⚠️ Session Issue:</strong> You have stored admin data but no active Firebase Auth session. 
-            <button 
-              onClick={() => window.location.href = '/admin/login'}
-              style={{ 
-                marginLeft: '10px', 
-                padding: '4px 8px', 
-                backgroundColor: '#007acc', 
-                color: 'white', 
-                border: 'none', 
-                borderRadius: '4px', 
-                cursor: 'pointer',
-                fontSize: '11px'
-              }}
-            >
-              Log In Again
-            </button>
-          </div>
-        )}
-      </div>
 
       <div className="user-management-header">
         <div className="header-left">

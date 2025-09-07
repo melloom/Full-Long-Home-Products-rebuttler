@@ -20,10 +20,13 @@ const CompanyModal = ({
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    onFormChange({
+    const newFormData = {
       ...formData,
       [name]: type === 'checkbox' ? checked : value
-    });
+    };
+    console.log('🔍 Form change:', name, '=', type === 'checkbox' ? checked : value);
+    console.log('🔍 New form data:', newFormData);
+    onFormChange(newFormData);
   };
 
   const sections = [

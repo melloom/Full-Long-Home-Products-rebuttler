@@ -25,7 +25,7 @@ import PlatformBuilder from './PlatformBuilder';
 import './SaasAdminDashboard.css';
 
 const SaasAdminDashboard = () => {
-  const { currentUser, authLoading } = useAuth();
+  const { currentUser, authLoading, logout } = useAuth();
   const navigate = useNavigate();
   
   // Custom hooks
@@ -190,6 +190,8 @@ const SaasAdminDashboard = () => {
   const handleEditCompany = async (e) => {
     e.preventDefault();
     try {
+      console.log('🔍 Editing company with form data:', editCompanyForm);
+      console.log('🔍 Status in form:', editCompanyForm.status);
       await updateCompany(editingCompany.id, editCompanyForm);
       closeEditCompany();
     } catch (err) {
@@ -246,6 +248,11 @@ const SaasAdminDashboard = () => {
   const handleLogout = () => {
     // Clear impersonation data
     localStorage.removeItem('impersonation');
+    
+    // Use AuthContext logout to clear all auth data
+    logout();
+    
+    // Navigate to login
     navigate('/admin/login');
   };
 
@@ -253,9 +260,29 @@ const SaasAdminDashboard = () => {
   const goToImpersonatedDashboard = () => {
     console.log('🚀 Impersonation navigation:', { impersonateMode, impersonateCompanyId });
     if (impersonateMode && impersonateCompanyId) {
-      const targetUrl = `/admin/dashboard?impersonate=${impersonateCompanyId}`;
-      console.log('🚀 Navigating to:', targetUrl);
-      navigate(targetUrl);
+      // Find the company to get its slug
+      const company = companies.find(c => c.id === impersonateCompanyId);
+      if (company) {
+        const slugOrId = company.slug || company.id;
+        let targetUrl;
+        
+        // For Long Home Products, go to admin dashboard with impersonation
+        if (slugOrId === 'long-home') {
+          targetUrl = `/admin/dashboard?impersonate=${impersonateCompanyId}`;
+        } else {
+          targetUrl = `/company/${slugOrId}`;
+        }
+        
+        console.log('🚀 Navigating to company dashboard:', targetUrl);
+        // Set impersonation data in localStorage
+        localStorage.setItem('impersonation', JSON.stringify({ 
+          enabled: true, 
+          companyId: impersonateCompanyId 
+        }));
+        navigate(targetUrl);
+      } else {
+        console.warn('🚀 Company not found for impersonation:', impersonateCompanyId);
+      }
     } else {
       console.warn('🚀 Impersonation navigation failed:', { impersonateMode, impersonateCompanyId });
     }
@@ -389,7 +416,9 @@ const SaasAdminDashboard = () => {
                   <option key={c.id} value={c.id}>{c.name || c.id}</option>
                 ))}
               </select>
-              <button className="header-button" onClick={goToImpersonatedDashboard} disabled={!impersonateMode || !impersonateCompanyId}>Dashboard</button>
+              <button className="header-button" onClick={goToImpersonatedDashboard} disabled={!impersonateMode || !impersonateCompanyId}>
+                {impersonateCompanyId && companies.find(c => c.id === impersonateCompanyId)?.slug === 'long-home' ? 'Visit Admin Dashboard' : 'Visit Training'}
+              </button>
             </div>
           )}
           <button className="header-button" onClick={() => navigate('/')}>SaaS Landing</button>

@@ -295,6 +295,181 @@
   margin-bottom: 1rem;
 }
 
+/* Dark Mode Styles */
+.edit-admin-modal-overlay {
+  background: rgba(0, 0, 0, 0.8) !important;
+}
+
+.edit-admin-modal-container {
+  background: linear-gradient(135deg, #1a1f36 0%, #2d3748 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5) !important;
+}
+
+.edit-admin-form {
+  background: transparent !important;
+}
+
+.edit-admin-form .form-section {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px !important;
+  padding: 1.5rem !important;
+  margin-bottom: 1.5rem !important;
+}
+
+.edit-admin-form .section-header h3 {
+  color: #ffffff !important;
+}
+
+.edit-admin-form .section-header p {
+  color: #a1a1aa !important;
+}
+
+.edit-admin-form .form-field label {
+  color: #ffffff !important;
+}
+
+.edit-admin-form .form-input,
+.edit-admin-form .form-textarea,
+.edit-admin-form .form-select {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+
+.edit-admin-form .form-input::placeholder,
+.edit-admin-form .form-textarea::placeholder {
+  color: #a1a1aa !important;
+}
+
+.edit-admin-form .form-input:focus,
+.edit-admin-form .form-textarea:focus,
+.edit-admin-form .form-select:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+}
+
+.edit-admin-form .form-select option {
+  background: #1a1f36 !important;
+  color: #ffffff !important;
+}
+
+.edit-admin-form .tags-input {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+
+.edit-admin-form .tags-input::placeholder {
+  color: #a1a1aa !important;
+}
+
+.edit-admin-form .tags-dropdown {
+  background: #1a1f36 !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+.edit-admin-form .tag-suggestion {
+  color: #ffffff !important;
+}
+
+.edit-admin-form .tag-suggestion:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.edit-admin-form .tag {
+  background: rgba(59, 130, 246, 0.2) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(59, 130, 246, 0.3) !important;
+}
+
+.edit-admin-form .remove-tag-btn {
+  color: #a1a1aa !important;
+}
+
+.edit-admin-form .remove-tag-btn:hover {
+  color: #ef4444 !important;
+}
+
+.edit-admin-form .premade-tags {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.edit-admin-form .premade-tags h4 {
+  color: #ffffff !important;
+}
+
+.edit-admin-form .premade-tag {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+
+.edit-admin-form .premade-tag:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.edit-admin-form .premade-tag:disabled {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #6b7280 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.edit-admin-form .add-tag-btn {
+  background: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+.edit-admin-form .add-tag-btn:hover:not(:disabled) {
+  background: #2563eb !important;
+}
+
+.edit-admin-form .add-tag-btn:disabled {
+  background: #1e40af !important;
+  color: #6b7280 !important;
+}
+
+.edit-admin-form .form-actions {
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.edit-admin-form .cancel-btn {
+  background: #6b7280 !important;
+  color: #ffffff !important;
+}
+
+.edit-admin-form .cancel-btn:hover {
+  background: #4b5563 !important;
+}
+
+.edit-admin-form .submit-btn {
+  background: #10b981 !important;
+  color: #ffffff !important;
+}
+
+.edit-admin-form .submit-btn:hover:not(:disabled) {
+  background: #059669 !important;
+}
+
+.edit-admin-form .submit-btn:disabled {
+  background: #374151 !important;
+  color: #6b7280 !important;
+}
+
+.edit-admin-form .error-message {
+  background: rgba(239, 68, 68, 0.1) !important;
+  color: #fca5a5 !important;
+  border: 1px solid rgba(239, 68, 68, 0.2) !important;
+}
+
+.edit-admin-form .loading-indicator {
+  color: #a1a1aa !important;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .rebuttal-form-container {

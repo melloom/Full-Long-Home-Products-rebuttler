@@ -165,6 +165,24 @@ const SaasCompaniesManagement = ({
                         >
                           📋 Copy
                         </button>
+                        <button
+                          className="action-button secondary"
+                          onClick={() => {
+                            // For Long Home Products, go to admin dashboard with impersonation
+                            if (company.slug === 'long-home' || company.id === 'long-home') {
+                              // Set impersonation data
+                              localStorage.setItem('impersonation', JSON.stringify({ 
+                                enabled: true, 
+                                companyId: company.id 
+                              }));
+                              window.open(`/admin/dashboard?impersonate=${company.id}`, '_blank');
+                            } else {
+                              window.open(url, '_blank');
+                            }
+                          }}
+                        >
+                          {company.slug === 'long-home' || company.id === 'long-home' ? '🚀 Visit Admin Dashboard' : '🚀 Visit Training'}
+                        </button>
                       </>
                     );
                   })()}

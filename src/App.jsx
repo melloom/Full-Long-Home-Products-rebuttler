@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { useAuth } from './contexts/AuthContext';
 import { scrollToTop } from './utils/useScrollToTop';
 import { registerServiceWorker, handleServiceWorkerUpdates } from './utils/pwa';
 import Home from './components/Home';
+import HomePage from './pages/Home';
 import SaaSLandingPage from './components/SaaSLandingPage';
 import CompanyPlatform from './components/CompanyPlatform';
 import RebuttalLibrary from './components/RebuttalLibrary';
@@ -56,6 +58,7 @@ const NavigationWrapper = ({ Component }) => {
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
+  const { loading: authLoading } = useAuth();
 
   // Force dark mode on every render
   useEffect(() => {
@@ -93,7 +96,7 @@ function App() {
     return () => clearTimeout(timer);
   }, []);
 
-  if (isLoading) {
+  if (isLoading || authLoading) {
     const path = typeof window !== 'undefined' ? window.location.pathname : '/';
     // SaaS landing routes should show StayOnScript loading
     const saasRoutes = ['/', '/admin'];
@@ -231,9 +234,7 @@ function App() {
         <Route 
           path="/app" 
           element={
-            <SecureRoute fallbackPath="/">
-              <Layout><NavigationWrapper Component={Home} /></Layout>
-            </SecureRoute>
+            <Layout><NavigationWrapper Component={Home} /></Layout>
           } 
         />
         <Route 

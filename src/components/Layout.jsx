@@ -49,6 +49,8 @@ const Layout = ({ children }) => {
 
   const currentSlug = (location.pathname.startsWith('/company/') ? location.pathname.split('/')[2] : (localStorage.getItem('currentCompanySlug') || null));
   const homePath = currentSlug ? (currentSlug === 'long-home' ? '/app' : `/company/${currentSlug}`) : '/';
+
+  // Company status checking is now handled in CompanyPlatform component
   const navItems = [
     { path: homePath, label: 'Home', icon: '🏠' },
     { path: '/rebuttals', label: 'Rebuttals', icon: '💬' },

@@ -45,9 +45,8 @@ const PlatformBuilder = ({
         const origin = typeof window !== 'undefined' ? window.location.origin : '';
         const slugOrId = company.slug || company.id;
         
-        // For Long Home Products, try to go directly to the training content
+        // For Long Home Products, go directly to app (HomePage component)
         if (slugOrId === 'long-home') {
-          // Try the app route first (which shows the training content)
           setPreviewUrl(`${origin}/app`);
         } else {
           setPreviewUrl(`${origin}/company/${slugOrId}`);

@@ -90,17 +90,17 @@ service cloud.firestore {
     // Role directories
     // ================================
     match /super-admins/{userId} {
-      allow read: if isSuperAdmin();
+      allow read: if isSuperAdmin() || isCompanyAdminTopLevel();
       allow write: if isSuperAdmin() && isOwn(userId);
     }
 
     match /company-admins/{userId} {
-      allow read: if isCompanyAdminTopLevel() && isOwn(userId) || isSuperAdmin();
+      allow read: if isCompanyAdminTopLevel() || isSuperAdmin();
       allow write: if isSuperAdmin();
     }
 
     match /admins/{userId} {
-      allow read: if isCompanyAdminTopLevel() && isOwn(userId) || isSuperAdmin();
+      allow read: if isCompanyAdminTopLevel() || isSuperAdmin();
       // Only Super Admin can manage any admin; company admins can only manage admins within their own company
       allow create: if isSuperAdmin() || (isCompanyAdminEffective() && sameCompany(request.resource.data.companyId));
       allow update, delete: if isSuperAdmin() || (isCompanyAdminEffective() && sameCompany(resource.data.companyId));
@@ -129,29 +129,94 @@ service cloud.firestore {
     // ================================
     // Company-scoped operational collections
     // ================================
+    
     match /rebuttals/{rebuttalId} {
       // Allow read if same company, public/legacy, or Super Admin
-      allow read: if isSuperAdmin() || (isAuthenticated() && sameCompany(resource.data.companyId)) || !('companyId' in resource.data) || resource.data.companyId == null;
-      allow create: if isSuperAdmin() || (isCompanyAdminEffective() && sameCompany(request.resource.data.companyId));
-      allow update, delete: if isSuperAdmin() || (isCompanyAdminEffective() && sameCompany(resource.data.companyId));
+      allow read: if isSuperAdmin() || 
+                     (isAuthenticated() && sameCompany(resource.data.companyId)) || 
+                     (isCompanyAdminTopLevel() && resource.data.companyId == getUserCompanyId()) ||
+                     !('companyId' in resource.data) || 
+                     resource.data.companyId == null;
+      allow create: if isSuperAdmin() || 
+                     (isCompanyAdminTopLevel() && sameCompany(request.resource.data.companyId)) ||
+                     (isAuthenticated() && sameCompany(request.resource.data.companyId));
+      allow update, delete: if isSuperAdmin() || 
+                             (isCompanyAdminTopLevel() && sameCompany(resource.data.companyId)) ||
+                             (isAuthenticated() && sameCompany(resource.data.companyId));
+    }
+    
+    // Collection-level rules for queries - allow company admins to query
+    match /rebuttals {
+      allow read: if isSuperAdmin() || isCompanyAdminTopLevel() || isAuthenticated();
     }
 
     match /categories/{categoryId} {
-      allow read: if isSuperAdmin() || (isAuthenticated() && sameCompany(resource.data.companyId)) || !('companyId' in resource.data) || resource.data.companyId == null;
-      allow create: if isSuperAdmin() || (isCompanyAdminEffective() && sameCompany(request.resource.data.companyId));
-      allow update, delete: if isSuperAdmin() || (isCompanyAdminEffective() && sameCompany(resource.data.companyId));
+      allow read: if isSuperAdmin() || 
+                     (isAuthenticated() && sameCompany(resource.data.companyId)) || 
+                     (isCompanyAdminTopLevel() && resource.data.companyId == getUserCompanyId()) ||
+                     !('companyId' in resource.data) || 
+                     resource.data.companyId == null;
+      allow create: if isSuperAdmin() || 
+                     (isCompanyAdminTopLevel() && sameCompany(request.resource.data.companyId)) ||
+                     (isAuthenticated() && sameCompany(request.resource.data.companyId));
+      allow update, delete: if isSuperAdmin() || 
+                             (isCompanyAdminTopLevel() && sameCompany(resource.data.companyId)) ||
+                             (isAuthenticated() && sameCompany(resource.data.companyId));
     }
 
     match /faqs/{faqId} {
-      allow read: if isSuperAdmin() || (isAuthenticated() && sameCompany(resource.data.companyId)) || !('companyId' in resource.data) || resource.data.companyId == null;
-      allow create: if isSuperAdmin() || (isCompanyAdminEffective() && sameCompany(request.resource.data.companyId));
-      allow update, delete: if isSuperAdmin() || (isCompanyAdminEffective() && sameCompany(resource.data.companyId));
+      allow read: if isSuperAdmin() || 
+                     (isAuthenticated() && sameCompany(resource.data.companyId)) || 
+                     (isCompanyAdminTopLevel() && resource.data.companyId == getUserCompanyId()) ||
+                     !('companyId' in resource.data) || 
+                     resource.data.companyId == null;
+      allow create: if isSuperAdmin() || 
+                     (isCompanyAdminTopLevel() && sameCompany(request.resource.data.companyId)) ||
+                     (isAuthenticated() && sameCompany(request.resource.data.companyId));
+      allow update, delete: if isSuperAdmin() || 
+                             (isCompanyAdminTopLevel() && sameCompany(resource.data.companyId)) ||
+                             (isAuthenticated() && sameCompany(resource.data.companyId));
+    }
+    
+    // Collection-level rules for queries
+    match /categories {
+      allow read: if isSuperAdmin() || isCompanyAdminTopLevel() || isAuthenticated();
     }
 
     match /dispositions/{dispositionId} {
-      allow read: if isSuperAdmin() || (isAuthenticated() && sameCompany(resource.data.companyId)) || !('companyId' in resource.data) || resource.data.companyId == null;
-      allow create: if isSuperAdmin() || (isCompanyAdminEffective() && sameCompany(request.resource.data.companyId));
-      allow update, delete: if isSuperAdmin() || (isCompanyAdminEffective() && sameCompany(resource.data.companyId));
+      allow read: if isSuperAdmin() || 
+                     (isAuthenticated() && sameCompany(resource.data.companyId)) || 
+                     (isCompanyAdminTopLevel() && resource.data.companyId == getUserCompanyId()) ||
+                     !('companyId' in resource.data) || 
+                     resource.data.companyId == null;
+      allow create: if isSuperAdmin() || 
+                     (isCompanyAdminTopLevel() && sameCompany(request.resource.data.companyId)) ||
+                     (isAuthenticated() && sameCompany(request.resource.data.companyId));
+      allow update, delete: if isSuperAdmin() || 
+                             (isCompanyAdminTopLevel() && sameCompany(resource.data.companyId)) ||
+                             (isAuthenticated() && sameCompany(resource.data.companyId));
+    }
+    
+    // Collection-level rules for queries
+    match /dispositions {
+      allow read: if isSuperAdmin() || isCompanyAdminTopLevel() || isAuthenticated();
+    }
+
+    // Collection-level rules for other collections
+    match /faqs {
+      allow read: if isSuperAdmin() || isCompanyAdminTopLevel() || isAuthenticated();
+    }
+    
+    match /serviceTopics {
+      allow read: if isSuperAdmin() || isCompanyAdminTopLevel() || isAuthenticated();
+    }
+    
+    match /companies {
+      allow read: if isSuperAdmin() || isCompanyAdminTopLevel() || isAuthenticated();
+    }
+    
+    match /platforms {
+      allow read: if isSuperAdmin() || isCompanyAdminTopLevel() || isAuthenticated();
     }
 
     // Platforms collection - super admins can manage all; company admins manage their own; reads allowed for listing

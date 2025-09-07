@@ -217,120 +217,206 @@ const RebuttalForm = ({ rebuttal, onSave }) => {
   };
 
   return (
-    <div className="rebuttal-form-modal">
+    <div className="edit-admin-form">
       {error && <div className="error-message">{error}</div>}
       <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="title">Title</label>
-            <input
-              type="text"
-              id="title"
-              name="title"
-              value={formData.title}
-              onChange={handleInputChange}
-              required
-              placeholder="Enter rebuttal title"
-            />
+        <div className="form-section">
+          <div className="section-header">
+            <div className="section-icon">📝</div>
+            <h3>Basic Information</h3>
+            <p>Essential details about the rebuttal</p>
+          </div>
+          
+          <div className="form-grid">
+            <div className="form-field">
+              <label htmlFor="title">
+                <span className="label-icon">📝</span>
+                <span className="label-text">Title</span>
+                <span className="required-indicator">*</span>
+              </label>
+              <div className="input-wrapper">
+                <input
+                  type="text"
+                  id="title"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="Enter rebuttal title"
+                  className="form-input"
+                />
+                <div className="input-icon">📝</div>
+              </div>
+            </div>
+
+            <div className="form-field">
+              <label htmlFor="category">
+                <span className="label-icon">🏷️</span>
+                <span className="label-text">Category</span>
+                <span className="required-indicator">*</span>
+              </label>
+              <div className="input-wrapper">
+                <select
+                  id="category"
+                  name="category"
+                  value={formData.category}
+                  onChange={handleInputChange}
+                  required
+                  disabled={categoriesLoading}
+                  className="form-select"
+                >
+                  <option value="">Select a category</option>
+                  {categories.map(category => (
+                    <option key={category.id} value={category.name}>
+                      {category.icon} {category.name}
+                    </option>
+                  ))}
+                </select>
+                <div className="input-icon">🏷️</div>
+              </div>
+              {categoriesLoading && <div className="loading-indicator">Loading categories...</div>}
+            </div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="category">Category</label>
-            <select
-              id="category"
-              name="category"
-              value={formData.category}
-              onChange={handleInputChange}
-              required
-              disabled={categoriesLoading}
-              className="category-select"
-            >
-              <option value="">Select a category</option>
-              {categories.map(category => (
-                <option key={category.id} value={category.name}>
-                  {category.icon} {category.name}
-                </option>
-              ))}
-            </select>
-            {categoriesLoading && <div className="loading-indicator">Loading categories...</div>}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="summary">Summary</label>
-            <textarea
-              id="summary"
-              name="summary"
-              value={formData.summary}
-              onChange={handleInputChange}
-              required
-              rows="3"
-              placeholder="Enter a brief summary of the rebuttal"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="situationOverview">Situation Overview</label>
-            <textarea
-              id="situationOverview"
-              name="situationOverview"
-              value={formData.situationOverview}
-              onChange={handleInputChange}
-              required
-              rows="4"
-              placeholder="Describe the situation or objection being addressed"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="rebuttalStrategy">Rebuttal Strategy</label>
-            <textarea
-              id="rebuttalStrategy"
-              name="rebuttalStrategy"
-              value={formData.rebuttalStrategy}
-              onChange={handleInputChange}
-              required
-              rows="4"
-              placeholder="Describe the overall strategy for this rebuttal"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="content-pt1">Initial Response (Part 1)</label>
-            <textarea
-              id="content-pt1"
-              value={formData.content.pt1}
-              onChange={(e) => handleContentChange('pt1', e.target.value)}
-              required
-              rows="6"
-              placeholder="Enter the initial response to the objection..."
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="content-pt2">Follow-up Response (Part 2)</label>
-            <textarea
-              id="content-pt2"
-              value={formData.content.pt2}
-              onChange={(e) => handleContentChange('pt2', e.target.value)}
-              rows="6"
-              placeholder="Enter the follow-up response if the initial response doesn't work..."
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Tips</label>
-            <div className="tags-input-container">
-              <input
-                type="text"
-                value={newTip}
-                onChange={(e) => setNewTip(e.target.value)}
-                placeholder="Add a tip (e.g., 'Stay calm and professional')"
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddTip();
-                  }
-                }}
+          <div className="form-field">
+            <label htmlFor="summary">
+              <span className="label-icon">📋</span>
+              <span className="label-text">Summary</span>
+              <span className="required-indicator">*</span>
+            </label>
+            <div className="input-wrapper">
+              <textarea
+                id="summary"
+                name="summary"
+                value={formData.summary}
+                onChange={handleInputChange}
+                required
+                rows="3"
+                placeholder="Enter a brief summary of the rebuttal"
+                className="form-textarea"
               />
+              <div className="input-icon">📋</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="form-section">
+          <div className="section-header">
+            <div className="section-icon">🎯</div>
+            <h3>Strategy & Content</h3>
+            <p>Define the approach and detailed responses</p>
+          </div>
+
+          <div className="form-field">
+            <label htmlFor="situationOverview">
+              <span className="label-icon">🔍</span>
+              <span className="label-text">Situation Overview</span>
+              <span className="required-indicator">*</span>
+            </label>
+            <div className="input-wrapper">
+              <textarea
+                id="situationOverview"
+                name="situationOverview"
+                value={formData.situationOverview}
+                onChange={handleInputChange}
+                required
+                rows="4"
+                placeholder="Describe the situation or objection being addressed"
+                className="form-textarea"
+              />
+              <div className="input-icon">🔍</div>
+            </div>
+          </div>
+
+          <div className="form-field">
+            <label htmlFor="rebuttalStrategy">
+              <span className="label-icon">⚡</span>
+              <span className="label-text">Rebuttal Strategy</span>
+              <span className="required-indicator">*</span>
+            </label>
+            <div className="input-wrapper">
+              <textarea
+                id="rebuttalStrategy"
+                name="rebuttalStrategy"
+                value={formData.rebuttalStrategy}
+                onChange={handleInputChange}
+                required
+                rows="4"
+                placeholder="Describe the overall strategy for this rebuttal"
+                className="form-textarea"
+              />
+              <div className="input-icon">⚡</div>
+            </div>
+          </div>
+
+          <div className="form-field">
+            <label htmlFor="content-pt1">
+              <span className="label-icon">💬</span>
+              <span className="label-text">Initial Response (Part 1)</span>
+              <span className="required-indicator">*</span>
+            </label>
+            <div className="input-wrapper">
+              <textarea
+                id="content-pt1"
+                value={formData.content.pt1}
+                onChange={(e) => handleContentChange('pt1', e.target.value)}
+                required
+                rows="6"
+                placeholder="Enter the initial response to the objection..."
+                className="form-textarea"
+              />
+              <div className="input-icon">💬</div>
+            </div>
+          </div>
+
+          <div className="form-field">
+            <label htmlFor="content-pt2">
+              <span className="label-icon">🔄</span>
+              <span className="label-text">Follow-up Response (Part 2)</span>
+            </label>
+            <div className="input-wrapper">
+              <textarea
+                id="content-pt2"
+                value={formData.content.pt2}
+                onChange={(e) => handleContentChange('pt2', e.target.value)}
+                rows="6"
+                placeholder="Enter the follow-up response if the initial response doesn't work..."
+                className="form-textarea"
+              />
+              <div className="input-icon">🔄</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="form-section">
+          <div className="section-header">
+            <div className="section-icon">🏷️</div>
+            <h3>Tags & Tips</h3>
+            <p>Organize and enhance your rebuttal</p>
+          </div>
+
+          <div className="form-field">
+            <label>
+              <span className="label-icon">💡</span>
+              <span className="label-text">Tips</span>
+            </label>
+            <div className="tags-input-container">
+              <div className="input-wrapper">
+                <input
+                  type="text"
+                  value={newTip}
+                  onChange={(e) => setNewTip(e.target.value)}
+                  placeholder="Add a tip (e.g., 'Stay calm and professional')"
+                  className="form-input"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddTip();
+                    }
+                  }}
+                />
+                <div className="input-icon">💡</div>
+              </div>
               <button type="button" onClick={handleAddTip} className="add-tag-btn">
                 Add Tip
               </button>
@@ -351,17 +437,23 @@ const RebuttalForm = ({ rebuttal, onSave }) => {
             </div>
           </div>
 
-          <div className="form-group">
-            <label>Tags</label>
+          <div className="form-field">
+            <label>
+              <span className="label-icon">🏷️</span>
+              <span className="label-text">Tags</span>
+            </label>
             <div className="tags-input-container">
               <div className="tags-input-wrapper">
-                <input
-                  type="text"
-                  value={newTag}
-                  onChange={handleTagInputChange}
-                  placeholder="Add a tag or select from suggestions"
-                  className="tags-input"
-                />
+                <div className="input-wrapper">
+                  <input
+                    type="text"
+                    value={newTag}
+                    onChange={handleTagInputChange}
+                    placeholder="Add a tag or select from suggestions"
+                    className="form-input"
+                  />
+                  <div className="input-icon">🏷️</div>
+                </div>
                 {showTagDropdown && filteredTags.length > 0 && (
                   <div className="tags-dropdown">
                     {filteredTags.map((tag, index) => (
@@ -416,19 +508,20 @@ const RebuttalForm = ({ rebuttal, onSave }) => {
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="form-actions">
-            <button
-              type="button"
-              onClick={onSave}
-              className="cancel-btn"
-            >
-              Cancel
-            </button>
-            <button type="submit" disabled={loading} className="submit-btn">
-              {loading ? 'Saving...' : isEditing ? 'Update' : 'Save'}
-            </button>
-          </div>
+        <div className="form-actions">
+          <button
+            type="button"
+            onClick={onSave}
+            className="cancel-btn"
+          >
+            Cancel
+          </button>
+          <button type="submit" disabled={loading} className="submit-btn">
+            {loading ? 'Saving...' : isEditing ? 'Update' : 'Save'}
+          </button>
+        </div>
         </form>
       </div>
     );

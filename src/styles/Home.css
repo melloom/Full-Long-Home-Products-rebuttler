@@ -22,15 +22,17 @@
 }
 
 .hero-wrapper {
-  min-height: auto;
+  min-height: 60vh;
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   margin: 0 auto;
-  padding: 2rem 0;
-  width: 100%;
-  max-width: 100%;
+  padding: 4rem 0; /* Increased padding for more space */
+  width: calc(100% - 180px);
+  max-width: calc(100% - 180px);
+  margin-left: 180px;
 }
 .home-hero {
   width: 100%;
@@ -54,9 +56,10 @@
   align-items: center;
   justify-content: center;
   margin: 0 auto 1.5rem auto;
-  gap: 0.5rem;
+  gap: 0; /* Removed gap since we're using margin-bottom */
   width: 100%;
   max-width: 800px;
+  position: relative; /* Ensure proper positioning */
 }
 
 .hero-logo {
@@ -65,7 +68,12 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem; /* was 1rem */
-  margin-bottom: 0.5rem; /* was 1rem */
+  margin-bottom: 5rem; /* Increased to 5rem for much more separation */
+  padding-bottom: 0; /* Removed padding-bottom */
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: none !important;
 }
 
 .logo-icon {
@@ -80,19 +88,63 @@
   font-size: 3.5rem;
   font-weight: 800;
   color: #ffffff;
-  margin: 0;
+  margin: 0; /* Removed bottom margin */
+  padding: 0;
   line-height: 1.2;
   text-align: center;
   letter-spacing: -0.02em;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: block; /* Ensure it's a block element */
+  border: none !important;
+  text-decoration: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: none !important;
+}
+
+/* Force remove any borders or lines from h1 elements */
+h1.hero-title,
+.hero-content h1,
+.hero-logo h1 {
+  border: none !important;
+  border-bottom: none !important;
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  text-decoration: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: none !important;
+}
+
+/* Remove any pseudo-elements that might be creating lines */
+h1.hero-title::before,
+h1.hero-title::after,
+.hero-content h1::before,
+.hero-content h1::after,
+.hero-logo h1::before,
+.hero-logo h1::after,
+.title-accent::before,
+.title-accent::after {
+  display: none !important;
+  content: none !important;
+  border: none !important;
+  background: none !important;
+  height: 0 !important;
+  width: 0 !important;
 }
 
 .title-accent {
-  background: linear-gradient(45deg, #60a5fa, #3b82f6);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #60a5fa !important;
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  -webkit-text-fill-color: unset !important;
   font-weight: 900;
+  border: none !important;
+  text-decoration: none !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .hero-subtitle {
@@ -100,10 +152,12 @@
   color: rgba(255, 255, 255, 0.9);
   font-weight: 400;
   max-width: 100%;
-  margin: 0 auto;
+  margin: 0; /* Reset margin */
+  padding-top: 2rem; /* Increased padding-top significantly */
   line-height: 1.6;
   text-align: center;
   width: 100%;
+  display: block; /* Ensure it's a block element */
 }
 
 /* Search Container */
@@ -1869,16 +1923,16 @@
 
 .no-categories h3 {
   color: #ffffff;
-  font-size: 1.5rem;
+  font-size: 2rem;
   font-weight: 600;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
 }
 
 .no-categories p {
   color: rgba(255, 255, 255, 0.7);
-  font-size: 1rem;
+  font-size: 1.25rem;
   line-height: 1.5;
-  max-width: 300px;
+  max-width: 400px;
 }
 
 @keyframes float {
@@ -1914,14 +1968,16 @@
   display: flex;
   gap: 12px;
   z-index: 1000;
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(0, 0, 0, 0.3);
   padding: 8px;
   border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
 }
 
 .admin-dashboard-btn,
+.admin-company-dashboard-btn,
 .admin-logout-btn {
   display: flex;
   align-items: center;
@@ -1947,6 +2003,17 @@
   box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
 }
 
+.admin-company-dashboard-btn {
+  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+}
+
+.admin-company-dashboard-btn:hover {
+  background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2);
+}
+
+
 .admin-logout-btn {
   background: linear-gradient(135deg, #f44336 0%, #e53935 100%);
 }
@@ -1958,6 +2025,7 @@
 }
 
 .admin-dashboard-btn svg,
+.admin-company-dashboard-btn svg,
 .admin-logout-btn svg {
   width: 16px;
   height: 16px;
@@ -2135,17 +2203,16 @@ body:has(.modal-overlay) .quick-navigation,
 
 .simple-mode-grid {
   flex: 1;
-  min-height: 60vh;
+  min-height: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 2rem auto 0;
   position: relative;
   z-index: 1;
-  margin-left: 180px;
 }
 .no-categories {
   margin: auto;
