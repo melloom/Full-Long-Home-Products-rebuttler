@@ -1,7 +1,7 @@
 {
-  "name": "CloseLoop - Rebuttal Library",
-  "short_name": "CloseLoop",
-  "description": "Access evidence-based responses to common misconceptions and arguments. Navigate through organized categories to find the perfect rebuttal when you need it.",
+  "name": "Master Sales Training with Smart Rebuttals",
+  "short_name": "Smart Rebuttals",
+  "description": "Empower your sales team with our comprehensive training platform featuring intelligent rebuttal responses, objection handling techniques, customer service scripts, and performance tracking.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -12,44 +12,14 @@
   "categories": ["productivity", "business", "education"],
   "icons": [
     {
-      "src": "/icons/icon-72x72.png",
-      "sizes": "72x72",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icons/icon-96x96.png",
-      "sizes": "96x96",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icons/icon-128x128.png",
-      "sizes": "128x128",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
       "src": "/icons/icon-144x144.png",
       "sizes": "144x144",
       "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icons/icon-152x152.png",
-      "sizes": "152x152",
-      "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icons/icon-384x384.png",
-      "sizes": "384x384",
       "type": "image/png",
       "purpose": "maskable any"
     },
@@ -86,22 +56,7 @@
       ]
     }
   ],
-  "screenshots": [
-    {
-      "src": "/screenshots/desktop-1.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Homepage of CloseLoop Rebuttal Library"
-    },
-    {
-      "src": "/screenshots/mobile-1.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Mobile view of CloseLoop"
-    }
-  ],
+  "screenshots": [],
   "related_applications": [],
   "prefer_related_applications": false
 } 

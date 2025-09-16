@@ -48,7 +48,7 @@ const PWAUpdateNotification = () => {
         <div className="pwa-update-icon">🔄</div>
         <div className="pwa-update-text">
           <h3>New Version Available!</h3>
-          <p>A new version of StayOnScript is ready to install.</p>
+          <p>A new version is ready to install.</p>
         </div>
         <div className="pwa-update-actions">
           <button 

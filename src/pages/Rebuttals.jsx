@@ -2,8 +2,8 @@ import React from 'react';
 import { useState, useEffect } from 'react';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { getDb } from '../services/firebase/config';
-import RebuttalCard from '../components/RebuttalCard';
-import RebuttalSidebar from '../components/RebuttalSidebar';
+import { RebuttalCard } from '../components/longhome-training';
+import { RebuttalSidebar } from '../components/longhome-training';
 
 export default function Rebuttals() {
   const [rebuttals, setRebuttals] = useState([]);

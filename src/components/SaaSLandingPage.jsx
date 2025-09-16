@@ -362,7 +362,7 @@ const SaaSLandingPage = () => {
                 <li className="feature-item"><span className="check-icon">✓</span> API access</li>
                 <li className="feature-item"><span className="check-icon">✓</span> Dedicated success manager</li>
               </ul>
-              <button className="plan-button" onClick={() => window.location.href = 'mailto:sales@stayonscript.app?subject=Enterprise%20Plan%20Inquiry'}>
+              <button className="plan-button" onClick={() => window.location.href = 'mailto:sales@longhome.com?subject=Enterprise%20Plan%20Inquiry'}>
                 Contact Sales
               </button>
             </div>
@@ -434,7 +434,7 @@ const SaaSLandingPage = () => {
           </div>
           <div className="footer-bottom">
             <p className="footer-copyright">
-              © 2024 StayOnScript. All rights reserved.
+              © 2024. All rights reserved.
             </p>
           </div>
         </div>

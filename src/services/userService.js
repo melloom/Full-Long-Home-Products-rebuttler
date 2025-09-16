@@ -337,22 +337,22 @@ const userService = {
           lastSignIn: new Date().toISOString(),
           isActive: true,
           emailVerified: user.emailVerified,
-          displayName: '',
+          displayName: user.displayName || '',
           updatedAt: new Date().toISOString(),
-          needsDisplayName: true
+          needsDisplayName: false // Don't require display name by default
         };
         await setDoc(userRef, userData);
-        needsDisplayName = true;
+        needsDisplayName = false;
       } else {
         const userData = userDoc.data();
-        // Check if user needs to set display name
-        needsDisplayName = !userData.displayName || userData.displayName.trim() === '';
+        // Check if user needs to set display name - only if needsDisplayName is explicitly true
+        // Don't override the needsDisplayName flag if it's already been set to false
+        needsDisplayName = userData.needsDisplayName === true;
         
-        // Update last sign-in time and other fields
+        // Update last sign-in time and other fields, but don't override needsDisplayName
         await updateDoc(userRef, {
           lastSignIn: new Date().toISOString(),
           emailVerified: user.emailVerified,
-          needsDisplayName: needsDisplayName,
           updatedAt: new Date().toISOString()
         });
       }

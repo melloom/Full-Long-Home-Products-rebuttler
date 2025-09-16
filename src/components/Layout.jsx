@@ -9,7 +9,7 @@ import '../styles/Layout.css';
 const Layout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isNavCollapsed, setIsNavCollapsed] = useState(true);
+  const [isNavCollapsed, setIsNavCollapsed] = useState(false);
   const [isNavHidden, setIsNavHidden] = useState(false);
   const [showComingSoon, setShowComingSoon] = useState(false);
 
@@ -88,7 +88,9 @@ const Layout = ({ children }) => {
       {!isNavHidden && (
         <nav className={`side-nav ${isNavCollapsed ? 'collapsed' : ''}`}>
           <div className="nav-header">
-            <h2>StayOnScript</h2>
+            {!isNavCollapsed && (
+              <h2 className="nav-title">Navigation</h2>
+            )}
             <div className="nav-buttons">
               <button className="nav-toggle" onClick={toggleNav} aria-label={isNavCollapsed ? 'Expand navigation' : 'Collapse navigation'}>
                 {isNavCollapsed ? '→' : '←'}
@@ -108,7 +110,9 @@ const Layout = ({ children }) => {
                 onClick={() => handleNavigation(item.path)}
               >
                 <span className="nav-icon">{item.icon}</span>
-                {!isNavCollapsed && <span className="nav-label">{item.label}</span>}
+                {!isNavCollapsed && (
+                  <span className="nav-label">{item.label}</span>
+                )}
               </li>
             ))}
           </ul>
@@ -152,7 +156,7 @@ const Layout = ({ children }) => {
               <div className="help-step">
                 <h4>Step 1: Navigate to Admin</h4>
                 <p>Add <code>/admin</code> to the end of your current URL</p>
-                <p><strong>Example:</strong> <code>https://stayonscript.netlify.app/admin</code></p>
+                <p><strong>Example:</strong> <code>https://longhome-rebuttal-hub.netlify.app/admin</code></p>
               </div>
               <div className="help-step">
                 <h4>Step 2: Login</h4>

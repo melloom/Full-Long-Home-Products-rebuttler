@@ -15,15 +15,6 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
       <div className="max-w-4xl mx-auto text-center p-8">
-        <div className="mb-12">
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">
-            Rebuttal Library
-          </h1>
-          <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-            Access evidence-based responses to common misconceptions and arguments. 
-            Navigate through organized categories to find the perfect rebuttal when you need it.
-          </p>
-        </div>
         
         <button
           onClick={() => navigate('/rebuttals')}

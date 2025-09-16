@@ -6,22 +6,20 @@ import { registerServiceWorker, handleServiceWorkerUpdates } from './utils/pwa';
 import Home from './components/Home';
 import HomePage from './pages/Home';
 import SaaSLandingPage from './components/SaaSLandingPage';
-import CompanyPlatform from './components/CompanyPlatform';
-import RebuttalLibrary from './components/RebuttalLibrary';
-import LeadDisposition from './components/LeadDisposition';
-import CustomerService from './components/CustomerService';
-import FAQ from './components/FAQ';
-import ScheduleScript from './components/ScheduleScript';
-import AdminDashboard from './components/admin/AdminDashboard.jsx';
-import SaasAdminDashboard from './components/admin/SaasAdminDashboard.jsx';
-import SaasAdminLogin from './components/admin/SaasAdminLogin.jsx';
-import AdminDashboardTest from './components/admin/AdminDashboardTest.jsx';
-import FirebaseTest from './components/admin/FirebaseTest.jsx';
-import ErrorBoundaryTest from './components/admin/ErrorBoundaryTest.jsx';
-import AdminLogin from './components/admin/AdminLogin';
-import AdminSetup from './components/admin/AdminSetup';
-import RebuttalForm from './components/admin/RebuttalForm';
-import CustomerServiceManager from './components/admin/CustomerServiceManager';
+import { CompanyPlatform } from './components/longhome-training';
+import { RebuttalLibrary, LeadDisposition, CustomerService, FAQ, ScheduleScript } from './components/longhome-training';
+import { 
+  AdminDashboard, 
+  SaasAdminDashboard, 
+  SaasAdminLogin, 
+  AdminDashboardTest, 
+  FirebaseTest, 
+  ErrorBoundaryTest, 
+  AdminLogin, 
+  AdminSetup, 
+  RebuttalForm, 
+  CustomerServiceManager 
+} from './components/longhome-training';
 import Layout from './components/Layout';
 import LoadingScreen from './components/LoadingScreen';
 import SecureRoute from './components/SecureRoute';
@@ -98,7 +96,7 @@ function App() {
 
   if (isLoading || authLoading) {
     const path = typeof window !== 'undefined' ? window.location.pathname : '/';
-    // SaaS landing routes should show StayOnScript loading
+        // SaaS landing routes should show app loading
     const saasRoutes = ['/', '/admin'];
     // Company/training routes should show Long Home loading
     const isCompanyRoute = path.startsWith('/company') || 

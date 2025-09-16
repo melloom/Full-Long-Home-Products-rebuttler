@@ -26,7 +26,7 @@ const LoadingScreen = ({ variant = 'landing' }) => {
             )}
           </div>
           <div className="logo-subtext">
-            {isCompany ? "Long Home Products" : "StayOnScript"}
+            {isCompany ? "Long Home Products" : ""}
           </div>
         </div>
         <div className="loading-animation">

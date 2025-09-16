@@ -7,7 +7,7 @@ import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { getDb } from '../services/firebase/config';
 import categoryService from '../services/categoryService';
 import rebuttalsService from '../services/rebuttalsService';
-import SearchBar from './SearchBar';
+import { SearchBar } from './longhome-training';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -1905,6 +1905,9 @@ const Home = () => {
     if (!selectedCategory) {
       return (
         <div className="no-categories">
+          <div className="main-title">
+            <h1 className="longhome-title">Long Home Rebuttal</h1>
+          </div>
           <div className="no-categories-icon">
             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M3 3H21C21.5523 3 22 3.44772 22 4V20C22 20.5523 21.5523 21 21 21H3C2.44772 21 2 20.5523 2 20V4C2 3.44772 2.44772 3 3 3Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -2130,15 +2133,6 @@ const Home = () => {
         <div className="hero-wrapper">
           <div className="home-hero">
             <div className="hero-content">
-              <div className="hero-logo">
-                <span className="logo-icon">🏠</span>
-                <h1 className="hero-title">
-                  Long Home <span className="title-accent">Rebuttal Hub</span>
-                </h1>
-              </div>
-              <p className="hero-subtitle">
-                Your intelligent assistant for mastering appointment setting, objection handling, and customer service excellence
-              </p>
             </div>
           </div>
           
