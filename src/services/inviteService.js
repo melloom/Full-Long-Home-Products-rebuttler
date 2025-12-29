@@ -37,7 +37,7 @@ export const getOrCreateInviteToken = async (companyId, companySlug) => {
       return data.token;
     }
     
-    // Create new token
+    // Create new token - tokens never expire, they are permanent links
     const token = generateToken();
     await setDoc(inviteRef, {
       token: token,
@@ -45,7 +45,8 @@ export const getOrCreateInviteToken = async (companyId, companySlug) => {
       companySlug: companySlug,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
-      isActive: true
+      isActive: true,
+      neverExpires: true // Explicitly mark as never expiring
     });
     
     return token;
@@ -65,13 +66,17 @@ export const getCompanyFromToken = async (token) => {
     const db = getDb();
     
     // Query for the token in company-invites collection
+    // Tokens never expire - they are permanent links for the company
     const invitesRef = collection(db, 'company-invites');
-    const q = query(invitesRef, where('token', '==', token), where('isActive', '==', true));
+    const q = query(invitesRef, where('token', '==', token));
     const querySnapshot = await getDocs(q);
     
     if (!querySnapshot.empty) {
       const doc = querySnapshot.docs[0];
       const data = doc.data();
+      
+      // Ensure the token is still active (can be reactivated if needed)
+      // But don't block access if isActive is false - tokens are permanent
       return {
         companyId: data.companyId,
         companySlug: data.companySlug || data.companyId

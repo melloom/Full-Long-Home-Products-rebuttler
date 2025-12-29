@@ -24,7 +24,7 @@ const InviteHandler = () => {
           // Redirect to the company training page
           navigate(`/company/${companyData.companySlug}`, { replace: true });
         } else {
-          setError('Invalid or expired invite link');
+          setError('Invalid invite link');
           setLoading(false);
         }
       } catch (err) {
