@@ -326,6 +326,28 @@ service cloud.firestore {
     }
 
     // ================================
+    // Company Invites (for shareable links)
+    // ================================
+    match /company-invites/{companyId} {
+      // Allow public read for token validation (when users click invite links)
+      allow read: if true;
+      // Super admins can create/update invites for any company
+      allow create, update: if isSuperAdmin();
+      // Company admins can create/update invites for their own company
+      allow create, update: if isCompanyAdminTopLevel() && companyId == getCompanyIdFromCompanyAdmin();
+      // Regular admins can create/update invites - check if they're an admin
+      allow create, update: if isAuthenticated() && 
+                               exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      // Only super admins can delete invites
+      allow delete: if isSuperAdmin();
+    }
+    
+    // Collection-level rule for querying invites by token
+    match /company-invites {
+      allow read: if true; // Allow public read for token validation
+    }
+
+    // ================================
     // Default deny everything else
     // ================================
     match /{document=**} {

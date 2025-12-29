@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { getFirestore, collection, getDocs, writeBatch, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import rebuttalsService from '../../../services/rebuttalsService';
+import ShareLinkButton from './ShareLinkButton';
 import './AdminSettings.css';
 
 const LOCAL_STORAGE_KEY_PREFIX = 'adminSettings:';
@@ -389,6 +390,17 @@ const AdminSettings = ({ companyId, companyName }) => {
               <span className="kv-key">Company Name</span>
               <span className="kv-value"><strong>{companyName || 'N/A'}</strong></span>
             </div>
+            {companyId && (
+              <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e0e0e0' }}>
+                <label className="field-label" style={{ marginBottom: '8px', display: 'block', fontWeight: 600 }}>
+                  Share Link for Workers
+                </label>
+                <p style={{ fontSize: '14px', color: '#666', marginBottom: '12px' }}>
+                  Copy this link to share with your workers. They'll be automatically directed to your company's training page.
+                </p>
+                <ShareLinkButton companyId={companyId} />
+              </div>
+            )}
             <div className="field">
               <label className="field-label">Display name</label>
               <input

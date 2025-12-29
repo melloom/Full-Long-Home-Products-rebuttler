@@ -40,8 +40,11 @@ const AdminDashboard = () => {
   // Update company name and slug when scopedCompanyId changes
   useEffect(() => {
     if (scopedCompanyId) {
-      setCompanyName(getCompanyName(scopedCompanyId));
-      // Fetch company data to get slug
+      // Set initial company name immediately
+      const initialName = getCompanyName(scopedCompanyId);
+      setCompanyName(initialName);
+      
+      // Fetch company data to get slug and proper name
       const fetchCompanyData = async () => {
         try {
           const db = getDb();
@@ -49,18 +52,24 @@ const AdminDashboard = () => {
           const companyDoc = await getDoc(companyRef);
           if (companyDoc.exists()) {
             const companyData = companyDoc.data();
-            setCompanyName(companyData.name || getCompanyName(scopedCompanyId));
+            setCompanyName(companyData.name || initialName);
             setCompanySlug(companyData.slug || scopedCompanyId);
           } else {
             // Fallback to ID if company not found
+            setCompanyName(initialName);
             setCompanySlug(scopedCompanyId);
           }
         } catch (error) {
           console.error('Error fetching company data:', error);
+          setCompanyName(initialName);
           setCompanySlug(scopedCompanyId);
         }
       };
       fetchCompanyData();
+    } else {
+      // Reset if no company ID
+      setCompanyName('');
+      setCompanySlug('');
     }
   }, [scopedCompanyId]);
 
@@ -112,12 +121,26 @@ const AdminDashboard = () => {
             if (companyId) {
               setScopedCompanyId(companyId);
               setIsImpersonating(false); // Not impersonating, this is their own company
+              // Set company name immediately
+              setCompanyName(getCompanyName(companyId));
               console.log('🔍 AdminDashboard: Company admin accessing their company:', companyId);
             } else {
               console.error('🔍 AdminDashboard: Company admin missing companyId');
               setError('Company admin missing company information');
               return;
             }
+          } else if (parsedAdmin.role === 'admin') {
+            // Regular admin - set companyId if they have one, otherwise default to Long Home
+            let companyIdToUse;
+            if (parsedAdmin.companyId) {
+              companyIdToUse = parsedAdmin.companyId;
+            } else {
+              // Default to Long Home for regular admins without a specific company
+              companyIdToUse = 'oLuxoJq8SHXXEWm9KSEU';
+            }
+            setScopedCompanyId(companyIdToUse);
+            // Set company name immediately
+            setCompanyName(getCompanyName(companyIdToUse));
           }
 
           setAdminUser(parsedAdmin);
@@ -159,8 +182,22 @@ const AdminDashboard = () => {
           if (adminDoc.exists()) {
             const adminData = adminDoc.data();
             console.log('🔍 AdminDashboard: Found admin in Firestore:', adminData);
-            setAdminUser({ ...currentUser, ...adminData });
-            localStorage.setItem('adminUser', JSON.stringify({ ...currentUser, ...adminData }));
+            const adminUserData = { ...currentUser, ...adminData };
+            setAdminUser(adminUserData);
+            localStorage.setItem('adminUser', JSON.stringify(adminUserData));
+            
+            // Set companyId for regular admins if they have one, otherwise default to Long Home
+            let companyIdToUse;
+            if (adminData.companyId) {
+              companyIdToUse = adminData.companyId;
+            } else {
+              // Default to Long Home for regular admins without a specific company
+              companyIdToUse = 'oLuxoJq8SHXXEWm9KSEU';
+            }
+            setScopedCompanyId(companyIdToUse);
+            // Set company name immediately
+            setCompanyName(getCompanyName(companyIdToUse));
+            
             setLoading(false);
           } else {
             console.log('🔍 AdminDashboard: User is not admin, redirecting to login');
@@ -296,7 +333,7 @@ const AdminDashboard = () => {
             <button className="admin-header-button" onClick={exitImpersonation}>Back to My Dashboard</button>
           )}
           {((scopedCompanyId && (adminUser?.role === 'company-admin' || adminUser?.role === 'admin' || isImpersonating)) || 
-            (adminUser?.role === 'admin' && !scopedCompanyId)) && (
+            (adminUser?.role === 'admin')) && (
             <>
               {scopedCompanyId && (
                 <ShareLinkButton companyId={scopedCompanyId} />

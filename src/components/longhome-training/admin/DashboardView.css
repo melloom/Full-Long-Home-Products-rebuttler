@@ -4,6 +4,9 @@
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   min-height: 100vh;
   color: #333;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 /* Loading State */
@@ -467,6 +470,8 @@
   margin-bottom: 24px;
   position: relative;
   overflow: hidden;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .recent-activity-modern::before {
@@ -487,6 +492,9 @@
   align-items: center;
   margin-bottom: 32px;
   position: relative;
+  flex-wrap: wrap;
+  gap: 16px;
+  max-width: 100%;
 }
 
 .activity-header .header-content h2 {
@@ -551,6 +559,8 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .activity-card::before {
@@ -604,6 +614,10 @@
 .activity-content {
   position: relative;
   z-index: 1;
+  max-width: 100%;
+  overflow: hidden;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .activity-header-card {
@@ -655,6 +669,10 @@
   color: #e5e7eb;
   margin-bottom: 16px;
   line-height: 1.4;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
 }
 
 .activity-meta {
@@ -662,12 +680,17 @@
   gap: 16px;
   margin-bottom: 16px;
   flex-wrap: wrap;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .meta-item {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .meta-label {
@@ -684,6 +707,10 @@
   padding: 4px 8px;
   border-radius: 6px;
   text-align: center;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+  display: inline-block;
 }
 
 .category-badge {
@@ -739,6 +766,11 @@
   border-radius: 8px;
   padding: 12px;
   margin-top: 12px;
+  max-width: 100%;
+  overflow: hidden;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  box-sizing: border-box;
 }
 
 .preview-label {
@@ -756,6 +788,10 @@
   color: #e5e7eb;
   line-height: 1.4;
   font-style: italic;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
 }
 
 .empty-activity {
@@ -921,6 +957,9 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
   gap: 2rem;
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .dashboard-card {
@@ -1064,6 +1103,8 @@
   margin-bottom: 24px;
   position: relative;
   overflow: hidden;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .system-status-modern::before {
@@ -1084,6 +1125,9 @@
   align-items: center;
   margin-bottom: 32px;
   position: relative;
+  flex-wrap: wrap;
+  gap: 16px;
+  max-width: 100%;
 }
 
 .status-header .header-content h2 {
@@ -1154,6 +1198,10 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+  max-width: 100%;
+  box-sizing: border-box;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .status-card::before {
@@ -1202,6 +1250,9 @@
   font-weight: 600;
   margin: 0 0 8px 0;
   color: #e5e7eb;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
 }
 
 .status-badge {
@@ -1212,6 +1263,12 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .status-badge.success {
