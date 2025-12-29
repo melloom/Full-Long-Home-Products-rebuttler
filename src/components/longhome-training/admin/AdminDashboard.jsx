@@ -13,6 +13,7 @@ import DashboardView from './DashboardView';
 import TimeBlockManagement from './TimeBlockManagement';
 import './AdminDashboard.css';
 import AdminSettings from './AdminSettings';
+import ShareLinkButton from './ShareLinkButton';
 
 const AdminDashboard = () => {
   const { currentUser, authLoading } = useAuth();
@@ -296,27 +297,32 @@ const AdminDashboard = () => {
           )}
           {((scopedCompanyId && (adminUser?.role === 'company-admin' || adminUser?.role === 'admin' || isImpersonating)) || 
             (adminUser?.role === 'admin' && !scopedCompanyId)) && (
-            <button 
-              className="admin-header-button training-button" 
-              onClick={() => {
-                // For regular admins without a scoped company, default to Long Home
-                if (adminUser?.role === 'admin' && !scopedCompanyId) {
-                  window.open('/app', '_blank');
-                  return;
-                }
-                
-                // Special handling for Long Home - go to /app
-                if (companySlug === 'long-home' || companyName === 'Long Home' || companyName === 'Long Home Products') {
-                  window.open('/app', '_blank');
-                } else if (companySlug) {
-                  window.open(`/company/${companySlug}`, '_blank');
-                } else if (scopedCompanyId) {
-                  window.open(`/company/${scopedCompanyId}`, '_blank');
-                }
-              }}
-            >
-              🏢 View Company Landing Page
-            </button>
+            <>
+              {scopedCompanyId && (
+                <ShareLinkButton companyId={scopedCompanyId} />
+              )}
+              <button 
+                className="admin-header-button training-button" 
+                onClick={() => {
+                  // For regular admins without a scoped company, default to Long Home
+                  if (adminUser?.role === 'admin' && !scopedCompanyId) {
+                    window.open('/app', '_blank');
+                    return;
+                  }
+                  
+                  // Special handling for Long Home - go to /app
+                  if (companySlug === 'long-home' || companyName === 'Long Home' || companyName === 'Long Home Products') {
+                    window.open('/app', '_blank');
+                  } else if (companySlug) {
+                    window.open(`/company/${companySlug}`, '_blank');
+                  } else if (scopedCompanyId) {
+                    window.open(`/company/${scopedCompanyId}`, '_blank');
+                  }
+                }}
+              >
+                🏢 View Company Landing Page
+              </button>
+            </>
           )}
           <span>Welcome, {adminUser.email}</span>
           <button onClick={handleLogout}>Logout</button>

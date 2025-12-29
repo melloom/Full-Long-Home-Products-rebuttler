@@ -154,10 +154,10 @@ const SaaSLandingPage = () => {
           <div className="logo-section">
             <div className="brand">
               <span className="brand-icon">⚡</span>
-              <span className="brand-name">PitchPerfect</span>
+              <span className="brand-name">Closed Loop</span>
             </div>
             <div className="mobile-header-wrapper">
-              <h1 className="mobile-header-title">PitchPerfect</h1>
+              <h1 className="mobile-header-title">Closed Loop</h1>
               {/* Mobile Menu Toggle */}
               <button 
                 className={`mobile-menu-toggle ${isMobileMenuOpen ? 'active' : ''}`}

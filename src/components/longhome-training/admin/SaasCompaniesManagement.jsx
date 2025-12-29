@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { copyToClipboard } from '../../../utils/saasAdminUtils';
+import ShareLinkButton from './ShareLinkButton';
 
 const SaasCompaniesManagement = ({ 
   companies, 
@@ -186,6 +187,12 @@ const SaasCompaniesManagement = ({
                       </>
                     );
                   })()}
+                </div>
+                <div style={{ marginTop: '12px' }}>
+                  <span className="detail-label">Share Link (for workers)</span>
+                  <div style={{ marginTop: '8px' }}>
+                    <ShareLinkButton companyId={company.id} />
+                  </div>
                 </div>
               </div>
             </div>

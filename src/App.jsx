@@ -27,6 +27,7 @@ import LoadingScreen from './components/LoadingScreen';
 import SecureRoute from './components/SecureRoute';
 import PersistentRoute from './components/PersistentRoute';
 import MaintenanceMode from './components/MaintenanceMode';
+import InviteHandler from './components/InviteHandler';
 import './styles/App.css';
 
 // Legacy PrivateRoute - now using SecureRoute for better protection
@@ -225,6 +226,7 @@ function App() {
         {/* Public Routes */}
         <Route path="/" element={<SaaSLandingPage />} />
         <Route path="/company/register" element={<CompanyRegister />} />
+        <Route path="/invite/:token" element={<InviteHandler />} />
         <Route path="/company/:companySlug" element={
           <PersistentRoute>
             <CompanyPlatform />
