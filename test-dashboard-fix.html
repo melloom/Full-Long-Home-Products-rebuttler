@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .test-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin: 10px 5px;
+        }
+        .test-link:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔧 Dashboard Fix Test</h1>
+        <p>This page helps test if the dashboard data loading issue has been fixed.</p>
+        
+        <div class="test-result info">
+            <h3>📋 What was fixed:</h3>
+            <ul>
+                <li><strong>Data Filtering Issue:</strong> The dashboard was filtering rebuttals and categories by companyId, but these are global data without companyId fields.</li>
+                <li><strong>Solution:</strong> Changed the filtering logic to always show all rebuttals and categories.</li>
+                <li><strong>Added Logging:</strong> Added console logging to help debug data fetching.</li>
+            </ul>
+        </div>
+
+        <div class="test-result info">
+            <h3>🧪 How to test:</h3>
+            <ol>
+                <li>Open the application in your browser</li>
+                <li>Navigate to the admin dashboard</li>
+                <li>Check the console logs for data fetching information</li>
+                <li>Verify that the dashboard shows the correct counts for rebuttals, categories, and dispositions</li>
+            </ol>
+        </div>
+
+        <div class="test-result success">
+            <h3>✅ Expected Results:</h3>
+            <ul>
+                <li><strong>Total Rebuttals:</strong> Should show a number > 0 (there are 50+ rebuttals in the database)</li>
+                <li><strong>Categories:</strong> Should show a number > 0 (there are 14+ categories in the database)</li>
+                <li><strong>Dispositions:</strong> Should show a number > 0 (there are 22+ dispositions in the database)</li>
+                <li><strong>Users:</strong> May show 0 or a small number depending on company filtering</li>
+            </ul>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="http://localhost:5173" class="test-link" target="_blank">
+                🚀 Open Application
+            </a>
+            <a href="http://localhost:5173/admin/login" class="test-link" target="_blank">
+                🔐 Admin Login
+            </a>
+        </div>
+
+        <div class="test-result info">
+            <h3>🔍 Console Logs to Look For:</h3>
+            <p>Open the browser console (F12) and look for these log messages:</p>
+            <ul>
+                <li><code>🔍 DashboardView: Fetching dashboard data...</code></li>
+                <li><code>🔍 DashboardView: Raw data counts: {rebuttals: X, categories: Y, dispositions: Z, users: W}</code></li>
+                <li><code>🔍 DashboardView: Filtered data counts: {rebuttals: X, categories: Y, dispositions: Z, users: W}</code></li>
+                <li><code>🔍 DashboardView: Final stats being set: {totalRebuttals: X, totalCategories: Y, ...}</code></li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

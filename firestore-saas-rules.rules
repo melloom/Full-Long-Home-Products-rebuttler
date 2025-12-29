@@ -1,0 +1,127 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isSuperAdmin() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/super-admins/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/super-admins/$(request.auth.uid)).data.role == 'super-admin';
+    }
+    
+    function isCompanyAdmin(companyId) {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/companies/$(companyId)/admins/$(request.auth.uid));
+    }
+    
+    function isCompanyUser(companyId) {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/companies/$(companyId)/users/$(request.auth.uid));
+    }
+    
+    function getUserCompanyId() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.companyId;
+    }
+    
+    // Super Admins collection - only super admins can read/write
+    match /super-admins/{userId} {
+      allow read, write: if isSuperAdmin();
+    }
+    
+    // Companies collection - super admins can manage all, company admins can read their own
+    match /companies/{companyId} {
+      allow read, write: if isSuperAdmin();
+      allow read: if isCompanyAdmin(companyId);
+      
+      // Company admins subcollection
+      match /admins/{adminId} {
+        allow read, write: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+      
+      // Company users subcollection
+      match /users/{userId} {
+        allow read, write: if isSuperAdmin() || isCompanyAdmin(companyId);
+        allow read: if isCompanyUser(companyId);
+      }
+    }
+    
+    // Platforms collection - super admins can manage all, company admins can manage their company's platforms
+    match /platforms/{platformId} {
+      allow read, write: if isSuperAdmin();
+      allow read, write: if isAuthenticated() && 
+        resource.data.companyId in get(/databases/$(database)/documents/companies/$(getUserCompanyId())).data.platformIds;
+    }
+    
+    // Users collection - super admins can manage all, users can read their own data
+    match /users/{userId} {
+      allow read, write: if isSuperAdmin();
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      allow read: if isAuthenticated() && 
+        resource.data.companyId == getUserCompanyId();
+    }
+    
+    // Rebuttals collection - company-specific access
+    match /rebuttals/{rebuttalId} {
+      allow read, write: if isSuperAdmin();
+      allow read, write: if isAuthenticated() && 
+        resource.data.companyId == getUserCompanyId();
+    }
+    
+    // Categories collection - company-specific access
+    match /categories/{categoryId} {
+      allow read, write: if isSuperAdmin();
+      allow read, write: if isAuthenticated() && 
+        resource.data.companyId == getUserCompanyId();
+    }
+    
+    // Dispositions collection - company-specific access
+    match /dispositions/{dispositionId} {
+      allow read, write: if isSuperAdmin();
+      allow read, write: if isAuthenticated() && 
+        resource.data.companyId == getUserCompanyId();
+    }
+    
+    // Customer Service collection - company-specific access
+    match /customer-service/{itemId} {
+      allow read, write: if isSuperAdmin();
+      allow read, write: if isAuthenticated() && 
+        resource.data.companyId == getUserCompanyId();
+    }
+    
+    // FAQ collection - company-specific access
+    match /faq/{faqId} {
+      allow read, write: if isSuperAdmin();
+      allow read, write: if isAuthenticated() && 
+        resource.data.companyId == getUserCompanyId();
+    }
+    
+    // Time Blocks collection - company-specific access
+    match /time-blocks/{blockId} {
+      allow read, write: if isSuperAdmin();
+      allow read, write: if isAuthenticated() && 
+        resource.data.companyId == getUserCompanyId();
+    }
+    
+    // Analytics collection - super admins can read all, company admins can read their company's analytics
+    match /analytics/{analyticsId} {
+      allow read: if isSuperAdmin();
+      allow read: if isAuthenticated() && 
+        resource.data.companyId == getUserCompanyId();
+      allow write: if isSuperAdmin();
+    }
+    
+    // System settings - only super admins
+    match /system-settings/{settingId} {
+      allow read, write: if isSuperAdmin();
+    }
+    
+    // Default deny rule for any other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
