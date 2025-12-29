@@ -9,6 +9,7 @@ import SaaSLandingPage from './components/SaaSLandingPage';
 import CompanyRegister from './pages/CompanyRegister';
 import { CompanyPlatform } from './components/longhome-training';
 import { RebuttalLibrary, LeadDisposition, CustomerService, FAQ, ScheduleScript } from './components/longhome-training';
+import ScheduleScriptComingSoon from './components/longhome-training/ScheduleScriptComingSoon';
 import { 
   AdminDashboard, 
   SaasAdminDashboard, 
@@ -273,7 +274,7 @@ function App() {
           path="/scheduleScript" 
           element={
             <SecureRoute fallbackPath="/">
-              <Layout><ScheduleScript /></Layout>
+              <Layout><ScheduleScriptComingSoon /></Layout>
             </SecureRoute>
           } 
         />

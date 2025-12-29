@@ -51,13 +51,17 @@ const Layout = ({ children }) => {
   const homePath = currentSlug ? (currentSlug === 'long-home' ? '/app' : `/company/${currentSlug}`) : '/';
 
   // Company status checking is now handled in CompanyPlatform component
+  const isDev = import.meta.env.DEV;
+  const isAdmin = localStorage.getItem('adminUser') || localStorage.getItem('saasAdminUser');
+  const showScheduleScript = isDev || isAdmin;
+  
   const navItems = [
     { path: homePath, label: 'Home', icon: '🏠' },
     { path: '/rebuttals', label: 'Rebuttals', icon: '💬' },
     { path: '/disposition', label: 'Disposition', icon: '📋' },
     { path: '/customerService', label: 'Customer Service', icon: '👥' },
     { path: '/faq', label: 'FAQ', icon: '❓' },
-    { path: '/scheduleScript', label: 'Schedule Script', icon: '📅' }
+    { path: '/scheduleScript', label: 'Schedule Script', icon: '📅', comingSoon: !showScheduleScript }
   ];
 
   const handleInstallSuccess = (outcome) => {
@@ -111,7 +115,17 @@ const Layout = ({ children }) => {
               >
                 <span className="nav-icon">{item.icon}</span>
                 {!isNavCollapsed && (
-                  <span className="nav-label">{item.label}</span>
+                  <span className="nav-label">
+                    {item.label}
+                    {item.comingSoon && (
+                      <span style={{
+                        fontSize: '0.7rem',
+                        color: '#fbbf24',
+                        marginLeft: '0.5rem',
+                        fontWeight: 600
+                      }}>🚀 Soon</span>
+                    )}
+                  </span>
                 )}
               </li>
             ))}

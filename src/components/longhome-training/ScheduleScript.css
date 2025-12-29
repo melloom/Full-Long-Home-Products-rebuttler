@@ -1,11 +1,15 @@
 /* Schedule Script Dark Theme Styles */
 .schedule-script-container-dark {
   min-height: 100vh;
-  padding: 2rem;
+  padding: 2rem 1rem;
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
   color: #f8fafc;
   position: relative;
   overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  box-sizing: border-box;
 }
 
 .schedule-script-container-dark::before {
@@ -23,10 +27,13 @@
 }
 
 .schedule-script-content-dark {
-  max-width: 1200px;
+  max-width: 100%;
+  width: 100%;
   margin: 0 auto;
   position: relative;
   z-index: 1;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 /* Header Section */
@@ -279,41 +286,68 @@
 .script-main-content-dark {
   background: rgba(30, 41, 59, 0.8);
   border-radius: 20px;
-  padding: 2rem;
+  padding: 2rem 3rem;
   box-shadow: 
     0 10px 30px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(20px);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 0;
 }
+
+/* ============================================
+   ALL STEPS - CENTERED AND WIDE LAYOUT
+   ============================================ */
 
 .script-step-dark {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 2.5rem;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 2rem;
+  box-sizing: border-box;
+  align-items: stretch;
+  justify-content: flex-start;
 }
 
 .step-title-dark {
-  font-size: 2rem;
+  font-size: 2.5rem;
   font-weight: 700;
   color: #f8fafc;
-  margin-bottom: 1rem;
+  margin-bottom: 2rem;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.75rem;
+  text-align: center;
+  width: 100%;
 }
 
-/* Greeting Options */
+/* ============================================
+   GREETING OPTIONS - CENTERED HORIZONTAL
+   ============================================ */
+
 .greeting-options-dark {
   display: grid;
-  gap: 1.5rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  justify-items: stretch;
+  padding: 0;
 }
 
 .greeting-option-dark {
   display: flex;
   align-items: flex-start;
   gap: 1rem;
-  padding: 1.5rem;
+  padding: 2rem;
   border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   cursor: pointer;
@@ -321,6 +355,8 @@
   background: rgba(51, 65, 85, 0.5);
   backdrop-filter: blur(10px);
   position: relative;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .greeting-option-dark:hover {
@@ -377,17 +413,25 @@
   font-style: italic;
 }
 
-/* Project Options */
+/* ============================================
+   PROJECT OPTIONS - CENTERED HORIZONTAL
+   ============================================ */
+
 .project-options-dark {
   display: grid;
-  gap: 1.5rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  justify-items: stretch;
 }
 
 .project-option-dark {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 1.5rem;
+  padding: 2rem;
   border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   cursor: pointer;
@@ -395,6 +439,8 @@
   background: rgba(51, 65, 85, 0.5);
   backdrop-filter: blur(10px);
   position: relative;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .project-option-dark:hover {
@@ -442,11 +488,17 @@
   color: rgba(248, 250, 252, 0.7);
 }
 
-/* Checklists */
+/* ============================================
+   CHECKLISTS - CENTERED
+   ============================================ */
+
 .checklist-container-dark {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
 }
 
 .checklist-title-dark {
@@ -499,11 +551,17 @@
   line-height: 1.4;
 }
 
-/* Questions Container */
+/* ============================================
+   QUESTIONS CONTAINER - CENTERED
+   ============================================ */
+
 .questions-container-dark {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 2rem;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 /* Form Grid */
@@ -547,13 +605,19 @@
   color: rgba(248, 250, 252, 0.5);
 }
 
-/* Customer Info Container */
+/* ============================================
+   CUSTOMER INFO CONTAINER - CENTERED
+   ============================================ */
+
 .customer-info-container-dark {
   background: #1e293b;
   border-radius: 12px;
-  padding: 2rem;
-  margin-bottom: 24px;
+  padding: 2.5rem;
+  margin: 0 auto 24px auto;
   border: 1px solid #334155;
+  width: 100%;
+  max-width: 1200px;
+  box-sizing: border-box;
   box-shadow: 0 1px 8px rgba(0,0,0,0.3);
 }
 
@@ -567,11 +631,17 @@
   gap: 8px;
 }
 
-/* Value Proposition */
+/* ============================================
+   VALUE PROPOSITION - CENTERED
+   ============================================ */
+
 .value-proposition-dark {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2rem;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .proposition-card-dark {
@@ -635,11 +705,17 @@
   left: 0;
 }
 
-/* Commitment */
+/* ============================================
+   COMMITMENT CONTAINER - CENTERED
+   ============================================ */
+
 .commitment-container-dark {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2rem;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .commitment-card-dark {
@@ -751,11 +827,17 @@
   font-size: 0.9rem;
 }
 
-/* Confirmation */
+/* ============================================
+   CONFIRMATION CONTAINER - CENTERED
+   ============================================ */
+
 .confirmation-container-dark {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2rem;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .confirmation-card-dark {
@@ -2181,6 +2263,19 @@
   .detail-item {
     flex-direction: column;
     text-align: center;
+    gap: 0.75rem;
+  }
+  
+  .detail-icon {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .status-badge {
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+  }
+}
     gap: 0.75rem;
   }
   
