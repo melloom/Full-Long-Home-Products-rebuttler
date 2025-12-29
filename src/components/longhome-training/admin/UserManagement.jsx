@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import userService from '../../../services/userService';
 import { useAuth } from '../../../contexts/AuthContext';
 import { auth } from '../../../services/firebase/config';
+import { getDb } from '../../../services/firebase/config';
+import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import './UserManagement.css';
 import { SearchBar } from '..';
 
@@ -51,12 +53,27 @@ const UserManagement = () => {
       const fetchedUsers = await userService.getAllUsers();
       console.log('Fetched users:', fetchedUsers);
       
-      if (!fetchedUsers || fetchedUsers.length === 0) {
+      // Filter out super admins - they should not appear in company user lists
+      const db = getDb();
+      const superAdminsRef = collection(db, 'super-admins');
+      const superAdminsSnapshot = await getDocs(superAdminsRef);
+      const superAdminUids = new Set(superAdminsSnapshot.docs.map(doc => doc.id));
+      
+      // Filter out any users who are super admins
+      const filteredUsers = fetchedUsers.filter(user => {
+        const userId = user.uid || user.id;
+        return !superAdminUids.has(userId);
+      });
+      
+      console.log(`Filtered out ${fetchedUsers.length - filteredUsers.length} super admins`);
+      console.log(`Remaining users: ${filteredUsers.length}`);
+      
+      if (!filteredUsers || filteredUsers.length === 0) {
         console.log('No users found in response');
         setError('No users found. Try creating a new user.');
       } else {
-        console.log(`Found ${fetchedUsers.length} users`);
-        setUsers(fetchedUsers);
+        console.log(`Found ${filteredUsers.length} users`);
+        setUsers(filteredUsers);
       }
     } catch (error) {
       console.error('Error in fetchUsers:', error);

@@ -229,6 +229,11 @@ export const useSaasAdminData = () => {
       const adminsData = {};
       const db = getDb();
       
+      // First, get all super admin UIDs to filter them out
+      const superAdminsSnapshot = await getDocs(collection(db, 'super-admins'));
+      const superAdminUids = new Set(superAdminsSnapshot.docs.map(doc => doc.id));
+      console.log(`🔍 Found ${superAdminUids.size} super admins to filter out`);
+      
       // First, let's check what collections exist and their structure
       console.log('🔍 Checking database collections...');
       
@@ -309,14 +314,23 @@ export const useSaasAdminData = () => {
             };
           });
 
-          // Combine all admin types and users, then sort by creation date
-          const allCompanyUsers = [...admins, ...companyAdmins, ...users].sort((a, b) => {
-            const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
-            const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
-            return dateB - dateA;
-          });
+          // Combine all admin types and users, then filter out super admins
+          const allCompanyUsers = [...admins, ...companyAdmins, ...users]
+            .filter(user => {
+              const userId = user.uid || user.id;
+              const isSuperAdmin = superAdminUids.has(userId);
+              if (isSuperAdmin) {
+                console.log(`🚫 Filtering out super admin: ${user.email || user.name} (${userId})`);
+              }
+              return !isSuperAdmin;
+            })
+            .sort((a, b) => {
+              const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+              const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+              return dateB - dateA;
+            });
 
-          console.log(`✅ Total users for ${company.name}: ${allCompanyUsers.length}`);
+          console.log(`✅ Total users for ${company.name}: ${allCompanyUsers.length} (super admins filtered out)`);
           return { companyId: company.id, users: allCompanyUsers };
         } catch (err) {
           console.error(`❌ Error loading users for company ${company.id} (${company.name}):`, err);

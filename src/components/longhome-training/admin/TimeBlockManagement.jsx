@@ -25,7 +25,6 @@ const TimeBlockManagement = () => {
   const [showAddBlock, setShowAddBlock] = useState(false);
   const [showAddRegion, setShowAddRegion] = useState(false);
   const [isFixingData, setIsFixingData] = useState(false);
-  const [isDevMode, setIsDevMode] = useState(false); // Default to false for production
 
   // Generate next 3 weeks of dates
   const generateDates = () => {
@@ -266,110 +265,15 @@ const TimeBlockManagement = () => {
       >
         <h1>⏰ Time Block Management</h1>
         <p>Configure appointment time blocks, regional assignments, and availability</p>
-        
-        {/* Development Mode Toggle */}
-        <div style={{ 
-          marginTop: '1rem', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center', 
-          gap: '1rem' 
-        }}>
-          <label style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '0.5rem', 
-            color: 'white', 
-            fontSize: '0.9rem',
-            cursor: 'pointer'
-          }}>
-            <input
-              type="checkbox"
-              checked={isDevMode}
-              onChange={(e) => setIsDevMode(e.target.checked)}
-              style={{ width: '16px', height: '16px' }}
-            />
-            🛠️ Development Mode
-          </label>
-        </div>
       </motion.div>
 
       <div className="tbm-content">
-        {/* Coming Soon Message (when not in dev mode) */}
-        {!isDevMode && (
-          <motion.div 
-            className="tbm-section"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            style={{
-              background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%)',
-              border: '1px solid rgba(59, 130, 246, 0.2)',
-              textAlign: 'center',
-              padding: '3rem 2rem'
-            }}
-          >
-            <div style={{ 
-              display: 'inline-flex', 
-              alignItems: 'center', 
-              gap: '8px', 
-              background: 'rgba(59, 130, 246, 0.1)', 
-              color: '#3b82f6', 
-              padding: '0.5rem 1rem', 
-              borderRadius: '20px', 
-              fontSize: '0.875rem', 
-              fontWeight: 600,
-              marginBottom: '1rem'
-            }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              Time Block Management
-            </div>
-            <h2 style={{ color: '#1f2937', fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-              Coming Soon! 🚀
-            </h2>
-            <p style={{ color: '#6b7280', fontSize: '1.1rem', lineHeight: '1.6', marginBottom: '2rem', maxWidth: '600px', margin: '0 auto 2rem auto' }}>
-              Advanced time block management features are currently under development. Enable Development Mode to access the current functionality and help us test new features.
-            </p>
-            <button 
-              onClick={() => setIsDevMode(true)}
-              style={{
-                background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '12px',
-                padding: '0.75rem 1.5rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                fontSize: '1rem',
-                boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
-                transition: 'all 0.2s ease',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                margin: '0 auto'
-              }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              Enable Development Mode
-            </button>
-          </motion.div>
-        )}
-
         {/* Time Blocks Configuration */}
         <motion.div 
           className="tbm-section"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          style={{ display: isDevMode ? 'block' : 'none' }}
         >
           <div className="section-header">
             <Clock className="section-icon" />
@@ -521,7 +425,6 @@ const TimeBlockManagement = () => {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          style={{ display: isDevMode ? 'block' : 'none' }}
         >
           <div className="section-header">
             <MapPin className="section-icon" />
@@ -608,7 +511,6 @@ const TimeBlockManagement = () => {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, delay: 0.6 }}
-          style={{ display: isDevMode ? 'block' : 'none' }}
         >
           <div className="section-header">
             <Calendar className="section-icon" />

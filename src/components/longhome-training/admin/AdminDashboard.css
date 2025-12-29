@@ -5,6 +5,9 @@
   margin: 0 auto;
   background-color: #f8fafc;
   color: #333;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 /* Impersonation Banner */
@@ -955,6 +958,41 @@
   border-radius: 12px;
   flex-wrap: wrap;
   gap: 1rem;
+  position: relative;
+  z-index: 100;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.hamburger-menu {
+  display: none;
+  flex-direction: column;
+  justify-content: space-around;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  z-index: 1001;
+  position: relative;
+}
+
+.hamburger-menu span {
+  width: 100%;
+  height: 3px;
+  background: #2d3748;
+  border-radius: 3px;
+  transition: all 0.3s ease;
+  display: block;
+}
+
+.dark .hamburger-menu span {
+  background: #e5e7eb;
 }
 
 .admin-header h1 {
@@ -968,11 +1006,32 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .admin-header .admin-actions span {
   color: #2d3748;
   font-weight: 500;
+}
+
+.welcome-text {
+  display: inline-block;
+}
+
+.logout-button {
+  padding: 0.5rem 1rem;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.logout-button:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
 }
 
 /* Dark mode styles for admin-actions */
@@ -3317,6 +3376,112 @@
     min-width: 0;
     padding: 1rem;
   }
+  
+  /* Mobile Hamburger Menu */
+  .hamburger-menu {
+    display: flex !important;
+  }
+  
+  .admin-header {
+    padding: 1rem;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 1000;
+  }
+  
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+  }
+  
+  .admin-header h1 {
+    font-size: 1.25rem;
+    margin: 0;
+  }
+  
+  .admin-actions {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+  
+  .admin-actions .welcome-text {
+    display: none;
+  }
+  
+  .admin-header-button {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.8rem;
+    white-space: nowrap;
+  }
+  
+  .training-button {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.8rem;
+    white-space: nowrap;
+  }
+  
+  .logout-button {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.8rem;
+  }
+  
+  .sidebar-overlay {
+    display: block;
+  }
+  
+  /* Prevent body scroll when sidebar is open */
+  body.sidebar-open {
+    overflow: hidden;
+  }
+  
+  .dashboard-content {
+    width: 100%;
+    padding: 1rem;
+    max-width: 100%;
+    overflow-x: hidden;
+    box-sizing: border-box;
+  }
+  
+  .dashboard-container {
+    gap: 0;
+    position: relative;
+    flex-direction: column;
+  }
+  
+  /* Ensure sidebar doesn't take space when hidden */
+  .sidebar:not(.open) {
+    display: none;
+  }
+  
+  .sidebar.open {
+    display: block;
+  }
+  
+  /* Impersonation Banner Mobile */
+  .impersonation-banner {
+    width: 100%;
+    font-size: 0.85rem;
+    padding: 6px 12px;
+    margin-top: 0.5rem;
+  }
+  
+  /* Sidebar button styles for mobile */
+  .sidebar button {
+    padding: 1rem;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+  }
+  
+  /* Ensure sidebar is hidden by default on mobile */
+  .sidebar:not(.open) {
+    transform: translateX(-100%);
+  }
 }
 @media (max-width: 480px) {
   .dashboard-header h2 {
@@ -3326,12 +3491,121 @@
     padding: 0.5rem;
     font-size: 0.95rem;
   }
+  
+  .admin-dashboard {
+    padding: 0;
+  }
+  
+  .admin-header {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0;
+  }
+  
+  .admin-header h1 {
+    font-size: 1rem;
+  }
+  
+  .header-left {
+    gap: 0.5rem;
+  }
+  
+  .hamburger-menu {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .admin-actions {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+  
+  .admin-header-button,
+  .training-button,
+  .logout-button {
+    font-size: 0.7rem;
+    padding: 0.3rem 0.6rem;
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .sidebar {
+    width: 100%;
+    max-width: 100%;
+    padding-top: 4rem;
+  }
+  
+  .sidebar-close {
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 32px;
+    height: 32px;
+    font-size: 1.25rem;
+  }
+  
+  .sidebar button {
+    padding: 0.9rem 1rem;
+    font-size: 0.95rem;
+  }
+  
+  .dashboard-content {
+    padding: 0.75rem;
+  }
+  
+  .impersonation-banner {
+    font-size: 0.7rem;
+    padding: 5px 10px;
+    margin-top: 0.25rem;
+  }
+  
+  .admin-header-button,
+  .training-button,
+  .logout-button {
+    font-size: 0.75rem;
+    padding: 0.35rem 0.7rem;
+  }
+  
+  .sidebar {
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .sidebar button {
+    padding: 0.9rem 1rem;
+    font-size: 0.95rem;
+  }
+  
+  .impersonation-banner {
+    font-size: 0.75rem;
+    padding: 5px 10px;
+  }
 }
 
 /* Layout for Admin Dashboard */
 .dashboard-container {
   display: flex;
   gap: 1.25rem;
+  position: relative;
+}
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 998;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.active {
+  display: block;
+  opacity: 1;
 }
 
 .sidebar {
@@ -3343,7 +3617,33 @@
   height: fit-content;
   position: sticky;
   top: 1rem;
+  transition: transform 0.3s ease;
+  z-index: 999;
 }
+
+/* Mobile: Hide sidebar by default, show as drawer when opened */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    width: 280px;
+    max-width: 85%;
+    transform: translateX(-100%);
+    z-index: 1000;
+    border-radius: 0;
+    padding: 1rem;
+    padding-top: 5rem;
+    overflow-y: auto;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+  }
+  
+  .sidebar.open {
+    transform: translateX(0);
+  }
+}
+
 
 .sidebar button {
   display: block;
@@ -3371,9 +3671,43 @@
   border-color: rgba(96,165,250,0.45);
 }
 
+.sidebar-close {
+  display: none;
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 36px;
+  height: 36px;
+  background: rgba(51, 65, 85, 0.5);
+  border: 1px solid #334155;
+  border-radius: 8px;
+  color: #e5e7eb;
+  font-size: 1.5rem;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+  transition: all 0.2s ease;
+}
+
+.sidebar-close:hover {
+  background: rgba(51, 65, 85, 0.8);
+  transform: scale(1.1);
+}
+
+@media (max-width: 768px) {
+  .sidebar-close {
+    display: flex;
+  }
+}
+
 .dashboard-content {
   flex: 1;
   min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 /* Dark theme base overrides */

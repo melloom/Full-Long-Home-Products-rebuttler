@@ -26,6 +26,19 @@ const AdminDashboard = () => {
   const [isImpersonating, setIsImpersonating] = useState(false);
   const [companyName, setCompanyName] = useState('');
   const [companySlug, setCompanySlug] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Handle body scroll lock when sidebar is open
+  useEffect(() => {
+    if (sidebarOpen) {
+      document.body.classList.add('sidebar-open');
+    } else {
+      document.body.classList.remove('sidebar-open');
+    }
+    return () => {
+      document.body.classList.remove('sidebar-open');
+    };
+  }, [sidebarOpen]);
 
   // Function to get company name from ID
   const getCompanyName = (companyId) => {
@@ -320,7 +333,18 @@ const AdminDashboard = () => {
   return (
       <div className="admin-dashboard">
       <header className="admin-header">
-            <h1>Admin Dashboard</h1>
+        <div className="header-left">
+          <button 
+            className="hamburger-menu" 
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            aria-label="Toggle menu"
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+          <h1>Admin Dashboard</h1>
+        </div>
         {(isImpersonating || (adminUser?.role === 'company-admin' && scopedCompanyId)) && (
           <div className="impersonation-banner">
             <span>
@@ -361,21 +385,29 @@ const AdminDashboard = () => {
               </button>
             </>
           )}
-          <span>Welcome, {adminUser.email}</span>
-          <button onClick={handleLogout}>Logout</button>
+          <span className="welcome-text">Welcome, {adminUser.email}</span>
+          <button onClick={handleLogout} className="logout-button">Logout</button>
         </div>
       </header>
       <div className="dashboard-container">
-        <aside className="sidebar">
-          <button className={activeTab === 'dashboard' ? 'active' : ''} onClick={() => setActiveTab('dashboard')}>Dashboard</button>
-          <button className={activeTab === 'rebuttals' ? 'active' : ''} onClick={() => setActiveTab('rebuttals')}>Rebuttals</button>
-          <button className={activeTab === 'categories' ? 'active' : ''} onClick={() => setActiveTab('categories')}>Categories</button>
-          <button className={activeTab === 'dispositions' ? 'active' : ''} onClick={() => setActiveTab('dispositions')}>Lead Dispositions</button>
-          <button className={activeTab === 'customer-service' ? 'active' : ''} onClick={() => setActiveTab('customer-service')}>Customer Service</button>
-          <button className={activeTab === 'faq' ? 'active' : ''} onClick={() => setActiveTab('faq')}>FAQ</button>
-          <button className={activeTab === 'users' ? 'active' : ''} onClick={() => setActiveTab('users')}>Users</button>
-          <button className={activeTab === 'time-blocks' ? 'active' : ''} onClick={() => setActiveTab('time-blocks')}>Time Blocks</button>
-          <button className={activeTab === 'settings' ? 'active' : ''} onClick={() => setActiveTab('settings')}>Settings</button>
+        <div className={`sidebar-overlay ${sidebarOpen ? 'active' : ''}`} onClick={() => setSidebarOpen(false)}></div>
+        <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+          <button 
+            className="sidebar-close" 
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Close menu"
+          >
+            ✕
+          </button>
+          <button className={activeTab === 'dashboard' ? 'active' : ''} onClick={() => { setActiveTab('dashboard'); setSidebarOpen(false); }}>Dashboard</button>
+          <button className={activeTab === 'rebuttals' ? 'active' : ''} onClick={() => { setActiveTab('rebuttals'); setSidebarOpen(false); }}>Rebuttals</button>
+          <button className={activeTab === 'categories' ? 'active' : ''} onClick={() => { setActiveTab('categories'); setSidebarOpen(false); }}>Categories</button>
+          <button className={activeTab === 'dispositions' ? 'active' : ''} onClick={() => { setActiveTab('dispositions'); setSidebarOpen(false); }}>Lead Dispositions</button>
+          <button className={activeTab === 'customer-service' ? 'active' : ''} onClick={() => { setActiveTab('customer-service'); setSidebarOpen(false); }}>Customer Service</button>
+          <button className={activeTab === 'faq' ? 'active' : ''} onClick={() => { setActiveTab('faq'); setSidebarOpen(false); }}>FAQ</button>
+          <button className={activeTab === 'users' ? 'active' : ''} onClick={() => { setActiveTab('users'); setSidebarOpen(false); }}>Users</button>
+          <button className={activeTab === 'time-blocks' ? 'active' : ''} onClick={() => { setActiveTab('time-blocks'); setSidebarOpen(false); }}>Time Blocks</button>
+          <button className={activeTab === 'settings' ? 'active' : ''} onClick={() => { setActiveTab('settings'); setSidebarOpen(false); }}>Settings</button>
         </aside>
         <main className="dashboard-content">
           {renderContent()}
