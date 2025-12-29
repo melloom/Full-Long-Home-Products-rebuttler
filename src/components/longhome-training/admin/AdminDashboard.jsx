@@ -334,15 +334,6 @@ const AdminDashboard = () => {
       <div className="admin-dashboard">
       <header className="admin-header">
         <div className="header-left">
-          <button 
-            className="hamburger-menu" 
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            aria-label="Toggle menu"
-          >
-            <span></span>
-            <span></span>
-            <span></span>
-          </button>
           <h1>Admin Dashboard</h1>
         </div>
         {(isImpersonating || (adminUser?.role === 'company-admin' && scopedCompanyId)) && (
@@ -387,6 +378,15 @@ const AdminDashboard = () => {
           )}
           <span className="welcome-text">Welcome, {adminUser.email}</span>
           <button onClick={handleLogout} className="logout-button">Logout</button>
+          <button 
+            className="hamburger-menu" 
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            aria-label="Toggle menu"
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
         </div>
       </header>
       <div className="dashboard-container">

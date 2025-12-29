@@ -980,6 +980,7 @@
   padding: 4px;
   z-index: 1001;
   position: relative;
+  margin-left: 0.5rem;
 }
 
 .hamburger-menu span {
@@ -3406,6 +3407,13 @@
     gap: 0.5rem;
     width: 100%;
     margin-top: 0.5rem;
+    align-items: center;
+    justify-content: flex-end;
+  }
+  
+  .admin-actions .hamburger-menu {
+    margin-left: auto;
+    flex-shrink: 0;
   }
   
   .admin-actions .welcome-text {
@@ -3517,9 +3525,14 @@
   
   .admin-actions {
     width: 100%;
-    justify-content: space-between;
+    justify-content: flex-end;
     flex-wrap: wrap;
     gap: 0.25rem;
+  }
+  
+  .admin-actions .hamburger-menu {
+    margin-left: auto;
+    flex-shrink: 0;
   }
   
   .admin-header-button,
