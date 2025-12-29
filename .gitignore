@@ -1,6 +1,7 @@
 # Sensitive files - DO NOT COMMIT
 super-admin-credentials.txt
 *firebase*service*account*.json
+<<<<<<< HEAD
 *firebase*adminsdk*.json
 *credentials*.txt
 ADMIN_LOGIN_CREDENTIALS.txt
@@ -13,6 +14,14 @@ ADMIN_LOGIN_CREDENTIALS.txt
 .env.production
 .env.development
 .env.*
+=======
+*credentials*.txt
+*key*.json
+.env
+.env.local
+.env.production
+.env.development
+>>>>>>> 8443ce15cfd1fa87efd46e3ac3f027a10c3881be
 
 # Firebase
 firebase-debug.log
@@ -69,5 +78,9 @@ node_modules/
 .Trashes
 ehthumbs.db
 Thumbs.db
+<<<<<<< HEAD
 # Specific Firebase admin SDK files
 long-home-c034d-firebase-adminsdk-*.json
+=======
+long-home-c034d-firebase-adminsdk-fbsvc-9b66faca79.json
+>>>>>>> 8443ce15cfd1fa87efd46e3ac3f027a10c3881be
