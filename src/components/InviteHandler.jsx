@@ -22,7 +22,17 @@ const InviteHandler = () => {
         
         if (companyData && companyData.companySlug) {
           // Redirect to the company training page
-          navigate(`/company/${companyData.companySlug}`, { replace: true });
+          // Special-case Long Home to land in the app at `/app` instead of `/company/long-home`
+          if (companyData.companySlug === 'long-home') {
+            try {
+              localStorage.setItem('currentCompanySlug', companyData.companySlug);
+            } catch (e) {
+              // ignore storage errors
+            }
+            navigate('/app', { replace: true });
+          } else {
+            navigate(`/company/${companyData.companySlug}`, { replace: true });
+          }
         } else {
           setError('Invalid invite link');
           setLoading(false);
