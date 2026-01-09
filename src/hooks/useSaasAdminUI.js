@@ -1,7 +1,24 @@
 import { useState } from 'react';
 
 export const useSaasAdminUI = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTabState] = useState(() => {
+    try {
+      return localStorage.getItem('saas-admin-active-tab') || 'dashboard';
+    } catch (err) {
+      console.warn('Could not read saas-admin-active-tab from localStorage:', err);
+      return 'dashboard';
+    }
+  });
+
+  // Setter that keeps localStorage in sync
+  const setActiveTab = (tab) => {
+    setActiveTabState(tab);
+    try {
+      localStorage.setItem('saas-admin-active-tab', tab);
+    } catch (err) {
+      console.warn('Could not persist saas-admin-active-tab to localStorage:', err);
+    }
+  };
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [expandedCompanies, setExpandedCompanies] = useState(new Set());
