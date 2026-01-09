@@ -305,16 +305,16 @@ service cloud.firestore {
     match /company-registration-requests/{requestId} {
       // Allow anyone to create registration requests (public registration)
       allow create: if true;
-      // Allow authenticated users to read registration requests (needed for login checks)
-      // Also allow super admins to read all
-      allow read: if isAuthenticated() || isSuperAdmin();
+      // Allow anyone to read registration requests (needed for login checks prior to sign-in)
+      // Also allow super admins to read all (explicit)
+      allow read: if true;
       // Only super admins can update/delete registration requests
       allow update, delete: if isSuperAdmin();
     }
     
     // Collection-level rule for querying registration requests by email (needed during login)
     match /company-registration-requests {
-      allow read: if isAuthenticated() || isSuperAdmin();
+      allow read: if true;
     }
 
     // ================================
