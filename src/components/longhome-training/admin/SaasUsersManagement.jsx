@@ -9,7 +9,10 @@ import {
 } from '../../../utils/companyDataUtils';
 
 
+import { useAuth } from '../../../contexts/AuthContext';
+
 const SaasUsersManagement = ({ companies = [], companyAdmins = {}, onCreateUser, onEditAdmin, onDeleteUser }) => {
+  const { getUserType } = useAuth();
   const [viewMode, setViewMode] = useState('hierarchical'); // 'hierarchical' or 'table'
   const [expandedCompanies, setExpandedCompanies] = useState(new Set());
   const [searchTerm, setSearchTerm] = useState('');
@@ -140,13 +143,35 @@ const SaasUsersManagement = ({ companies = [], companyAdmins = {}, onCreateUser,
                           >
                             ✏️
                           </button>
-                          <button 
-                            className="action-button danger compact"
-                            onClick={() => onDeleteUser && onDeleteUser(user)}
-                            title="Delete User"
-                          >
-                            🗑️
-                          </button>
+                          {(() => {
+                            const currentUserType = getUserType ? getUserType() : null;
+                            const currentUserRole = currentUserType ? currentUserType.role : null;
+                            const isTargetAdmin = user.type === 'admin';
+                            const canDelete = !isTargetAdmin || (currentUserRole === 'super-admin');
+
+                            if (canDelete) {
+                              return (
+                                <button 
+                                  className="action-button danger compact"
+                                  onClick={() => onDeleteUser && onDeleteUser(user)}
+                                  title="Delete User"
+                                >
+                                  🗑️
+                                </button>
+                              );
+                            }
+
+                            return (
+                              <button 
+                                className="action-button danger compact disabled"
+                                disabled
+                                title="Cannot delete admin users"
+                                aria-disabled="true"
+                              >
+                                🗑️
+                              </button>
+                            );
+                          })()}
                         </div>
                       </div>
                     </div>

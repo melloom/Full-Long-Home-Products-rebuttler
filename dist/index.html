@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rebuttal — Sales Training</title>
+
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="Reusable rebuttals, training modules and analytics to help teams close more deals." />
+    <meta name="theme-color" content="#1e40af" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Smart Rebuttals" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="msapplication-TileColor" content="#1e40af" />
+    <meta name="msapplication-config" content="/browserconfig.xml" />
+    
+    <!-- PWA Icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="57x57" href="/icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512x512.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-192x192.png">
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/sw.js')
+            .then(function(registration) {
+              console.log('SW registered: ', registration);
+            })
+            .catch(function(registrationError) {
+              console.log('SW registration failed: ', registrationError);
+              // Silently handle service worker registration failures
+              // This prevents uncaught promise errors
+            });
+        });
+        
+        // Add global handler for unhandled promise rejections
+        window.addEventListener('unhandledrejection', function(event) {
+          // Check if this is a service worker related error
+          if (event.reason && (
+            event.reason.toString().includes('ServiceWorker') ||
+            event.reason.toString().includes('sw.js') ||
+            event.reason.toString().includes('Cache') ||
+            event.reason.toString().includes('fetch')
+          )) {
+            console.log('Service Worker promise rejection handled:', event.reason);
+            event.preventDefault();
+          }
+        });
+      }
+    </script>
+    <script type="module" crossorigin src="/assets/index-Cki4zt2A.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/react-vendor-DDxydHEc.js">
+    <link rel="modulepreload" crossorigin href="/assets/index.esm2017-BZkcafvK.js">
+    <link rel="modulepreload" crossorigin href="/assets/config-Dar2JuxW.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-BTD-Ha6Y.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html> 

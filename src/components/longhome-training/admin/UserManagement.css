@@ -332,6 +332,14 @@
   background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
 }
 
+.action-button.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  filter: grayscale(20%);
+}
+
 .action-button:active {
   transform: translateY(0);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);

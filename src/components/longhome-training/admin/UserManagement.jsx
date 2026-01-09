@@ -8,7 +8,7 @@ import './UserManagement.css';
 import { SearchBar } from '..';
 
 const UserManagement = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, getUserType } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -391,13 +391,37 @@ const UserManagement = () => {
                       {user.role === 'admin' ? <span role="img" aria-label="Remove Admin">👑</span> : <span role="img" aria-label="Make Admin">👤</span>}
                       {user.role === 'admin' ? 'Remove Admin' : 'Make Admin'}
                     </button>
-                    {user.email !== 'longhome@' && (
-                      <button 
-                        className="action-button delete"
-                        onClick={() => handleDeleteUser(user.id || user.uid)}
-                        title="Delete User"
-                      >
-                        <span role="img" aria-label="Delete">🗑️</span> Delete
+                    {user.email !== 'longhome@' && (() => {
+                      // Determine whether delete should be allowed
+                      const currentUserType = getUserType ? getUserType() : null;
+                      const currentUserRole = currentUserType ? currentUserType.role : null;
+                      const isTargetAdmin = (user.role === 'admin');
+                      const canDelete = !isTargetAdmin || (currentUserRole === 'super-admin');
+
+                      if (canDelete) {
+                        return (
+                          <button 
+                            className="action-button delete"
+                            onClick={() => handleDeleteUser(user.id || user.uid)}
+                            title="Delete User"
+                          >
+                            <span role="img" aria-label="Delete">🗑️</span> Delete
+                          </button>
+                        );
+                      }
+
+                      // If deletion is not allowed, show a disabled button with an explanatory title
+                      return (
+                        <button
+                          className="action-button delete disabled"
+                          disabled
+                          title="Cannot delete admin users"
+                          aria-disabled="true"
+                        >
+                          <span role="img" aria-label="Delete">🗑️</span> Delete
+                        </button>
+                      );
+                    })()}
                       </button>
                     )}
                   </div>

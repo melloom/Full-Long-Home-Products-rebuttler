@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getCompanyFromToken } from '../services/inviteService';
 import LoadingScreen from './LoadingScreen';
+import { doc, getDoc } from 'firebase/firestore';
+import { getDb } from '../services/firebase/config';
 
 const InviteHandler = () => {
   const { token } = useParams();
@@ -40,8 +42,7 @@ const InviteHandler = () => {
           // If invite refers to a companyId, fetch the company doc to inspect slug/landingPath
           if (companyData.companyId) {
             try {
-              const db = require('../services/firebase/config').getDb();
-              const { doc, getDoc } = require('firebase/firestore');
+              const db = getDb();
               const companyRef = doc(db, 'companies', companyData.companyId);
               const companyDoc = await getDoc(companyRef);
               if (companyDoc.exists()) {

@@ -271,9 +271,9 @@ const userService = {
     try {
       console.log('🔍 userService: deleteUser called with:', { userId });
       console.log('🔍 userService: auth.currentUser:', auth.currentUser);
-      
+
       let currentUser = auth.currentUser;
-      
+
       // If no Firebase Auth user, try to restore session
       if (!currentUser) {
         console.log('🔍 userService: No Firebase Auth user, attempting to restore session...');
@@ -289,11 +289,63 @@ const userService = {
         }
       }
 
-      console.log('🔍 userService: Current user authenticated, deleting user...');
+      // Fetch target user to check their role
+      const targetRef = doc(getDb(), 'users', userId);
+      const targetSnap = await getDoc(targetRef);
+      if (!targetSnap.exists()) {
+        console.warn('🔍 userService: Target user not found in Firestore:', userId);
+        const err = new Error('User not found');
+        err.code = 'not-found';
+        throw err;
+      }
+
+      const targetData = targetSnap.data();
+      const targetRole = (targetData && targetData.role) ? targetData.role : 'user';
+      console.log('🔍 userService: Target user role:', targetRole);
+
+      // If the target is an admin, ensure the caller is a super-admin
+      if (targetRole === 'admin') {
+        console.log('🔍 userService: Target is admin; checking caller role');
+        let callerRole = null;
+
+        try {
+          const callerRef = doc(getDb(), 'users', auth.currentUser.uid);
+          const callerSnap = await getDoc(callerRef);
+          if (callerSnap.exists()) {
+            callerRole = callerSnap.data().role;
+            console.log('🔍 userService: Caller role from Firestore:', callerRole);
+          }
+        } catch (err) {
+          console.warn('🔍 userService: Could not fetch caller role from Firestore, falling back to localStorage:', err);
+        }
+
+        // Fallback to localStorage admin data if Firestore lookup failed
+        if (!callerRole) {
+          try {
+            const stored = localStorage.getItem('adminUser');
+            if (stored) {
+              const parsed = JSON.parse(stored);
+              callerRole = parsed.role;
+              console.log('🔍 userService: Caller role from localStorage:', callerRole);
+            }
+          } catch (err) {
+            console.warn('🔍 userService: Failed to parse local adminUser from localStorage:', err);
+          }
+        }
+
+        if (callerRole !== 'super-admin') {
+          console.warn('🔍 userService: Caller is not authorized to delete admin users');
+          const err = new Error('permission-denied: cannot delete admin users');
+          err.code = 'permission-denied';
+          throw err;
+        }
+      }
+
+      console.log('🔍 userService: Current user authenticated and authorized, deleting user...');
       // Delete from Firestore
       await deleteDoc(doc(getDb(), 'users', userId));
       console.log('🔍 userService: User deleted from Firestore successfully');
-      
+
       // Note: Firebase Auth user deletion requires server-side implementation
       // For now, we only delete from Firestore. The user will still exist in Firebase Auth
       // but won't have access to the application data
@@ -305,7 +357,7 @@ const userService = {
         message: error.message,
         stack: error.stack
       });
-      
+
       if (error.code === 'permission-denied') {
         throw new Error('You do not have permission to delete users');
       } else if (error.code === 'not-found') {
