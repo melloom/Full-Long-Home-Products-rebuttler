@@ -70,7 +70,11 @@ const UserManagement = () => {
       // Filter out any users who are super admins
       const filteredUsers = fetchedUsers.filter(user => {
         const userId = user.uid || user.id;
-        return !superAdminUids.has(userId);
+        const userEmail = (user.email || '').toLowerCase().trim();
+        // Always hide super admins and the known superadmin account
+        if (superAdminUids.has(userId)) return false;
+        if (userEmail === 'superadmin@longhome.com') return false;
+        return true;
       });
       
       console.log(`Filtered out ${fetchedUsers.length - filteredUsers.length} super admins`);
@@ -254,6 +258,10 @@ const UserManagement = () => {
 
   const filteredUsers = getFilteredUsers();
 
+  // Determine current user's role once for permission checks
+  const currentUserType = getUserType ? getUserType() : null;
+  const currentUserRole = currentUserType ? currentUserType.role : null;
+
   if (loading) {
     return (
       <div className="user-management-loading">
@@ -370,33 +378,51 @@ const UserManagement = () => {
         ) : (
           <div className="users-grid">
             {filteredUsers.map(user => (
-              <div key={user.id || user.uid} className="user-card redesigned">
-                <div className="user-card-main">
-                  <div className="user-avatar big">
-                    {user.email.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="user-main-info">
-                    <div className="user-email redesigned">{user.email}</div>
-                    <div className="user-badges redesigned">
-                      {getStatusBadge(user)}
-                      {getRoleBadge(user.role || 'user')}
+              <div key={user.id || user.uid} className="user-card-wrapper">
+                <div className="user-card redesigned">
+                  <div className="user-card-main">
+                    <div className="user-avatar big">
+                      {user.email.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="user-main-info">
+                      <div className="user-email redesigned">{user.email}</div>
+                      <div className="user-badges redesigned">
+                        {getStatusBadge(user)}
+                        {getRoleBadge(user.role || 'user')}
+                      </div>
                     </div>
                   </div>
+                  <div className="user-card-divider"></div>
+                  <div className="user-card-meta">
+                    <div className="meta-item">
+                      <span className="meta-icon" role="img" aria-label="Created">📅</span>
+                      <span className="meta-label">Created:</span>
+                      <span className="meta-value">{formatDate(user.createdAt)}</span>
+                    </div>
+                    <div className="meta-item">
+                      <span className="meta-icon" role="img" aria-label="Last Sign In">🕒</span>
+                      <span className="meta-label">Last Sign In:</span>
+                      <span className="meta-value">{formatDate(user.lastSignIn)}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="user-card-actions-row">
                   <div className="user-actions redesigned">
-                    <button 
-                      className="action-button edit"
-                      onClick={() => handleRoleChange(user.id || user.uid, user.role === 'admin' ? 'user' : 'admin')}
-                      title={user.role === 'admin' ? 'Remove Admin' : 'Make Admin'}
-                    >
-                      {user.role === 'admin' ? <span role="img" aria-label="Remove Admin">👑</span> : <span role="img" aria-label="Make Admin">👤</span>}
-                      {user.role === 'admin' ? 'Remove Admin' : 'Make Admin'}
-                    </button>
+                    {currentUserRole === 'super-admin' && (
+                      <button 
+                        className="action-button edit"
+                        onClick={() => handleRoleChange(user.id || user.uid, user.role === 'admin' ? 'user' : 'admin')}
+                        title={user.role === 'admin' ? 'Remove Admin' : 'Make Admin'}
+                      >
+                        {user.role === 'admin' ? <span role="img" aria-label="Remove Admin">👑</span> : <span role="img" aria-label="Make Admin">👤</span>}
+                        {user.role === 'admin' ? 'Remove Admin' : 'Make Admin'}
+                      </button>
+                    )}
                     {user.email !== 'longhome@' && (() => {
-                      // Determine whether delete should be allowed
-                      const currentUserType = getUserType ? getUserType() : null;
-                      const currentUserRole = currentUserType ? currentUserType.role : null;
-                      const isTargetAdmin = (user.role === 'admin');
-                      const canDelete = !isTargetAdmin || (currentUserRole === 'super-admin');
+                      const targetRole = (user.role || '').toLowerCase();
+                      const isTargetPrivileged = targetRole === 'admin' || targetRole === 'super-admin';
+                      const isSuperAdmin = currentUserRole === 'super-admin';
+                      const canDelete = !isTargetPrivileged || isSuperAdmin;
 
                       if (canDelete) {
                         return (
@@ -410,31 +436,8 @@ const UserManagement = () => {
                         );
                       }
 
-                      // If deletion is not allowed, show a disabled button with an explanatory title
-                      return (
-                        <button
-                          className="action-button delete disabled"
-                          disabled
-                          title="Cannot delete admin users"
-                          aria-disabled="true"
-                        >
-                          <span role="img" aria-label="Delete">🗑️</span> Delete
-                        </button>
-                      );
+                      return null;
                     })()}
-                  </div>
-                </div>
-                <div className="user-card-divider"></div>
-                <div className="user-card-meta">
-                  <div className="meta-item">
-                    <span className="meta-icon" role="img" aria-label="Created">📅</span>
-                    <span className="meta-label">Created:</span>
-                    <span className="meta-value">{formatDate(user.createdAt)}</span>
-                  </div>
-                  <div className="meta-item">
-                    <span className="meta-icon" role="img" aria-label="Last Sign In">🕒</span>
-                    <span className="meta-label">Last Sign In:</span>
-                    <span className="meta-value">{formatDate(user.lastSignIn)}</span>
                   </div>
                 </div>
               </div>
