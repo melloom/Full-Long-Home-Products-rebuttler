@@ -1212,6 +1212,42 @@
   }
 }
 
+/* Defensive layout fixes to prevent overflow & overlapping inside management cards */
+.user-card, .user-card.redesigned, .company-card {
+  overflow: hidden; /* keep children inside card bounds */
+  min-width: 0;
+}
+
+/* Ensure flex children can shrink properly and long text wraps or ellipsizes */
+.user-card-main, .user-card-meta, .company-info-grid, .company-actions {
+  min-width: 0;
+}
+
+.user-main-info, .user-info, .meta-item, .company-title, .company-name, .info-item {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap; /* use ellipsis for single-line truncation */
+}
+
+/* Allow badges and buttons to wrap instead of overflowing */
+.user-badges, .company-actions {
+  flex-wrap: wrap;
+}
+
+.action-button {
+  flex: 0 1 auto; /* allow shrinking */
+  min-width: 0;
+}
+
+/* For extremely long emails or names, allow breaking on small screens */
+@media (max-width: 600px) {
+  .user-main-info, .company-title, .company-name {
+    white-space: normal; /* let it wrap to multiple lines on small screens */
+  }
+}
+
+
 /* ===== DARK MODE STYLES ===== */
 .dark .user-management {
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;

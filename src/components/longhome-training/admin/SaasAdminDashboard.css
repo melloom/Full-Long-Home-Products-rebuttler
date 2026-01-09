@@ -2722,6 +2722,31 @@
   border-top: 1px solid rgba(226, 232, 240, 0.2);
   flex-wrap: wrap;
   position: relative;
+  min-width: 0;
+}
+
+/* Defensive fixes for company cards to prevent overflow/overlap */
+.company-card {
+  /* prefer visible for decorative elements, but ensure children don't overflow */
+  overflow: hidden;
+}
+
+.company-info, .company-info-grid, .company-actions, .info-item, .company-name, .company-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.company-actions .action-button {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+@media (max-width: 800px) {
+  .company-name, .company-title {
+    white-space: normal; /* wrap on small screens */
+  }
 }
 
 /* Responsive Design for Company Cards */
