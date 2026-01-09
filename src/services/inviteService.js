@@ -93,10 +93,15 @@ export const getCompanyFromToken = async (token) => {
 /**
  * Generate the full invite URL
  * @param {string} token - The invite token
+ * @param {string} [companySlug] - Optional company slug to influence the landing path
  * @returns {string} - The full URL
  */
-export const getInviteUrl = (token) => {
+export const getInviteUrl = (token, companySlug) => {
   const baseUrl = window.location.origin;
+  // Special-case Long Home which uses `/app` as the landing path
+  if (companySlug === 'long-home') {
+    return `${baseUrl}/app/invite/${token}`;
+  }
   return `${baseUrl}/invite/${token}`;
 };
 

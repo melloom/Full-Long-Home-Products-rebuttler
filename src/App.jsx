@@ -227,6 +227,8 @@ function App() {
         <Route path="/" element={<SaaSLandingPage />} />
         <Route path="/company/register" element={<CompanyRegister />} />
         <Route path="/invite/:token" element={<InviteHandler />} />
+        {/* Support invite links that land under /app (used by Long Home) */}
+        <Route path="/app/invite/:token" element={<InviteHandler />} />
         <Route path="/company/:companySlug" element={
           <PersistentRoute>
             <CompanyPlatform />

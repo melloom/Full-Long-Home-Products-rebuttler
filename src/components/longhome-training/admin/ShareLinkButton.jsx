@@ -26,7 +26,7 @@ const ShareLinkButton = ({ companyId }) => {
           
           // Generate or get the invite token
           const token = await getOrCreateInviteToken(companyId, slug);
-          const url = getInviteUrl(token);
+          const url = getInviteUrl(token, slug);
           setInviteUrl(url);
         }
       } catch (error) {
@@ -44,7 +44,7 @@ const ShareLinkButton = ({ companyId }) => {
     try {
       // Ensure we have the latest token
       const token = await getOrCreateInviteToken(companyId, companySlug || companyId);
-      const url = getInviteUrl(token);
+      const url = getInviteUrl(token, companySlug || companyId);
       
       // Copy to clipboard
       await navigator.clipboard.writeText(url);
