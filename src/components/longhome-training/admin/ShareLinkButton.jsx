@@ -10,6 +10,8 @@ const ShareLinkButton = ({ companyId }) => {
   const [inviteUrl, setInviteUrl] = useState('');
   const [companySlug, setCompanySlug] = useState('');
 
+  const LEGACY_LONG_HOME_ID = 'oLuxoJq8SHXXEWm9KSEU';
+
   useEffect(() => {
     const fetchCompanyData = async () => {
       if (!companyId) return;
@@ -21,10 +23,11 @@ const ShareLinkButton = ({ companyId }) => {
         
         if (companyDoc.exists()) {
           const companyData = companyDoc.data();
-          const slug = companyData.slug || companyId;
+          // Normalize Long Home: accept legacy id or slug
+          const slug = (companyData.slug === 'long-home' || companyId === LEGACY_LONG_HOME_ID) ? 'long-home' : (companyData.slug || companyId);
           setCompanySlug(slug);
           
-          // Generate or get the invite token
+          // Generate or get the invite token using the normalized slug
           const token = await getOrCreateInviteToken(companyId, slug);
           const url = getInviteUrl(token, slug);
           setInviteUrl(url);
@@ -42,9 +45,11 @@ const ShareLinkButton = ({ companyId }) => {
     
     setLoading(true);
     try {
+      // Use normalized slug if available, otherwise keep companyId
+      const effectiveSlug = companySlug || (companyId === LEGACY_LONG_HOME_ID ? 'long-home' : companyId);
       // Ensure we have the latest token
-      const token = await getOrCreateInviteToken(companyId, companySlug || companyId);
-      const url = getInviteUrl(token, companySlug || companyId);
+      const token = await getOrCreateInviteToken(companyId, effectiveSlug);
+      const url = getInviteUrl(token, effectiveSlug);
       
       // Copy to clipboard
       await navigator.clipboard.writeText(url);
