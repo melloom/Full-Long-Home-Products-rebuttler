@@ -21,12 +21,20 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [adminUser, setAdminUser] = useState(null);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState(() => {
+    // Restore tab from localStorage on mount
+    return localStorage.getItem('adminDashboardActiveTab') || 'dashboard';
+  });
   const [scopedCompanyId, setScopedCompanyId] = useState('');
   const [isImpersonating, setIsImpersonating] = useState(false);
   const [companyName, setCompanyName] = useState('');
   const [companySlug, setCompanySlug] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Save active tab to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('adminDashboardActiveTab', activeTab);
+  }, [activeTab]);
 
   // Handle body scroll lock when sidebar is open
   useEffect(() => {
