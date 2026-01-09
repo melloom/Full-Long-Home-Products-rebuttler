@@ -19,24 +19,52 @@ const InviteHandler = () => {
 
       try {
         const companyData = await getCompanyFromToken(token);
-        
-        if (companyData && companyData.companySlug) {
-          // Redirect to the company training page
-          // Special-case Long Home to land in the app at `/app` instead of `/company/long-home`
+
+        if (companyData && (companyData.companySlug || companyData.companyId)) {
+          // Fast path: invite includes slug and it's Long Home
           if (companyData.companySlug === 'long-home') {
-            try {
-              localStorage.setItem('currentCompanySlug', companyData.companySlug);
-            } catch (e) {
-              // ignore storage errors
-            }
+            try { localStorage.setItem('currentCompanySlug', 'long-home'); } catch (e) {}
+            console.log('InviteHandler: invite maps to slug long-home; redirecting to /app');
             navigate('/app', { replace: true });
-          } else {
-            navigate(`/company/${companyData.companySlug}`, { replace: true });
+            return;
           }
-        } else {
-          setError('Invalid invite link');
-          setLoading(false);
+
+          // If invite refers to a companyId, fetch the company doc to inspect slug/landingPath
+          if (companyData.companyId) {
+            try {
+              const db = require('../services/firebase/config').getDb();
+              const { doc, getDoc } = require('firebase/firestore');
+              const companyRef = doc(db, 'companies', companyData.companyId);
+              const companyDoc = await getDoc(companyRef);
+              if (companyDoc.exists()) {
+                const comp = companyDoc.data();
+                const slug = comp.slug || companyData.companyId;
+
+                if (slug === 'long-home' || comp.landingPath === '/app') {
+                  try { localStorage.setItem('currentCompanySlug', 'long-home'); } catch (e) {}
+                  console.log('InviteHandler: company doc indicates Long Home or landingPath=/app; redirecting to /app');
+                  navigate('/app', { replace: true });
+                  return;
+                }
+
+                console.log('InviteHandler: redirecting to company page by slug:', slug);
+                navigate(`/company/${slug}`, { replace: true });
+                return;
+              }
+            } catch (fetchErr) {
+              console.error('InviteHandler: Error fetching company by ID:', fetchErr);
+            }
+          }
+
+          // Fallback: if we have a companySlug, navigate to it
+          if (companyData.companySlug) {
+            navigate(`/company/${companyData.companySlug}`, { replace: true });
+            return;
+          }
         }
+
+        setError('Invalid invite link');
+        setLoading(false);
       } catch (err) {
         console.error('Error handling invite:', err);
         setError('Failed to process invite link');
