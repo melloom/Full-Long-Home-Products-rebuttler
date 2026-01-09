@@ -422,8 +422,6 @@ const UserManagement = () => {
                         </button>
                       );
                     })()}
-                      </button>
-                    )}
                   </div>
                 </div>
                 <div className="user-card-divider"></div>
