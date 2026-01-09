@@ -7,6 +7,12 @@
   NODE_VERSION = "18"
 
 [[redirects]]
+  from = "/company/oLuxoJq8SHXXEWm9KSEU"
+  to = "/app"
+  status = 301
+  force = true
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
