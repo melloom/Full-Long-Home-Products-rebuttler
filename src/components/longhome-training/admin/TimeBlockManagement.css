@@ -4,58 +4,6 @@
   margin: 0 auto;
   background: #f8fafc;
   min-height: 100vh;
-  position: relative;
-}
-
-/* Coming Soon Overlay */
-.coming-soon-overlay {
-  position: absolute;
-  top: 0;
-  left: -2rem;
-  right: -2rem;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 99;
-  backdrop-filter: blur(4px);
-  pointer-events: auto;
-  border-radius: 0;
-}
-
-.coming-soon-container {
-  background: white;
-  border-radius: 16px;
-  padding: 3rem 2rem;
-  text-align: center;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  max-width: 500px;
-  animation: slideIn 0.4s ease-out;
-}
-
-.coming-soon-container h2 {
-  font-size: 2.5rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-  color: #1f2937;
-}
-
-.coming-soon-container p {
-  font-size: 1.1rem;
-  color: #6b7280;
-  margin: 0;
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .tbm-header {

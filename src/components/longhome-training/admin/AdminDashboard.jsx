@@ -10,7 +10,6 @@ import CustomerServiceManagement from './CustomerServiceManagement';
 import FAQManagement from './FAQManagement';
 import UserManagement from './UserManagement';
 import DashboardView from './DashboardView';
-import TimeBlockManagement from './TimeBlockManagement';
 import './AdminDashboard.css';
 import AdminSettings from './AdminSettings';
 import ShareLinkButton from './ShareLinkButton';
@@ -266,8 +265,6 @@ const AdminDashboard = () => {
         return <FAQManagement companyId={scopedCompanyId} />;
       case 'users':
         return <UserManagement companyId={scopedCompanyId} />;
-      case 'time-blocks':
-        return <TimeBlockManagement companyId={scopedCompanyId} />;
       case 'settings':
         return <AdminSettings companyId={scopedCompanyId} companyName={companyName} />;
       default:
@@ -407,7 +404,6 @@ const AdminDashboard = () => {
           <button className={activeTab === 'customer-service' ? 'active' : ''} onClick={() => { setActiveTab('customer-service'); setSidebarOpen(false); }}>Customer Service</button>
           <button className={activeTab === 'faq' ? 'active' : ''} onClick={() => { setActiveTab('faq'); setSidebarOpen(false); }}>FAQ</button>
           <button className={activeTab === 'users' ? 'active' : ''} onClick={() => { setActiveTab('users'); setSidebarOpen(false); }}>Users</button>
-          <button className={activeTab === 'time-blocks' ? 'active' : ''} onClick={() => { setActiveTab('time-blocks'); setSidebarOpen(false); }}>Time Blocks</button>
           <button className={activeTab === 'settings' ? 'active' : ''} onClick={() => { setActiveTab('settings'); setSidebarOpen(false); }}>Settings</button>
         </aside>
         <main className="dashboard-content">

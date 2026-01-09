@@ -257,14 +257,6 @@ const TimeBlockManagement = () => {
 
   return (
     <div className="time-block-management">
-      {/* Coming Soon Overlay */}
-      <div className="coming-soon-overlay">
-        <div className="coming-soon-container">
-          <h2>🚀 Coming Soon</h2>
-          <p>Time Block Management features are under development</p>
-        </div>
-      </div>
-
       <motion.div 
         className="tbm-header"
         initial={{ opacity: 0, y: -20 }}
