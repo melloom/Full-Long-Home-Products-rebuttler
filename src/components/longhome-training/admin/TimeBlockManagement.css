@@ -5,11 +5,12 @@
   background: #f8fafc;
   min-height: 100vh;
   position: relative;
+  overflow: hidden;
 }
 
 /* Coming Soon Overlay */
 .coming-soon-overlay {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
