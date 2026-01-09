@@ -55,10 +55,18 @@ const UserManagement = () => {
       
       // Filter out super admins - they should not appear in company user lists
       const db = getDb();
-      const superAdminsRef = collection(db, 'super-admins');
-      const superAdminsSnapshot = await getDocs(superAdminsRef);
-      const superAdminUids = new Set(superAdminsSnapshot.docs.map(doc => doc.id));
-      
+      let superAdminUids = new Set();
+      try {
+        const superAdminsRef = collection(db, 'super-admins');
+        const superAdminsSnapshot = await getDocs(superAdminsRef);
+        superAdminUids = new Set(superAdminsSnapshot.docs.map(doc => doc.id));
+      } catch (err) {
+        // If we cannot list super-admins (permission denied for non-super-admins),
+        // log a warning and continue without filtering so UI remains usable.
+        console.warn('Could not fetch super-admins (may not have permission):', err);
+        superAdminUids = new Set();
+      }
+
       // Filter out any users who are super admins
       const filteredUsers = fetchedUsers.filter(user => {
         const userId = user.uid || user.id;
