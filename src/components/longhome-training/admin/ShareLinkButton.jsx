@@ -66,18 +66,73 @@ const ShareLinkButton = ({ companyId }) => {
     try {
       // Use normalized slug if available, otherwise keep companyId
       const effectiveSlug = companySlug || (companyId === LEGACY_LONG_HOME_ID ? 'long-home' : companyId);
-      // Ensure we have the latest token
+
+      // 1) If we already have a cached invite URL from earlier, try to copy it immediately
+      if (inviteUrl) {
+        const immediateUrl = inviteUrl;
+        let wrote = false;
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          try {
+            // Trigger clipboard write while still inside the click handler (user gesture)
+            await navigator.clipboard.writeText(immediateUrl);
+            wrote = true;
+          } catch (e) {
+            console.warn('Immediate clipboard write failed:', e);
+          }
+        }
+
+        if (!wrote) {
+          const ok = fallbackCopy(immediateUrl);
+          if (ok) wrote = true;
+        }
+
+        if (wrote) {
+          // Refresh token in the background so future clicks use fresh URL
+          (async () => {
+            try {
+              const token = await getOrCreateInviteToken(companyId, effectiveSlug);
+              const url = getInviteUrl(token, effectiveSlug);
+              setInviteUrl(url);
+            } catch (e) {
+              console.warn('Background token refresh failed', e);
+            }
+          })();
+
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+          return;
+        }
+        // If immediate copy failed, fall through to generate a fresh token and try again
+      }
+
+      // 2) No cached URL or immediate write failed — generate token now and then copy
       const token = await getOrCreateInviteToken(companyId, effectiveSlug);
       const url = getInviteUrl(token, effectiveSlug);
 
-      // Prefer modern Clipboard API when available
+      // Try Clipboard API first
       if (navigator.clipboard && navigator.clipboard.writeText) {
         try {
           await navigator.clipboard.writeText(url);
         } catch (e) {
           console.warn('Clipboard API writeText failed, falling back:', e);
-          const ok = fallbackCopy(url);
-          if (!ok) throw e;
+
+          // If the failure was because the document lost focus, try to focus and retry once
+          if (e && (e.name === 'NotAllowedError' || /Document is not focused/i.test(String(e.message || '')))) {
+            try {
+              window.focus && window.focus();
+              // small delay to allow focus to happen
+              await new Promise((r) => setTimeout(r, 50));
+              await navigator.clipboard.writeText(url);
+            } catch (err2) {
+              console.warn('Retry after focus failed:', err2);
+              const ok = fallbackCopy(url);
+              if (!ok) throw err2;
+            }
+          } else {
+            const ok = fallbackCopy(url);
+            if (!ok) throw e;
+          }
         }
       } else {
         // Older browsers
@@ -85,14 +140,16 @@ const ShareLinkButton = ({ companyId }) => {
         if (!ok) throw new Error('Copy not supported');
       }
 
+      // If we reached here, copy succeeded
+      setInviteUrl(url); // cache for next time
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error('Error copying link:', error);
-      // Show the URL in a prompt as a last-resort so users can manually copy it
-      const manual = inviteUrl || '';
+
+      // Try to surface a useful error for the user
+      const manual = inviteUrl || undefined;
       if (manual) {
-        // prevent focus stealing in some browsers
         setTimeout(() => window.prompt('Copy this link (press Ctrl/Cmd+C):', manual), 0);
       } else {
         alert('Failed to copy link. Please try again.');
