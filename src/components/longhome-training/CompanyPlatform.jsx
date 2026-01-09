@@ -18,6 +18,17 @@ const CompanyPlatform = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
+    // If this is Long Home, redirect straight to /app (we no longer serve the legacy company landing page)
+    if (companySlug === 'long-home') {
+      try {
+        localStorage.setItem('currentCompanySlug', companySlug);
+      } catch (e) {
+        // ignore storage errors
+      }
+      navigate('/app', { replace: true });
+      return; // skip loading company document
+    }
+
     const loadCompany = async () => {
       try {
         console.log('🔍 Loading company for slug:', companySlug);
