@@ -392,13 +392,6 @@ const AdminDashboard = () => {
       <div className="dashboard-container">
         <div className={`sidebar-overlay ${sidebarOpen ? 'active' : ''}`} onClick={() => setSidebarOpen(false)}></div>
         <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
-          <button 
-            className="sidebar-close" 
-            onClick={() => setSidebarOpen(false)}
-            aria-label="Close menu"
-          >
-            ✕
-          </button>
           <button className={activeTab === 'dashboard' ? 'active' : ''} onClick={() => { setActiveTab('dashboard'); setSidebarOpen(false); }}>Dashboard</button>
           <button className={activeTab === 'rebuttals' ? 'active' : ''} onClick={() => { setActiveTab('rebuttals'); setSidebarOpen(false); }}>Rebuttals</button>
           <button className={activeTab === 'categories' ? 'active' : ''} onClick={() => { setActiveTab('categories'); setSidebarOpen(false); }}>Categories</button>

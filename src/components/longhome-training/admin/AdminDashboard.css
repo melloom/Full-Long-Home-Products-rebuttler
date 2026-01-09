@@ -3537,13 +3537,7 @@
     padding-top: 4rem;
   }
   
-  .sidebar-close {
-    top: 0.75rem;
-    right: 0.75rem;
-    width: 32px;
-    height: 32px;
-    font-size: 1.25rem;
-  }
+
   
   .sidebar button {
     padding: 0.9rem 1rem;
@@ -3671,36 +3665,6 @@
   border-color: rgba(96,165,250,0.45);
 }
 
-.sidebar-close {
-  display: none;
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  width: 36px;
-  height: 36px;
-  background: rgba(51, 65, 85, 0.5);
-  border: 1px solid #334155;
-  border-radius: 8px;
-  color: #e5e7eb;
-  font-size: 1.5rem;
-  cursor: pointer;
-  align-items: center;
-  justify-content: center;
-  z-index: 1001;
-  transition: all 0.2s ease;
-}
-
-.sidebar-close:hover {
-  background: rgba(51, 65, 85, 0.8);
-  transform: scale(1.1);
-}
-
-@media (max-width: 768px) {
-  .sidebar-close {
-    display: flex;
-  }
-}
-
 .dashboard-content {
   flex: 1;
   min-width: 0;
@@ -3708,6 +3672,9 @@
   max-width: 100%;
   overflow-x: hidden;
   box-sizing: border-box;
+
+/* Hide removed sidebar close button */
+.sidebar-close { display: none !important; }
 }
 
 /* Dark theme base overrides */
