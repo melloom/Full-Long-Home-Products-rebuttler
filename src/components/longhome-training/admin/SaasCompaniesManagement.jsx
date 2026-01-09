@@ -151,7 +151,8 @@ const SaasCompaniesManagement = ({
                   {(() => {
                     const origin = typeof window !== 'undefined' ? window.location.origin : '';
                     const slugOrId = company.slug || company.id;
-                    const url = `${origin}/company/${slugOrId}`;
+                    // For Long Home, the public training landing is under /app
+                    const url = (company.slug === 'long-home' || company.id === 'long-home') ? `${origin}/app` : `${origin}/company/${slugOrId}`;
                     return (
                       <>
                         <input
@@ -169,20 +170,11 @@ const SaasCompaniesManagement = ({
                         <button
                           className="action-button secondary"
                           onClick={() => {
-                            // For Long Home Products, go to admin dashboard with impersonation
-                            if (company.slug === 'long-home' || company.id === 'long-home') {
-                              // Set impersonation data
-                              localStorage.setItem('impersonation', JSON.stringify({ 
-                                enabled: true, 
-                                companyId: company.id 
-                              }));
-                              window.open(`/admin/dashboard?impersonate=${company.id}`, '_blank');
-                            } else {
-                              window.open(url, '_blank');
-                            }
+                            // Open the public training URL (Long Home uses /app)
+                            window.open(url, '_blank');
                           }}
                         >
-                          {company.slug === 'long-home' || company.id === 'long-home' ? '🚀 Visit Admin Dashboard' : '🚀 Visit Training'}
+                          🚀 Visit Training
                         </button>
                       </>
                     );
