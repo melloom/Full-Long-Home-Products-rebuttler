@@ -29,6 +29,14 @@ const InviteHandler = () => {
             return;
           }
 
+          // If the invite maps to the legacy Long Home company ID, redirect immediately to /app
+          if (companyData.companyId === 'oLuxoJq8SHXXEWm9KSEU') {
+            try { localStorage.setItem('currentCompanySlug', 'long-home'); } catch (e) {}
+            console.log('InviteHandler: invite maps to legacy Long Home companyId; redirecting to /app');
+            navigate('/app', { replace: true });
+            return;
+          }
+
           // If invite refers to a companyId, fetch the company doc to inspect slug/landingPath
           if (companyData.companyId) {
             try {
