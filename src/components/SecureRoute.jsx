@@ -9,7 +9,8 @@ const SecureRoute = ({
   requiredRole = null, 
   requiredPermissions = [], 
   fallbackPath = '/admin/login',
-  allowImpersonation = false 
+  allowImpersonation = false,
+  allowPublic = false // Allow unauthenticated public access for certain routes (invite visitors)
 }) => {
   const { currentUser, authLoading } = useAuth();
   const location = useLocation();
@@ -34,8 +35,17 @@ const SecureRoute = ({
           return;
         }
 
-        // If no user, redirect to login
+        // If no user, allow public access when configured (invite visitors)
         if (!currentUser) {
+          if (allowPublic) {
+            // Treat as public visitor; set a public role and continue
+            setUserRole('public');
+            setUserPermissions([]);
+            setLoading(false);
+            return;
+          }
+
+          // Otherwise proceed to redirect to login
           setLoading(false);
           return;
         }
@@ -206,7 +216,7 @@ const SecureRoute = ({
   }
 
   // No user authenticated
-  if (!currentUser) {
+  if (!currentUser && !allowPublic) {
     return <Navigate to={fallbackPath} state={{ from: location }} replace />;
   }
 

@@ -245,7 +245,7 @@ function App() {
         <Route 
           path="/rebuttals" 
           element={
-            <SecureRoute fallbackPath="/">
+            <SecureRoute fallbackPath="/" allowPublic={true}>
               <Layout><RebuttalLibrary /></Layout>
             </SecureRoute>
           } 
@@ -253,7 +253,7 @@ function App() {
         <Route 
           path="/disposition" 
           element={
-            <SecureRoute fallbackPath="/">
+            <SecureRoute fallbackPath="/" allowPublic={true}>
               <Layout><LeadDisposition /></Layout>
             </SecureRoute>
           } 
@@ -261,7 +261,7 @@ function App() {
         <Route 
           path="/customerService" 
           element={
-            <SecureRoute fallbackPath="/">
+            <SecureRoute fallbackPath="/" allowPublic={true}>
               <Layout><CustomerService /></Layout>
             </SecureRoute>
           } 
@@ -269,7 +269,7 @@ function App() {
         <Route 
           path="/faq" 
           element={
-            <SecureRoute fallbackPath="/">
+            <SecureRoute fallbackPath="/" allowPublic={true}>
               <Layout><FAQ /></Layout>
             </SecureRoute>
           } 
@@ -277,7 +277,7 @@ function App() {
         <Route 
           path="/scheduleScript" 
           element={
-            <SecureRoute fallbackPath="/">
+            <SecureRoute fallbackPath="/" allowPublic={true}>
               <Layout><ScheduleScriptComingSoon /></Layout>
             </SecureRoute>
           } 
