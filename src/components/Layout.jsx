@@ -79,9 +79,24 @@ const Layout = ({ children }) => {
   };
 
   const handleNavigation = (path) => {
-    navigate(path);
-    setTimeout(scrollToTop, 0);    // After navigation
-    setTimeout(scrollToTop, 200);  // After render
+    try {
+      const currentPath = location.pathname;
+      const currentSlug = localStorage.getItem('currentCompanySlug');
+      console.log('🧭 Layout: handleNavigation', { path, currentPath, currentSlug });
+
+      // Prevent redundant navigation (avoid unintended redirects causing flicker)
+      if (path === currentPath) {
+        console.log('🧭 Layout: navigation skipped, already on path', path);
+        return;
+      }
+
+      navigate(path);
+      setTimeout(scrollToTop, 0);    // After navigation
+      setTimeout(scrollToTop, 200);  // After render
+    } catch (err) {
+      console.error('🧭 Layout: navigation error', err);
+      navigate(path);
+    }
   };
 
   return (
